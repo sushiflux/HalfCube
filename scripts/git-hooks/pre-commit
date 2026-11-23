@@ -1,0 +1,69 @@
+#!/usr/bin/env sh
+set -eu
+
+repo_root=$(git rev-parse --show-toplevel)
+cd "$repo_root"
+
+# Never allow files from intern/ into the public repository
+if git diff --cached --name-only | grep -q '^intern/'; then
+  echo "Fehler: Dateien aus intern/ duerfen nicht in das oeffentliche Repository committet werden." >&2
+  exit 1
+fi
+
+# Version = vYear.Month.CommitOfYear (month without leading zero)
+year=$(date +%Y)
+month=$(date +%m)
+month=${month#0}
+# Without any commit (first commit) HEAD does not exist: count falls back to 0
+commit_count=$(git rev-list --count HEAD --since="$year-01-01 00:00:00" 2>/dev/null || echo 0)
+next_commit=$((commit_count + 1))
+
+# Prompt counter maintained outside git; invalid or missing values mean 1
+prompt_file=".git/prompt-count"
+prompts=1
+if [ -f "$prompt_file" ]; then
+  raw_prompts=$(tr -d '[:space:]' < "$prompt_file" || echo "1")
+  case "$raw_prompts" in
+    ''|*[!0-9]*) prompts=1 ;;
+    0) prompts=1 ;;
+    *) prompts="$raw_prompts" ;;
+  esac
+fi
+
+# Changed lines of the staged diff (added + removed), version.txt excluded
+lines=$(git diff --cached --numstat -- . ':!version.txt' | awk '$1 ~ /^[0-9]+$/ && $2 ~ /^[0-9]+$/ { sum += $1 + $2 } END { print sum + 0 }')
+
+short_ver="v${year}.${month}.${next_commit}"
+full_ver="v${year}.${month}.${next_commit}.${prompts}.${lines}"
+
+printf '%s\n%s\n' "$short_ver" "$full_ver" > version.txt
+git add version.txt
+
+# Stamp intern/CHANGELOG.dev.md if present (never staged)
+if [ -f "intern/CHANGELOG.dev.md" ]; then
+  stamp_time=$(date '+%Y-%m-%d %H:%M')
+  node -e "
+    const fs = require('fs');
+    const p = 'intern/CHANGELOG.dev.md';
+    let c = fs.readFileSync(p, 'utf8');
+    const updated = c.replace(/^## Unreleased$/gm, '## ${full_ver} - ${stamp_time}');
+    if (updated !== c) fs.writeFileSync(p, updated, 'utf8');
+  " 2>/dev/null || true
+fi
+
+# Stamp the "## vNEXT" placeholders in staged customer changelogs
+for cf in CHANGELOG.md CHANGELOG.beta.md CHANGELOG.nightly.md; do
+  if git diff --cached --name-only | grep -qx "$cf"; then
+    node -e "
+      const fs = require('fs');
+      const p = '${cf}';
+      let c = fs.readFileSync(p, 'utf8');
+      let updated = c
+        .replace(/^## vNEXT α(.*)$/gm, '## ${full_ver} (α)\$1')
+        .replace(/^## vNEXT β(.*)$/gm, '## ${full_ver} (β)\$1')
+        .replace(/^## vNEXT(.*)$/gm, '## ${full_ver}\$1');
+      if (updated !== c) fs.writeFileSync(p, updated, 'utf8');
+    " 2>/dev/null || true
+    git add "$cf"
+  fi
+done

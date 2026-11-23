@@ -1,0 +1,35 @@
+/intern/
+/CLAUDE.md
+
+# Dependencies and build output
+node_modules/
+dist/
+out/
+build/
+/build-*/
+cmake-build-*/
+CMakeFiles/
+CMakeCache.txt
+.emscripten_cache/
+*.tsbuildinfo
+coverage/
+
+# Local environment and secrets
+.env
+.env.local
+.env.*.local
+
+# Logs and run/data folders
+*.log
+logs/
+.run/
+.logs/
+.data/
+
+# IDE and OS files
+.vs/
+.vscode/
+.idea/
+*.user
+Thumbs.db
+.DS_Store

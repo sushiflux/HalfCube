@@ -1,0 +1,13 @@
+#!/usr/bin/env sh
+repo_root=$(git rev-parse --show-toplevel 2>/dev/null) || exit 0
+cd "$repo_root" || exit 0
+
+# Reset the prompt counter for the next commit
+printf '0\n' > .git/prompt-count 2>/dev/null || true
+
+# Optional backup of intern/ through the command stored in the local git config
+sync_cmd=$(git config --get intern.sync 2>/dev/null || true)
+if [ -n "$sync_cmd" ] && [ -d "intern" ]; then
+  sh -c "$sync_cmd save \"$repo_root\"" >/dev/null 2>&1 || echo "Hinweis: intern.sync save konnte nicht ausgefuehrt werden."
+fi
+exit 0

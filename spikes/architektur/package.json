@@ -1,0 +1,40 @@
+{
+  "name": "partcraft-architecture-spike",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Architecture spike: engine message contract, native and WebAssembly transports, shared UI for the Electron window and the browser page",
+  "license": "GPL-3.0-or-later",
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json && tsc -p tsconfig.app.json && tsc -p tsconfig.desktop.json",
+    "test": "node --test --test-concurrency=1 \"tests/*.test.ts\"",
+    "bench": "node tests/bench.ts",
+    "dev:web": "vite --config vite.config.ts",
+    "build:web": "vite build --config vite.config.ts",
+    "preview:web": "vite preview --config vite.config.ts",
+    "build:desktop": "vite build --config vite.desktop.config.ts",
+    "build:ui": "npm run build:web && npm run build:desktop",
+    "start:desktop": "electron .",
+    "test:ui": "node tests/ui-drive.ts",
+    "test:e2e": "node --test --test-concurrency=1 --test-timeout=240000 \"tests/e2e/*.e2e.ts\""
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.6",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@types/three": "^0.187.0",
+    "@vitejs/plugin-react": "^6.3.0",
+    "ajv": "^8.20.0",
+    "electron": "^45.4.1",
+    "playwright-core": "^1.65.1",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "three": "^0.187.0",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.8"
+  },
+  "main": "_build/app-desktop/main.cjs"
+}

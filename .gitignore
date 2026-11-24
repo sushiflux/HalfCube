@@ -34,6 +34,7 @@ logs/
 Thumbs.db
 .DS_Store
 
-# Kernel test: third-party sources and build trees
+# Spikes: third-party sources, build trees and local results
 _deps/
 _build/
+_results/

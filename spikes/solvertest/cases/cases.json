@@ -1,0 +1,8960 @@
+{
+ "format": 1,
+ "title": "Partcraft solver test: solver-neutral case catalogue",
+ "units": "millimetres and radians; right-handed, y up; arcs run counter-clockwise from start to end",
+ "tolerances": {
+  "length": 0.000001,
+  "angle": 0.000001,
+  "curvature": 0.00001
+ },
+ "cases": [
+  {
+   "id": "K01a-horizontal-line",
+   "group": "K01",
+   "title": "Horizontal constraint on a line",
+   "elements": [
+    {
+     "id": "P1",
+     "type": "point",
+     "x": 0,
+     "y": 0
+    },
+    {
+     "id": "P2",
+     "type": "point",
+     "x": 10,
+     "y": 3
+    },
+    {
+     "id": "L1",
+     "type": "line",
+     "p1": "P1",
+     "p2": "P2"
+    }
+   ],
+   "constraints": [
+    {
+     "id": "c1",
+     "type": "horizontal",
+     "line": "L1"
+    }
+   ],
+   "expect": {
+    "solved": true,
+    "dof": 3
+   }
+  },
+  {
+   "id": "K01b-vertical-line",
+   "group": "K01",
+   "title": "Vertical constraint on a line",
+   "elements": [
+    {
+     "id": "P1",
+     "type": "point",
+     "x": 0,
+     "y": 0
+    },
+    {
+     "id": "P2",
+     "type": "point",
+     "x": 3,
+     "y": 10
+    },
+    {
+     "id": "L1",
+     "type": "line",
+     "p1": "P1",
+     "p2": "P2"
+    }
+   ],
+   "constraints": [
+    {
+     "id": "c1",
+     "type": "vertical",
+     "line": "L1"
+    }
+   ],
+   "expect": {
+    "solved": true,
+    "dof": 3
+   }
+  },
+  {
+   "id": "K01c-horizontal-two-points",
+   "group": "K01",
+   "title": "Horizontal constraint between two points (no line)",
+   "elements": [
+    {
+     "id": "P1",
+     "type": "point",
+     "x": 0,
+     "y": 0
+    },
+    {
+     "id": "P2",
+     "type": "point",
+     "x": 10,
+     "y": 4
+    }
+   ],
+   "constraints": [
+    {
+     "id": "c1",
+     "type": "horizontal",
+     "p1": "P1",
+     "p2": "P2"
+    }
+   ],
+   "expect": {
+    "solved": true,
+    "dof": 3
+   }
+  },
+  {
+   "id": "K01d-vertical-two-points",
+   "group": "K01",
+   "title": "Vertical constraint between two points (no line)",
+   "elements": [
+    {
+     "id": "P1",
+     "type": "point",
+     "x": 0,
+     "y": 0
+    },
+    {
+     "id": "P2",
+     "type": "point",
+     "x": 4,
+     "y": 10
+    }
+   ],
+   "constraints": [
+    {
+     "id": "c1",
+     "type": "vertical",
+     "p1": "P1",
+     "p2": "P2"
+    }
+   ],
+   "expect": {
+    "solved": true,
+    "dof": 3
+   }
+  },
+  {
+   "id": "K02a-coincident-points",
+   "group": "K02",
+   "title": "Two points coincident",
+   "elements": [
+    {
+     "id": "P1",
+     "type": "point",
+     "x": 0,
+     "y": 0
+    },
+    {
+     "id": "P2",
+     "type": "point",
+     "x": 5,
+     "y": 4
+    }
+   ],
+   "constraints": [
+    {
+     "id": "c1",
+     "type": "coincident",
+     "p1": "P1",
+     "p2": "P2"
+    }
+   ],
+   "expect": {
+    "solved": true,
+    "dof": 2
+   }
+  },
+  {
+   "id": "K02b-point-on-line",
+   "group": "K02",
+   "title": "Point on a (fixed) line",
+   "elements": [
+    {
+     "id": "P1",
+     "type": "point",
+     "x": 0,
+     "y": 0,
+     "fixed": true
+    },
+    {
+     "id": "P2",
+     "type": "point",
+     "x": 10,
+     "y": 0,
+     "fixed": true
+    },
+    {
+     "id": "P3",
+     "type": "point",
+     "x": 4,
+     "y": 3
+    },
+    {
+     "id": "L1",
+     "type": "line",
+     "p1": "P1",
+     "p2": "P2"
+    }
+   ],
+   "constraints": [
+    {
+     "id": "c1",
+     "type": "point_on_curve",
+     "point": "P3",
+     "curve": "L1"
+    }
+   ],
+   "expect": {
+    "solved": true,
+    "dof": 1
+   }
+  },
+  {
+   "id": "K02c-point-on-circle",
+   "group": "K02",
+   "title": "Point on a circle (centre fixed, radius dimension 10)",
+   "elements": [
+    {
+     "id": "O",
+     "type": "point",
+     "x": 0,
+     "y": 0,
+     "fixed": true
+    },
+    {
+     "id": "P",
+     "type": "point",
+     "x": 8,
+     "y": 7
+    },
+    {
+     "id": "C1",
+     "type": "circle",
+     "center": "O",
+     "radius": 9
+    }
+   ],
+   "constraints": [
+    {
+     "id": "c1",
+     "type": "radius",
+     "curve": "C1",
+     "value": 10
+    },
+    {
+     "id": "c2",
+     "type": "point_on_curve",
+     "point": "P",
+     "curve": "C1"
+    }
+   ],
+   "expect": {
+    "solved": true,
+    "dof": 1
+   }
+  },
+  {
+   "id": "K02d-point-on-arc",
+   "group": "K02",
+   "title": "Point on the circle of an arc (centre fixed, radius dimension 10)",
+   "notes": "planegcs treats point-on-arc as point-on-circle (GCS.cpp:1009); the angular span is not enforced.",
+   "elements": [
+    {
+     "id": "O",
+     "type": "point",
+     "x": 0,
+     "y": 0,
+     "fixed": true
+    },
+    {
+     "id": "S",
+     "type": "point",
+     "x": 10,
+     "y": 1
+    },
+    {
+     "id": "E",
+     "type": "point",
+     "x": 1,
+     "y": 10
+    },
+    {
+     "id": "P",
+     "type": "point",
+     "x": 6,
+     "y": 9
+    },
+    {
+     "id": "A1",
+     "type": "arc",
+     "center": "O",
+     "start": "S",
+     "end": "E",
+     "radius": 10
+    }
+   ],
+   "constraints": [
+    {
+     "id": "c1",
+     "type": "radius",
+     "curve": "A1",
+     "value": 10
+    },
+    {
+     "id": "c2",
+     "type": "point_on_curve",
+     "point": "P",
+     "curve": "A1"
+    }
+   ],
+   "expect": {
+    "solved": true,
+    "dof": 3
+   }
+  },
+  {
+   "id": "K02e-point-on-bspline",
+   "group": "K02",
+   "title": "Point on an open cubic B-spline (poles fixed)",
+   "notes": "planegcs needs the curve parameter u as an extra unknown (point_on_bspline); u0 is only the starting value for it.",
+   "elements": [
+    {
+     "id": "P1",
+     "type": "point",
+     "x": 0,
+     "y": 0,
+     "fixed": true
+    },
+    {
+     "id": "P2",
+     "type": "point",
+     "x": 2,
+     "y": 5,
+     "fixed": true
+    },
+    {
+     "id": "P3",
+     "type": "point",
+     "x": 6,
+     "y": 5.5,
+     "fixed": true
+    },
+    {
+     "id": "P4",
+     "type": "point",
+     "x": 9,
+     "y": 0.3,
+     "fixed": true
+    },
+    {
+     "id": "Pt",
+     "type": "point",
+     "x": 4.2,
+     "y": 3.2
+    },
+    {
+     "id": "B1",
+     "type": "bspline",
+     "poles": [
+      "P1",
+      "P2",
+      "P3",
+      "P4"
+     ],
+     "weights": [
+      1,
+      1,
+      1,
+      1
+     ],
+     "knots": [
+      0,
+      1
+     ],
+     "mult": [
+      4,
+      4
+     ],
+     "degree": 3,
+     "periodic": false
+    }
+   ],
+   "constraints": [
+    {
+     "id": "c1",
+     "type": "point_on_curve",
+     "point": "Pt",
+     "curve": "B1",
+     "u0": 0.5037216796202333
+    }
+   ],
+   "expect": {
+    "solved": true,
+    "dof": 1
+   }
+  },
+  {
+   "id": "K03a-tangent-line-circle",
+   "group": "K03",
+   "title": "Line tangent to a circle (centre fixed, radius 5, line start fixed)",
+   "elements": [
+    {
+     "id": "O",
+     "type": "point",
+     "x": 0,
+     "y": 0,
+     "fixed": true
+    },
+    {
+     "id": "P1",
+     "type": "point",
+     "x": -8,
+     "y": 5,
+     "fixed": true
+    },
+    {
+     "id": "P2",
+     "type": "point",
+     "x": 8,
+     "y": 6
+    },
+    {
+     "id": "L1",
+     "type": "line",
+     "p1": "P1",
+     "p2": "P2"
+    },
+    {
+     "id": "C1",
+     "type": "circle",
+     "center": "O",
+     "radius": 5
+    }
+   ],
+   "constraints": [
+    {
+     "id": "c1",
+     "type": "radius",
+     "curve": "C1",
+     "value": 5
+    },
+    {
+     "id": "c2",
+     "type": "tangent",
+     "a": "L1",
+     "b": "C1"
+    }
+   ],
+   "expect": {
+    "solved": true,
+    "dof": 1
+   },
+   "run_algorithms": [
+    "DogLeg",
+    "LevenbergMarquardt",
+    "BFGS"
+   ]
+  },
+  {
+   "id": "K03b-tangent-line-arc",
+   "group": "K03",
+   "title": "Line tangent to the circle of an arc (centre fixed, radius 5)",
+   "elements": [
+    {
+     "id": "O",
+     "type": "point",
+     "x": 0,
+     "y": 0,
+     "fixed": true
+    },
+    {
+     "id": "S",
+     "type": "point",
+     "x": 4.8,
+     "y": 1.5
+    },
+    {
+     "id": "E",
+     "type": "point",
+     "x": 1.2,
+     "y": 4.9
+    },
+    {
+     "id": "A1",
+     "type": "arc",
+     "center": "O",
+     "start": "S",
+     "end": "E",
+     "radius": 5
+    },
+    {
+     "id": "P1",
+     "type": "point",
+     "x": -8,
+     "y": 5,
+     "fixed": true
+    },
+    {
+     "id": "P2",
+     "type": "point",
+     "x": 8,
+     "y": 6
+    },
+    {
+     "id": "L1",
+     "type": "line",
+     "p1": "P1",
+     "p2": "P2"
+    }
+   ],
+   "constraints": [
+    {
+     "id": "c1",
+     "type": "radius",
+     "curve": "A1",
+     "value": 5
+    },
+    {
+     "id": "c2",
+     "type": "tangent",
+     "a": "L1",
+     "b": "A1"
+    }
+   ],
+   "expect": {
+    "solved": true,
+    "dof": 3
+   }
+  },
+  {
+   "id": "K03c-tangent-circle-circle-external",
+   "group": "K03",
+   "title": "Two circles tangent from outside (radii 5 and 3)",
+   "notes": "planegcs decides external/internal when the constraint is created, from the current centre distance (GCS.cpp:1111).",
+   "elements": [
+    {
+     "id": "O1",
+     "type": "point",
+     "x": 0,
+     "y": 0,
+     "fixed": true
+    },
+    {
+     "id": "O2",
+     "type": "point",
+     "x": 12,
+     "y": 1
+    },
+    {
+     "id": "C1",
+     "type": "circle",
+     "center": "O1",
+     "radius": 5
+    },
+    {
+     "id": "C2",
+     "type": "circle",
+     "center": "O2",
+     "radius": 3
+    }
+   ],
+   "constraints": [
+    {
+     "id": "c1",
+     "type": "radius",
+     "curve": "C1",
+     "value": 5
+    },
+    {
+     "id": "c2",
+     "type": "radius",
+     "curve": "C2",
+     "value": 3
+    },
+    {
+     "id": "c3",
+     "type": "tangent",
+     "a": "C1",
+     "b": "C2"
+    }
+   ],
+   "expect": {
+    "solved": true,
+    "dof": 1
+   },
+   "run_algorithms": [
+    "DogLeg",
+    "LevenbergMarquardt",
+    "BFGS"
+   ]
+  },
+  {
+   "id": "K03d-tangent-circle-circle-internal",
+   "group": "K03",
+   "title": "Small circle tangent inside a big circle (radii 10 and 3)",
+   "elements": [
+    {
+     "id": "O1",
+     "type": "point",
+     "x": 0,
+     "y": 0,
+     "fixed": true
+    },
+    {
+     "id": "O2",
+     "type": "point",
+     "x": 4,
+     "y": 1
+    },
+    {
+     "id": "C1",
+     "type": "circle",
+     "center": "O1",
+     "radius": 10
+    },
+    {
+     "id": "C2",
+     "type": "circle",
+     "center": "O2",
+     "radius": 3
+    }
+   ],
+   "constraints": [
+    {
+     "id": "c1",
+     "type": "radius",
+     "curve": "C1",
+     "value": 10
+    },
+    {
+     "id": "c2",
+     "type": "radius",
+     "curve": "C2",
+     "value": 3
+    },
+    {
+     "id": "c3",
+     "type": "tangent",
+     "a": "C1",
+     "b": "C2"
+    }
+   ],
+   "expect": {
+    "solved": true,
+    "dof": 1
+   }
+  },
+  {
+   "id": "K03e-tangent-arc-arc-endpoint",
+   "group": "K03",
+   "title": "Two counter-clockwise arcs meeting tangentially at an end point (radii 5 and 3, the small one curls inside the big one)",
+   "notes": "Endpoint tangency = coincident + tangent direction (angle via point). Internal tangency, so both ccw arcs continue without a cusp.",
+   "elements": [
+    {
+     "id": "O1",
+     "type": "point",
+     "x": 0,
+     "y": 0,
+     "fixed": true
+    },
+    {
+     "id": "S1",
+     "type": "point",
+     "x": 5,
+     "y": 0.2
+    },
+    {
+     "id": "E1",
+     "type": "point",
+     "x": 3.1,
+     "y": 3.9
+    },
+    {
+     "id": "A1",
+     "type": "arc",
+     "center": "O1",
+     "start": "S1",
+     "end": "E1",
+     "radius": 5
+    },
+    {
+     "id": "O2",
+     "type": "point",
+     "x": 1.4,
+     "y": 1.9
+    },
+    {
+     "id": "S2",
+     "type": "point",
+     "x": 3.2,
+     "y": 4.1
+    },
+    {
+     "id": "E2",
+     "type": "point",
+     "x": -1.6,
+     "y": 1.7
+    },
+    {
+     "id": "A2",
+     "type": "arc",
+     "center": "O2",
+     "start": "S2",
+     "end": "E2",
+     "radius": 3
+    }
+   ],
+   "constraints": [
+    {
+     "id": "c1",
+     "type": "radius",
+     "curve": "A1",
+     "value": 5
+    },
+    {
+     "id": "c2",
+     "type": "radius",
+     "curve": "A2",
+     "value": 3
+    },
+    {
+     "id": "c3",
+     "type": "tangent_at",
+     "a": "A1",
+     "b": "A2",
+     "p1": "E1",
+     "p2": "S2"
+    }
+   ],
+   "expect": {
+    "solved": true,
+    "checks": [
+     {
+      "kind": "holds",
+      "constraint": {
+       "type": "no_cusp",
+       "a": "A1",
+       "b": "A2",
+       "p1": "E1",
+       "p2": "S2"
+      }
+     }
+    ],
+    "dof": 3
+   },
+   "run_algorithms": [
+    "DogLeg",
+    "LevenbergMarquardt",
+    "BFGS"
+   ]
+  },
+  {
+   "id": "K03f-tangent-line-arc-endpoint",
+   "group": "K03",
+   "title": "Line ending tangentially on an arc (radius 5)",
+   "elements": [
+    {
+     "id": "P1",
+     "type": "point",
+     "x": 0,
+     "y": 0,
+     "fixed": true
+    },
+    {
+     "id": "P2",
+     "type": "point",
+     "x": 10,
+     "y": 0.5
+    },
+    {
+     "id": "L1",
+     "type": "line",
+     "p1": "P1",
+     "p2": "P2"
+    },
+    {
+     "id": "O",
+     "type": "point",
+     "x": 10.4,
+     "y": 5.3
+    },
+    {
+     "id": "S",
+     "type": "point",
+     "x": 10.2,
+     "y": 0.4
+    },
+    {
+     "id": "E",
+     "type": "point",
+     "x": 15.5,
+     "y": 5.5
+    },
+    {
+     "id": "A1",
+     "type": "arc",
+     "center": "O",
+     "start": "S",
+     "end": "E",
+     "radius": 5
+    }
+   ],
+   "constraints": [
+    {
+     "id": "c1",
+     "type": "radius",
+     "curve": "A1",
+     "value": 5
+    },
+    {
+     "id": "c2",
+     "type": "tangent_at",
+     "a": "L1",
+     "b": "A1",
+     "p1": "P2",
+     "p2": "S"
+    }
+   ],
+   "expect": {
+    "solved": true,
+    "checks": [
+     {
+      "kind": "holds",
+      "constraint": {
+       "type": "no_cusp",
+       "a": "L1",
+       "b": "A1",
+       "p1": "P2",
+       "p2": "S"
+      }
+     }
+    ],
+    "dof": 3
+   }
+  },
+  {
+   "id": "K04a-equal-length",
+   "group": "K04",
+   "title": "Two lines of equal length",
+   "elements": [
+    {
+     "id": "P1",
+     "type": "point",
+     "x": 0,
+     "y": 0,
+     "fixed": true
+    },
+    {
+     "id": "P2",
+     "type": "point",
+     "x": 10,
+     "y": 2
+    },
+    {
+     "id": "P3",
+     "type": "point",
+     "x": 0,
+     "y": 5,
+     "fixed": true
+    },
+    {
+     "id": "P4",
+     "type": "point",
+     "x": 6,
+     "y": 8
+    },
+    {
+     "id": "L1",
+     "type": "line",
+     "p1": "P1",
+     "p2": "P2"
+    },
+    {
+     "id": "L2",
+     "type": "line",
+     "p1": "P3",
+     "p2": "P4"
+    }
+   ],
+   "constraints": [
+    {
+     "id": "c1",
+     "type": "equal",
+     "a": "L1",
+     "b": "L2"
+    }
+   ],
+   "expect": {
+    "solved": true,
+    "dof": 3
+   }
+  },
+  {
+   "id": "K04b-equal-radius-circles",
+   "group": "K04",
+   "title": "Two circles of equal radius (first has radius dimension 5)",
+   "elements": [
+    {
+     "id": "O1",
+     "type": "point",
+     "x": 0,
+     "y": 0,
+     "fixed": true
+    },
+    {
+     "id": "O2",
+     "type": "point",
+     "x": 20,
+     "y": 0,
+     "fixed": true
+    },
+    {
+     "id": "C1",
+     "type": "circle",
+     "center": "O1",
+     "radius": 4
+    },
+    {
+     "id": "C2",
+     "type": "circle",
+     "center": "O2",
+     "radius": 7
+    }
+   ],
+   "constraints": [
+    {
+     "id": "c1",
+     "type": "radius",
+     "curve": "C1",
+     "value": 5
+    },
+    {
+     "id": "c2",
+     "type": "equal",
+     "a": "C1",
+     "b": "C2"
+    }
+   ],
+   "expect": {
+    "solved": true,
+    "dof": 0
+   }
+  },
+  {
+   "id": "K04c-equal-radius-circle-arc",
+   "group": "K04",
+   "title": "Circle and arc of equal radius (circle has radius dimension 4)",
+   "elements": [
+    {
+     "id": "O1",
+     "type": "point",
+     "x": 0,
+     "y": 0,
+     "fixed": true
+    },
+    {
+     "id": "C1",
+     "type": "circle",
+     "center": "O1",
+     "radius": 3
+    },
+    {
+     "id": "O2",
+     "type": "point",
+     "x": 20,
+     "y": 0,
+     "fixed": true
+    },
+    {
+     "id": "S",
+     "type": "point",
+     "x": 24.1,
+     "y": 0.3
+    },
+    {
+     "id": "E",
+     "type": "point",
+     "x": 20.2,
+     "y": 4.2
+    },
+    {
+     "id": "A1",
+     "type": "arc",
+     "center": "O2",
+     "start": "S",
+     "end": "E",
+     "radius": 4.2
+    }
+   ],
+   "constraints": [
+    {
+     "id": "c1",
+     "type": "radius",
+     "curve": "C1",
+     "value": 4
+    },
+    {
+     "id": "c2",
+     "type": "equal",
+     "a": "C1",
+     "b": "A1"
+    }
+   ],
+   "expect": {
+    "solved": true,
+    "dof": 2
+   }
+  },
+  {
+   "id": "K04d-equal-radius-arcs",
+   "group": "K04",
+   "title": "Two arcs of equal radius (first has radius dimension 5)",
+   "elements": [
+    {
+     "id": "O1",
+     "type": "point",
+     "x": 0,
+     "y": 0,
+     "fixed": true
+    },
+    {
+     "id": "S1",
+     "type": "point",
+     "x": 5.1,
+     "y": 0.2
+    },
+    {
+     "id": "E1",
+     "type": "point",
+     "x": 0.2,
+     "y": 5.1
+    },
+    {
+     "id": "A1",
+     "type": "arc",
+     "center": "O1",
+     "start": "S1",
+     "end": "E1",
+     "radius": 5
+    },
+    {
+     "id": "O2",
+     "type": "point",
+     "x": 15,
+     "y": 0,
+     "fixed": true
+    },
+    {
+     "id": "S2",
+     "type": "point",
+     "x": 18.5,
+     "y": 0.1
+    },
+    {
+     "id": "E2",
+     "type": "point",
+     "x": 15.2,
+     "y": 3.4
+    },
+    {
+     "id": "A2",
+     "type": "arc",
+     "center": "O2",
+     "start": "S2",
+     "end": "E2",
+     "radius": 3.4
+    }
+   ],
+   "constraints": [
+    {
+     "id": "c1",
+     "type": "radius",
+     "curve": "A1",
+     "value": 5
+    },
+    {
+     "id": "c2",
+     "type": "equal",
+     "a": "A1",
+     "b": "A2"
+    }
+   ],
+   "expect": {
+    "solved": true,
+    "dof": 4
+   }
+  },
+  {
+   "id": "K05a-parallel-one-free",
+   "group": "K05",
+   "title": "Two lines parallel (first line fixed)",
+   "elements": [
+    {
+     "id": "P1",
+     "type": "point",
+     "x": 0,
+     "y": 0,
+     "fixed": true
+    },
+    {
+     "id": "P2",
+     "type": "point",
+     "x": 10,
+     "y": 1,
+     "fixed": true
+    },
+    {
+     "id": "P3",
+     "type": "point",
+     "x": 0,
+     "y": 5,
+     "fixed": true
+    },
+    {
+     "id": "P4",
+     "type": "point",
+     "x": 8,
+     "y": 8
+    },
+    {
+     "id": "L1",
+     "type": "line",
+     "p1": "P1",
+     "p2": "P2"
+    },
+    {
+     "id": "L2",
+     "type": "line",
+     "p1": "P3",
+     "p2": "P4"
+    }
+   ],
+   "constraints": [
+    {
+     "id": "c1",
+     "type": "parallel",
+     "l1": "L1",
+     "l2": "L2"
+    }
+   ],
+   "expect": {
+    "solved": true,
+    "dof": 1
+   }
+  },
+  {
+   "id": "K05b-parallel-both-free",
+   "group": "K05",
+   "title": "Two free lines parallel",
+   "elements": [
+    {
+     "id": "P1",
+     "type": "point",
+     "x": 0,
+     "y": 0
+    },
+    {
+     "id": "P2",
+     "type": "point",
+     "x": 10,
+     "y": 1
+    },
+    {
+     "id": "P3",
+     "type": "point",
+     "x": 0,
+     "y": 5
+    },
+    {
+     "id": "P4",
+     "type": "point",
+     "x": 8,
+     "y": 8
+    },
+    {
+     "id": "L1",
+     "type": "line",
+     "p1": "P1",
+     "p2": "P2"
+    },
+    {
+     "id": "L2",
+     "type": "line",
+     "p1": "P3",
+     "p2": "P4"
+    }
+   ],
+   "constraints": [
+    {
+     "id": "c1",
+     "type": "parallel",
+     "l1": "L1",
+     "l2": "L2"
+    }
+   ],
+   "expect": {
+    "solved": true,
+    "dof": 7
+   }
+  },
+  {
+   "id": "K06a-perpendicular-one-free",
+   "group": "K06",
+   "title": "Two lines perpendicular (first line fixed)",
+   "elements": [
+    {
+     "id": "P1",
+     "type": "point",
+     "x": 0,
+     "y": 0,
+     "fixed": true
+    },
+    {
+     "id": "P2",
+     "type": "point",
+     "x": 10,
+     "y": 0,
+     "fixed": true
+    },
+    {
+     "id": "P3",
+     "type": "point",
+     "x": 3,
+     "y": -2,
+     "fixed": true
+    },
+    {
+     "id": "P4",
+     "type": "point",
+     "x": 5,
+     "y": 6
+    },
+    {
+     "id": "L1",
+     "type": "line",
+     "p1": "P1",
+     "p2": "P2"
+    },
+    {
+     "id": "L2",
+     "type": "line",
+     "p1": "P3",
+     "p2": "P4"
+    }
+   ],
+   "constraints": [
+    {
+     "id": "c1",
+     "type": "perpendicular",
+     "l1": "L1",
+     "l2": "L2"
+    }
+   ],
+   "expect": {
+    "solved": true,
+    "dof": 1
+   }
+  },
+  {
+   "id": "K06b-perpendicular-both-free",
+   "group": "K06",
+   "title": "Two free lines perpendicular",
+   "elements": [
+    {
+     "id": "P1",
+     "type": "point",
+     "x": 0,
+     "y": 0
+    },
+    {
+     "id": "P2",
+     "type": "point",
+     "x": 10,
+     "y": 2
+    },
+    {
+     "id": "P3",
+     "type": "point",
+     "x": 3,
+     "y": -2
+    },
+    {
+     "id": "P4",
+     "type": "point",
+     "x": 5,
+     "y": 6
+    },
+    {
+     "id": "L1",
+     "type": "line",
+     "p1": "P1",
+     "p2": "P2"
+    },
+    {
+     "id": "L2",
+     "type": "line",
+     "p1": "P3",
+     "p2": "P4"
+    }
+   ],
+   "constraints": [
+    {
+     "id": "c1",
+     "type": "perpendicular",
+     "l1": "L1",
+     "l2": "L2"
+    }
+   ],
+   "expect": {
+    "solved": true,
+    "dof": 7
+   }
+  },
+  {
+   "id": "K07a-fix-point",
+   "group": "K07",
+   "title": "Fix a point at given coordinates",
+   "elements": [
+    {
+     "id": "P1",
+     "type": "point",
+     "x": 1,
+     "y": 1
+    }
+   ],
+   "constraints": [
+    {
+     "id": "c1",
+     "type": "fix",
+     "point": "P1",
+     "x": 3,
+     "y": 4
+    }
+   ],
+   "expect": {
+    "solved": true,
+    "dof": 0
+   }
+  },
+  {
+   "id": "K07b-fix-unfix-sequence",
+   "group": "K07",
+   "title": "Fix, unfix, fix again at another place",
+   "notes": "Unfix = removing the constraint: the point must stay where it is and gain its 2 DOF back.",
+   "elements": [
+    {
+     "id": "P1",
+     "type": "point",
+     "x": 1,
+     "y": 1
+    },
+    {
+     "id": "P2",
+     "type": "point",
+     "x": 6,
+     "y": 2
+    },
+    {
+     "id": "L1",
+     "type": "line",
+     "p1": "P1",
+     "p2": "P2"
+    }
+   ],
+   "constraints": [
+    {
+     "id": "c1",
+     "type": "fix",
+     "point": "P1",
+     "x": 3,
+     "y": 4
+    }
+   ],
+   "expect": {
+    "solved": true,
+    "step0": {
+     "dof": 2
+    },
+    "dof": 2
+   },
+   "steps": [
+    {
+     "id": "s1",
+     "label": "unfix",
+     "disable": [
+      "c1"
+     ],
+     "expect": {
+      "dof": 4,
+      "checks": [
+       {
+        "kind": "point_at",
+        "point": "P1",
+        "x": 3,
+        "y": 4
+       }
+      ]
+     }
+    },
+    {
+     "id": "s2",
+     "label": "fix again at (6, 2)",
+     "enable": [
+      "c1"
+     ],
+     "set": {
+      "c1": {
+       "x": 6,
+       "y": 2
+      }
+     },
+     "expect": {
+      "dof": 2
+     }
+    }
+   ]
+  },
+  {
+   "id": "K07c-fix-line",
+   "group": "K07",
+   "title": "Fix both end points of a line",
+   "elements": [
+    {
+     "id": "P1",
+     "type": "point",
+     "x": 0,
+     "y": 0
+    },
+    {
+     "id": "P2",
+     "type": "point",
+     "x": 10,
+     "y": 3
+    },
+    {
+     "id": "L1",
+     "type": "line",
+     "p1": "P1",
+     "p2": "P2"
+    }
+   ],
+   "constraints": [
+    {
+     "id": "c1",
+     "type": "fix",
+     "point": "P1",
+     "x": 1,
+     "y": 1
+    },
+    {
+     "id": "c2",
+     "type": "fix",
+     "point": "P2",
+     "x": 8,
+     "y": 2
+    }
+   ],
+   "expect": {
+    "solved": true,
+    "dof": 0
+   }
+  },
+  {
+   "id": "K08a-midpoint-of-fixed-line",
+   "group": "K08",
+   "title": "Point at the midpoint of a fixed line",
+   "elements": [
+    {
+     "id": "P1",
+     "type": "point",
+     "x": 0,
+     "y": 0,
+     "fixed": true
+    },
+    {
+     "id": "P2",
+     "type": "point",
+     "x": 10,
+     "y": 4,
+     "fixed": true
+    },
+    {
+     "id": "M",
+     "type": "point",
+     "x": 3,
+     "y": 3
+    },
+    {
+     "id": "L1",
+     "type": "line",
+     "p1": "P1",
+     "p2": "P2"
+    }
+   ],
+   "constraints": [
+    {
+     "id": "c1",
+     "type": "midpoint",
+     "point": "M",
+     "line": "L1"
+    }
+   ],
+   "expect": {
+    "solved": true,
+    "dof": 0
+   }
+  },
+  {
+   "id": "K08b-midpoint-fixes-line-end",
+   "group": "K08",
+   "title": "Line end follows the midpoint: P1 and M fixed, so P2 = 2M - P1",
+   "elements": [
+    {
+     "id": "P1",
+     "type": "point",
+     "x": 0,
+     "y": 0,
+     "fixed": true
+    },
+    {
+     "id": "M",
+     "type": "point",
+     "x": 6,
+     "y": 3,
+     "fixed": true
+    },
+    {
+     "id": "P2",
+     "type": "point",
+     "x": 10,
+     "y": 4
+    },
+    {
+     "id": "L1",
+     "type": "line",
+     "p1": "P1",
+     "p2": "P2"
+    }
+   ],
+   "constraints": [
+    {
+     "id": "c1",
+     "type": "midpoint",
+     "point": "M",
+     "line": "L1"
+    }
+   ],
+   "expect": {
+    "solved": true,
+    "dof": 0
+   }
+  },
+  {
+   "id": "K08c-midpoint-of-arc",
+   "group": "K08",
+   "title": "Point at the middle of an arc (composed: on the circle and on the bisector of the chord)",
+   "notes": "Arc midpoint has no planegcs constraint; composition: point-on-arc + point-on-perpendicular-bisector(S,E).",
+   "elements": [
+    {
+     "id": "O",
+     "type": "point",
+     "x": 0,
+     "y": 0,
+     "fixed": true
+    },
+    {
+     "id": "S",
+     "type": "point",
+     "x": 5,
+     "y": 0.1
+    },
+    {
+     "id": "E",
+     "type": "point",
+     "x": 0.2,
+     "y": 5
+    },
+    {
+     "id": "M",
+     "type": "point",
+     "x": 3.2,
+     "y": 3.7
+    },
+    {
+     "id": "A1",
+     "type": "arc",
+     "center": "O",
+     "start": "S",
+     "end": "E",
+     "radius": 5
+    }
+   ],
+   "constraints": [
+    {
+     "id": "c1",
+     "type": "radius",
+     "curve": "A1",
+     "value": 5
+    },
+    {
+     "id": "c2",
+     "type": "midpoint",
+     "point": "M",
+     "arc": "A1"
+    }
+   ],
+   "expect": {
+    "solved": true,
+    "dof": 2
+   }
+  },
+  {
+   "id": "K09a-concentric-circle-arc",
+   "group": "K09",
+   "title": "Arc concentric with a circle (circle radius 5)",
+   "elements": [
+    {
+     "id": "O1",
+     "type": "point",
+     "x": 0,
+     "y": 0,
+     "fixed": true
+    },
+    {
+     "id": "C1",
+     "type": "circle",
+     "center": "O1",
+     "radius": 5
+    },
+    {
+     "id": "Q",
+     "type": "point",
+     "x": 1.5,
+     "y": 1
+    },
+    {
+     "id": "S",
+     "type": "point",
+     "x": 6,
+     "y": 1
+    },
+    {
+     "id": "E",
+     "type": "point",
+     "x": 1,
+     "y": 6.2
+    },
+    {
+     "id": "A1",
+     "type": "arc",
+     "center": "Q",
+     "start": "S",
+     "end": "E",
+     "radius": 5
+    }
+   ],
+   "constraints": [
+    {
+     "id": "c1",
+     "type": "radius",
+     "curve": "C1",
+     "value": 5
+    },
+    {
+     "id": "c2",
+     "type": "concentric",
+     "a": "C1",
+     "b": "A1"
+    }
+   ],
+   "expect": {
+    "solved": true,
+    "dof": 3
+   }
+  },
+  {
+   "id": "K09b-concentric-circles",
+   "group": "K09",
+   "title": "Two circles concentric (radii 5 and 8)",
+   "elements": [
+    {
+     "id": "O1",
+     "type": "point",
+     "x": 0,
+     "y": 0,
+     "fixed": true
+    },
+    {
+     "id": "O2",
+     "type": "point",
+     "x": 0.5,
+     "y": -0.7
+    },
+    {
+     "id": "C1",
+     "type": "circle",
+     "center": "O1",
+     "radius": 5
+    },
+    {
+     "id": "C2",
+     "type": "circle",
+     "center": "O2",
+     "radius": 8
+    }
+   ],
+   "constraints": [
+    {
+     "id": "c1",
+     "type": "radius",
+     "curve": "C1",
+     "value": 5
+    },
+    {
+     "id": "c2",
+     "type": "radius",
+     "curve": "C2",
+     "value": 8
+    },
+    {
+     "id": "c3",
+     "type": "concentric",
+     "a": "C1",
+     "b": "C2"
+    }
+   ],
+   "expect": {
+    "solved": true,
+    "dof": 0
+   }
+  },
+  {
+   "id": "K10a-collinear-lines",
+   "group": "K10",
+   "title": "Second line collinear with a fixed first line",
+   "elements": [
+    {
+     "id": "P1",
+     "type": "point",
+     "x": 0,
+     "y": 0,
+     "fixed": true
+    },
+    {
+     "id": "P2",
+     "type": "point",
+     "x": 10,
+     "y": 2,
+     "fixed": true
+    },
+    {
+     "id": "P3",
+     "type": "point",
+     "x": 12,
+     "y": 4
+    },
+    {
+     "id": "P4",
+     "type": "point",
+     "x": 20,
+     "y": 3
+    },
+    {
+     "id": "L1",
+     "type": "line",
+     "p1": "P1",
+     "p2": "P2"
+    },
+    {
+     "id": "L2",
+     "type": "line",
+     "p1": "P3",
+     "p2": "P4"
+    }
+   ],
+   "constraints": [
+    {
+     "id": "c1",
+     "type": "collinear",
+     "l1": "L1",
+     "l2": "L2"
+    }
+   ],
+   "expect": {
+    "solved": true,
+    "dof": 2
+   }
+  },
+  {
+   "id": "K11a-symmetric-points-about-line",
+   "group": "K11",
+   "title": "Two points symmetric about a fixed vertical axis",
+   "elements": [
+    {
+     "id": "A1",
+     "type": "point",
+     "x": 0,
+     "y": 0,
+     "fixed": true
+    },
+    {
+     "id": "A2",
+     "type": "point",
+     "x": 0,
+     "y": 10,
+     "fixed": true
+    },
+    {
+     "id": "Axis",
+     "type": "line",
+     "p1": "A1",
+     "p2": "A2"
+    },
+    {
+     "id": "P",
+     "type": "point",
+     "x": -3,
+     "y": 2
+    },
+    {
+     "id": "Q",
+     "type": "point",
+     "x": 4,
+     "y": 3
+    }
+   ],
+   "constraints": [
+    {
+     "id": "c1",
+     "type": "symmetric",
+     "p1": "P",
+     "p2": "Q",
+     "line": "Axis"
+    }
+   ],
+   "expect": {
+    "solved": true,
+    "dof": 2
+   },
+   "run_algorithms": [
+    "DogLeg",
+    "LevenbergMarquardt",
+    "BFGS"
+   ]
+  },
+  {
+   "id": "K11b-symmetric-points-about-point",
+   "group": "K11",
+   "title": "Two points symmetric about a fixed centre point",
+   "elements": [
+    {
+     "id": "C",
+     "type": "point",
+     "x": 0,
+     "y": 0,
+     "fixed": true
+    },
+    {
+     "id": "P",
+     "type": "point",
+     "x": -3,
+     "y": 2,
+     "fixed": true
+    },
+    {
+     "id": "Q",
+     "type": "point",
+     "x": 4,
+     "y": 3
+    }
+   ],
+   "constraints": [
+    {
+     "id": "c1",
+     "type": "symmetric",
+     "p1": "P",
+     "p2": "Q",
+     "center": "C"
+    }
+   ],
+   "expect": {
+    "solved": true,
+    "dof": 0
+   }
+  },
+  {
+   "id": "K11c-symmetric-about-diagonal",
+   "group": "K11",
+   "title": "Point mirrored about the fixed diagonal y = x",
+   "elements": [
+    {
+     "id": "A1",
+     "type": "point",
+     "x": 0,
+     "y": 0,
+     "fixed": true
+    },
+    {
+     "id": "A2",
+     "type": "point",
+     "x": 10,
+     "y": 10,
+     "fixed": true
+    },
+    {
+     "id": "Axis",
+     "type": "line",
+     "p1": "A1",
+     "p2": "A2"
+    },
+    {
+     "id": "P",
+     "type": "point",
+     "x": 1,
+     "y": 4,
+     "fixed": true
+    },
+    {
+     "id": "Q",
+     "type": "point",
+     "x": 3.5,
+     "y": 0.5
+    }
+   ],
+   "constraints": [
+    {
+     "id": "c1",
+     "type": "symmetric",
+     "p1": "P",
+     "p2": "Q",
+     "line": "Axis"
+    }
+   ],
+   "expect": {
+    "solved": true,
+    "dof": 0
+   }
+  },
+  {
+   "id": "K12a-curvature-arc-arc",
+   "group": "K12",
+   "title": "G2 join of two arcs (composed: coincident + tangent + equal radius)",
+   "notes": "Two arcs with equal signed curvature and a common tangent at the joint lie on the same circle: expect centre of A2 = centre of A1 and radius 5.",
+   "elements": [
+    {
+     "id": "O1",
+     "type": "point",
+     "x": 0,
+     "y": 0,
+     "fixed": true
+    },
+    {
+     "id": "S1",
+     "type": "point",
+     "x": 5,
+     "y": 0.2
+    },
+    {
+     "id": "E1",
+     "type": "point",
+     "x": 3,
+     "y": 4
+    },
+    {
+     "id": "A1",
+     "type": "arc",
+     "center": "O1",
+     "start": "S1",
+     "end": "E1",
+     "radius": 5
+    },
+    {
+     "id": "O2",
+     "type": "point",
+     "x": 0.4,
+     "y": 0.3
+    },
+    {
+     "id": "S2",
+     "type": "point",
+     "x": 3.1,
+     "y": 3.9
+    },
+    {
+     "id": "E2",
+     "type": "point",
+     "x": -4,
+     "y": 3
+    },
+    {
+     "id": "A2",
+     "type": "arc",
+     "center": "O2",
+     "start": "S2",
+     "end": "E2",
+     "radius": 4.9
+    }
+   ],
+   "constraints": [
+    {
+     "id": "c1",
+     "type": "radius",
+     "curve": "A1",
+     "value": 5
+    },
+    {
+     "id": "c2",
+     "type": "curvature",
+     "a": "A1",
+     "b": "A2",
+     "p1": "E1",
+     "p2": "S2"
+    }
+   ],
+   "expect": {
+    "solved": true,
+    "checks": [
+     {
+      "kind": "holds",
+      "constraint": {
+       "type": "concentric",
+       "a": "A1",
+       "b": "A2"
+      }
+     },
+     {
+      "kind": "holds",
+      "constraint": {
+       "type": "equal",
+       "a": "A1",
+       "b": "A2"
+      }
+     }
+    ],
+    "dof": 3
+   },
+   "run_algorithms": [
+    "DogLeg",
+    "LevenbergMarquardt",
+    "BFGS"
+   ]
+  },
+  {
+   "id": "K12b-curvature-arc-bspline",
+   "group": "K12",
+   "title": "G2 join of an arc and an open cubic B-spline at the spline start",
+   "notes": "planegcs has no curvature constraint (no match for \"urvature\" in planegcs/ and Sketch.cpp). Needs a new constraint class, impossible in the prebuilt WASM.",
+   "elements": [
+    {
+     "id": "O",
+     "type": "point",
+     "x": 0,
+     "y": 0,
+     "fixed": true
+    },
+    {
+     "id": "S",
+     "type": "point",
+     "x": 5,
+     "y": 0.2
+    },
+    {
+     "id": "E",
+     "type": "point",
+     "x": 3,
+     "y": 4
+    },
+    {
+     "id": "A1",
+     "type": "arc",
+     "center": "O",
+     "start": "S",
+     "end": "E",
+     "radius": 5
+    },
+    {
+     "id": "P1",
+     "type": "point",
+     "x": 3.1,
+     "y": 3.9
+    },
+    {
+     "id": "P2",
+     "type": "point",
+     "x": 2,
+     "y": 5.6
+    },
+    {
+     "id": "P3",
+     "type": "point",
+     "x": -1,
+     "y": 7
+    },
+    {
+     "id": "P4",
+     "type": "point",
+     "x": -5,
+     "y": 6
+    },
+    {
+     "id": "B1",
+     "type": "bspline",
+     "poles": [
+      "P1",
+      "P2",
+      "P3",
+      "P4"
+     ],
+     "weights": [
+      1,
+      1,
+      1,
+      1
+     ],
+     "knots": [
+      0,
+      1
+     ],
+     "mult": [
+      4,
+      4
+     ],
+     "degree": 3,
+     "periodic": false
+    }
+   ],
+   "constraints": [
+    {
+     "id": "c1",
+     "type": "radius",
+     "curve": "A1",
+     "value": 5
+    },
+    {
+     "id": "c2",
+     "type": "curvature",
+     "a": "A1",
+     "b": "B1",
+     "p1": "E",
+     "p2": "P1"
+    }
+   ],
+   "expect": {
+    "solved": true,
+    "checks": [
+     {
+      "kind": "holds",
+      "constraint": {
+       "type": "no_cusp",
+       "a": "A1",
+       "b": "B1",
+       "p1": "E",
+       "p2": "P1"
+      }
+     }
+    ],
+    "dof": null
+   }
+  },
+  {
+   "id": "D01-distance-point-point",
+   "group": "D",
+   "title": "Distance between two points = 10",
+   "elements": [
+    {
+     "id": "P1",
+     "type": "point",
+     "x": 0,
+     "y": 0,
+     "fixed": true
+    },
+    {
+     "id": "P2",
+     "type": "point",
+     "x": 8,
+     "y": 5
+    }
+   ],
+   "constraints": [
+    {
+     "id": "c1",
+     "type": "distance",
+     "p1": "P1",
+     "p2": "P2",
+     "value": 10
+    }
+   ],
+   "expect": {
+    "solved": true,
+    "dof": 1
+   }
+  },
+  {
+   "id": "D02-distance-point-line",
+   "group": "D",
+   "title": "Distance of a point from a fixed line = 4",
+   "elements": [
+    {
+     "id": "A",
+     "type": "point",
+     "x": 0,
+     "y": 0,
+     "fixed": true
+    },
+    {
+     "id": "B",
+     "type": "point",
+     "x": 10,
+     "y": 0,
+     "fixed": true
+    },
+    {
+     "id": "L1",
+     "type": "line",
+     "p1": "A",
+     "p2": "B"
+    },
+    {
+     "id": "P",
+     "type": "point",
+     "x": 3,
+     "y": 2
+    }
+   ],
+   "constraints": [
+    {
+     "id": "c1",
+     "type": "distance_point_line",
+     "point": "P",
+     "line": "L1",
+     "value": 4
+    }
+   ],
+   "expect": {
+    "solved": true,
+    "dof": 1
+   }
+  },
+  {
+   "id": "D03-distance-horizontal",
+   "group": "D",
+   "title": "Horizontal distance P1 -> P2 = 12",
+   "elements": [
+    {
+     "id": "P1",
+     "type": "point",
+     "x": 0,
+     "y": 0,
+     "fixed": true
+    },
+    {
+     "id": "P2",
+     "type": "point",
+     "x": 8,
+     "y": 5
+    }
+   ],
+   "constraints": [
+    {
+     "id": "c1",
+     "type": "distance_x",
+     "p1": "P1",
+     "p2": "P2",
+     "value": 12
+    }
+   ],
+   "expect": {
+    "solved": true,
+    "dof": 1
+   }
+  },
+  {
+   "id": "D04-distance-vertical-negative",
+   "group": "D",
+   "title": "Vertical distance P1 -> P2 = -7 (P2 below P1, signed convention y2 - y1)",
+   "elements": [
+    {
+     "id": "P1",
+     "type": "point",
+     "x": 0,
+     "y": 0,
+     "fixed": true
+    },
+    {
+     "id": "P2",
+     "type": "point",
+     "x": 8,
+     "y": 5
+    }
+   ],
+   "constraints": [
+    {
+     "id": "c1",
+     "type": "distance_y",
+     "p1": "P1",
+     "p2": "P2",
+     "value": -7
+    }
+   ],
+   "expect": {
+    "solved": true,
+    "dof": 1
+   }
+  },
+  {
+   "id": "D05-line-length",
+   "group": "D",
+   "title": "Length of a line = 10",
+   "elements": [
+    {
+     "id": "P1",
+     "type": "point",
+     "x": 0,
+     "y": 0,
+     "fixed": true
+    },
+    {
+     "id": "P2",
+     "type": "point",
+     "x": 8,
+     "y": 5
+    },
+    {
+     "id": "L1",
+     "type": "line",
+     "p1": "P1",
+     "p2": "P2"
+    }
+   ],
+   "constraints": [
+    {
+     "id": "c1",
+     "type": "length",
+     "line": "L1",
+     "value": 10
+    }
+   ],
+   "expect": {
+    "solved": true,
+    "dof": 1
+   },
+   "run_algorithms": [
+    "DogLeg",
+    "LevenbergMarquardt",
+    "BFGS"
+   ]
+  },
+  {
+   "id": "D06-angle-between-lines",
+   "group": "D",
+   "title": "Angle from L1 (fixed, horizontal) to L2 = 30 degrees",
+   "elements": [
+    {
+     "id": "A",
+     "type": "point",
+     "x": 0,
+     "y": 0,
+     "fixed": true
+    },
+    {
+     "id": "B",
+     "type": "point",
+     "x": 10,
+     "y": 0,
+     "fixed": true
+    },
+    {
+     "id": "D",
+     "type": "point",
+     "x": 8,
+     "y": 2
+    },
+    {
+     "id": "L1",
+     "type": "line",
+     "p1": "A",
+     "p2": "B"
+    },
+    {
+     "id": "L2",
+     "type": "line",
+     "p1": "A",
+     "p2": "D"
+    }
+   ],
+   "constraints": [
+    {
+     "id": "c1",
+     "type": "angle",
+     "l1": "L1",
+     "l2": "L2",
+     "value": 0.5235987755982988
+    }
+   ],
+   "expect": {
+    "solved": true,
+    "dof": 1
+   },
+   "run_algorithms": [
+    "DogLeg",
+    "LevenbergMarquardt",
+    "BFGS"
+   ]
+  },
+  {
+   "id": "D06b-angle-of-line",
+   "group": "D",
+   "title": "Direction angle of a line (to the x axis) = 120 degrees",
+   "elements": [
+    {
+     "id": "P1",
+     "type": "point",
+     "x": 0,
+     "y": 0,
+     "fixed": true
+    },
+    {
+     "id": "P2",
+     "type": "point",
+     "x": 5,
+     "y": 4
+    },
+    {
+     "id": "L1",
+     "type": "line",
+     "p1": "P1",
+     "p2": "P2"
+    }
+   ],
+   "constraints": [
+    {
+     "id": "c1",
+     "type": "angle_line",
+     "line": "L1",
+     "value": 2.0943951023931953
+    }
+   ],
+   "expect": {
+    "solved": true,
+    "dof": 1
+   }
+  },
+  {
+   "id": "D07a-radius-circle",
+   "group": "D",
+   "title": "Radius of a circle = 7",
+   "elements": [
+    {
+     "id": "O",
+     "type": "point",
+     "x": 0,
+     "y": 0,
+     "fixed": true
+    },
+    {
+     "id": "C1",
+     "type": "circle",
+     "center": "O",
+     "radius": 5
+    }
+   ],
+   "constraints": [
+    {
+     "id": "c1",
+     "type": "radius",
+     "curve": "C1",
+     "value": 7
+    }
+   ],
+   "expect": {
+    "solved": true,
+    "dof": 0
+   }
+  },
+  {
+   "id": "D07b-radius-arc",
+   "group": "D",
+   "title": "Radius of an arc = 6",
+   "elements": [
+    {
+     "id": "O",
+     "type": "point",
+     "x": 0,
+     "y": 0,
+     "fixed": true
+    },
+    {
+     "id": "S",
+     "type": "point",
+     "x": 5.2,
+     "y": 0.4
+    },
+    {
+     "id": "E",
+     "type": "point",
+     "x": 0.3,
+     "y": 5.1
+    },
+    {
+     "id": "A1",
+     "type": "arc",
+     "center": "O",
+     "start": "S",
+     "end": "E",
+     "radius": 5
+    }
+   ],
+   "constraints": [
+    {
+     "id": "c1",
+     "type": "radius",
+     "curve": "A1",
+     "value": 6
+    }
+   ],
+   "expect": {
+    "solved": true,
+    "dof": 2
+   }
+  },
+  {
+   "id": "D08a-diameter-circle",
+   "group": "D",
+   "title": "Diameter of a circle = 14",
+   "elements": [
+    {
+     "id": "O",
+     "type": "point",
+     "x": 0,
+     "y": 0,
+     "fixed": true
+    },
+    {
+     "id": "C1",
+     "type": "circle",
+     "center": "O",
+     "radius": 5
+    }
+   ],
+   "constraints": [
+    {
+     "id": "c1",
+     "type": "diameter",
+     "curve": "C1",
+     "value": 14
+    }
+   ],
+   "expect": {
+    "solved": true,
+    "dof": 0
+   }
+  },
+  {
+   "id": "D08b-diameter-arc",
+   "group": "D",
+   "title": "Diameter of an arc = 12",
+   "elements": [
+    {
+     "id": "O",
+     "type": "point",
+     "x": 0,
+     "y": 0,
+     "fixed": true
+    },
+    {
+     "id": "S",
+     "type": "point",
+     "x": 5.2,
+     "y": 0.4
+    },
+    {
+     "id": "E",
+     "type": "point",
+     "x": 0.3,
+     "y": 5.1
+    },
+    {
+     "id": "A1",
+     "type": "arc",
+     "center": "O",
+     "start": "S",
+     "end": "E",
+     "radius": 5
+    }
+   ],
+   "constraints": [
+    {
+     "id": "c1",
+     "type": "diameter",
+     "curve": "A1",
+     "value": 12
+    }
+   ],
+   "expect": {
+    "solved": true,
+    "dof": 2
+   }
+  },
+  {
+   "id": "D09-arc-length",
+   "group": "D",
+   "title": "Arc of radius 5 with length 5*pi/2 (quarter circle)",
+   "elements": [
+    {
+     "id": "O",
+     "type": "point",
+     "x": 0,
+     "y": 0,
+     "fixed": true
+    },
+    {
+     "id": "S",
+     "type": "point",
+     "x": 5,
+     "y": 0.2
+    },
+    {
+     "id": "E",
+     "type": "point",
+     "x": 0.3,
+     "y": 5
+    },
+    {
+     "id": "A1",
+     "type": "arc",
+     "center": "O",
+     "start": "S",
+     "end": "E",
+     "radius": 5
+    }
+   ],
+   "constraints": [
+    {
+     "id": "c1",
+     "type": "radius",
+     "curve": "A1",
+     "value": 5
+    },
+    {
+     "id": "c2",
+     "type": "arc_length",
+     "arc": "A1",
+     "value": 7.853981633974483
+    }
+   ],
+   "expect": {
+    "solved": true,
+    "dof": 1
+   }
+  },
+  {
+   "id": "N01-nondriving-distance",
+   "group": "N",
+   "title": "Reference distance P1-P2 (geometry set by driving distance_x/y = 6/8)",
+   "elements": [
+    {
+     "id": "P1",
+     "type": "point",
+     "x": 0,
+     "y": 0,
+     "fixed": true
+    },
+    {
+     "id": "P2",
+     "type": "point",
+     "x": 6.2,
+     "y": 7.7
+    }
+   ],
+   "constraints": [
+    {
+     "id": "c1",
+     "type": "distance_x",
+     "p1": "P1",
+     "p2": "P2",
+     "value": 6
+    },
+    {
+     "id": "c2",
+     "type": "distance_y",
+     "p1": "P1",
+     "p2": "P2",
+     "value": 8
+    },
+    {
+     "id": "c3",
+     "type": "distance",
+     "p1": "P1",
+     "p2": "P2",
+     "value": 9,
+     "driving": false
+    }
+   ],
+   "expect": {
+    "solved": true,
+    "driven": {
+     "c3": 10
+    },
+    "dof": 0
+   }
+  },
+  {
+   "id": "N02-nondriving-point-line-distance",
+   "group": "N",
+   "title": "Reference distance of a point from a line",
+   "elements": [
+    {
+     "id": "A",
+     "type": "point",
+     "x": 0,
+     "y": 0,
+     "fixed": true
+    },
+    {
+     "id": "B",
+     "type": "point",
+     "x": 10,
+     "y": 0,
+     "fixed": true
+    },
+    {
+     "id": "L1",
+     "type": "line",
+     "p1": "A",
+     "p2": "B"
+    },
+    {
+     "id": "P",
+     "type": "point",
+     "x": 3.1,
+     "y": 3.7
+    }
+   ],
+   "constraints": [
+    {
+     "id": "c1",
+     "type": "distance_x",
+     "p1": "A",
+     "p2": "P",
+     "value": 3
+    },
+    {
+     "id": "c2",
+     "type": "distance_y",
+     "p1": "A",
+     "p2": "P",
+     "value": 4
+    },
+    {
+     "id": "c3",
+     "type": "distance_point_line",
+     "point": "P",
+     "line": "L1",
+     "value": 3,
+     "driving": false
+    }
+   ],
+   "expect": {
+    "solved": true,
+    "driven": {
+     "c3": 4
+    },
+    "dof": 0
+   }
+  },
+  {
+   "id": "N03-nondriving-horizontal-distance",
+   "group": "N",
+   "title": "Reference horizontal distance",
+   "elements": [
+    {
+     "id": "P1",
+     "type": "point",
+     "x": 0,
+     "y": 0,
+     "fixed": true
+    },
+    {
+     "id": "P2",
+     "type": "point",
+     "x": 4.5,
+     "y": 5.1
+    },
+    {
+     "id": "L1",
+     "type": "line",
+     "p1": "P1",
+     "p2": "P2"
+    }
+   ],
+   "constraints": [
+    {
+     "id": "c1",
+     "type": "length",
+     "line": "L1",
+     "value": 5
+    },
+    {
+     "id": "c2",
+     "type": "angle_line",
+     "line": "L1",
+     "value": 0.9272952180016122
+    },
+    {
+     "id": "c3",
+     "type": "distance_x",
+     "p1": "P1",
+     "p2": "P2",
+     "value": 1,
+     "driving": false
+    }
+   ],
+   "expect": {
+    "solved": true,
+    "driven": {
+     "c3": 3
+    },
+    "dof": 0
+   }
+  },
+  {
+   "id": "N04-nondriving-vertical-distance",
+   "group": "N",
+   "title": "Reference vertical distance",
+   "elements": [
+    {
+     "id": "P1",
+     "type": "point",
+     "x": 0,
+     "y": 0,
+     "fixed": true
+    },
+    {
+     "id": "P2",
+     "type": "point",
+     "x": 4.5,
+     "y": 5.1
+    },
+    {
+     "id": "L1",
+     "type": "line",
+     "p1": "P1",
+     "p2": "P2"
+    }
+   ],
+   "constraints": [
+    {
+     "id": "c1",
+     "type": "length",
+     "line": "L1",
+     "value": 5
+    },
+    {
+     "id": "c2",
+     "type": "angle_line",
+     "line": "L1",
+     "value": 0.9272952180016122
+    },
+    {
+     "id": "c3",
+     "type": "distance_y",
+     "p1": "P1",
+     "p2": "P2",
+     "value": 1,
+     "driving": false
+    }
+   ],
+   "expect": {
+    "solved": true,
+    "driven": {
+     "c3": 4
+    },
+    "dof": 0
+   }
+  },
+  {
+   "id": "N05-nondriving-length",
+   "group": "N",
+   "title": "Reference line length",
+   "elements": [
+    {
+     "id": "P1",
+     "type": "point",
+     "x": 0,
+     "y": 0,
+     "fixed": true
+    },
+    {
+     "id": "P2",
+     "type": "point",
+     "x": 3.3,
+     "y": 3.6
+    },
+    {
+     "id": "L1",
+     "type": "line",
+     "p1": "P1",
+     "p2": "P2"
+    }
+   ],
+   "constraints": [
+    {
+     "id": "c1",
+     "type": "distance_x",
+     "p1": "P1",
+     "p2": "P2",
+     "value": 3
+    },
+    {
+     "id": "c2",
+     "type": "distance_y",
+     "p1": "P1",
+     "p2": "P2",
+     "value": 4
+    },
+    {
+     "id": "c3",
+     "type": "length",
+     "line": "L1",
+     "value": 2,
+     "driving": false
+    }
+   ],
+   "expect": {
+    "solved": true,
+    "driven": {
+     "c3": 5
+    },
+    "dof": 0
+   }
+  },
+  {
+   "id": "N06-nondriving-angle",
+   "group": "N",
+   "title": "Reference angle between two lines",
+   "elements": [
+    {
+     "id": "A",
+     "type": "point",
+     "x": 0,
+     "y": 0,
+     "fixed": true
+    },
+    {
+     "id": "B",
+     "type": "point",
+     "x": 10,
+     "y": 0,
+     "fixed": true
+    },
+    {
+     "id": "D",
+     "type": "point",
+     "x": 6.3,
+     "y": 3.1
+    },
+    {
+     "id": "L1",
+     "type": "line",
+     "p1": "A",
+     "p2": "B"
+    },
+    {
+     "id": "L2",
+     "type": "line",
+     "p1": "A",
+     "p2": "D"
+    }
+   ],
+   "constraints": [
+    {
+     "id": "c1",
+     "type": "distance_x",
+     "p1": "A",
+     "p2": "D",
+     "value": 6
+    },
+    {
+     "id": "c2",
+     "type": "distance_y",
+     "p1": "A",
+     "p2": "D",
+     "value": 3.4641016151377544
+    },
+    {
+     "id": "c3",
+     "type": "angle",
+     "l1": "L1",
+     "l2": "L2",
+     "value": 1,
+     "driving": false
+    }
+   ],
+   "expect": {
+    "solved": true,
+    "driven": {
+     "c3": 0.5235987755982988
+    },
+    "dof": 0
+   }
+  },
+  {
+   "id": "N07-nondriving-radius-circle",
+   "group": "N",
+   "title": "Reference radius of a circle through a fixed point",
+   "elements": [
+    {
+     "id": "O",
+     "type": "point",
+     "x": 0,
+     "y": 0,
+     "fixed": true
+    },
+    {
+     "id": "P",
+     "type": "point",
+     "x": 3,
+     "y": 4,
+     "fixed": true
+    },
+    {
+     "id": "C1",
+     "type": "circle",
+     "center": "O",
+     "radius": 4
+    }
+   ],
+   "constraints": [
+    {
+     "id": "c1",
+     "type": "point_on_curve",
+     "point": "P",
+     "curve": "C1"
+    },
+    {
+     "id": "c2",
+     "type": "radius",
+     "curve": "C1",
+     "value": 4,
+     "driving": false
+    }
+   ],
+   "expect": {
+    "solved": true,
+    "driven": {
+     "c2": 5
+    },
+    "dof": 0
+   }
+  },
+  {
+   "id": "N08-nondriving-diameter-circle",
+   "group": "N",
+   "title": "Reference diameter of a circle through a fixed point (README of the package lists this type as faulty)",
+   "elements": [
+    {
+     "id": "O",
+     "type": "point",
+     "x": 0,
+     "y": 0,
+     "fixed": true
+    },
+    {
+     "id": "P",
+     "type": "point",
+     "x": 3,
+     "y": 4,
+     "fixed": true
+    },
+    {
+     "id": "C1",
+     "type": "circle",
+     "center": "O",
+     "radius": 4
+    }
+   ],
+   "constraints": [
+    {
+     "id": "c1",
+     "type": "point_on_curve",
+     "point": "P",
+     "curve": "C1"
+    },
+    {
+     "id": "c2",
+     "type": "diameter",
+     "curve": "C1",
+     "value": 8,
+     "driving": false
+    }
+   ],
+   "expect": {
+    "solved": true,
+    "driven": {
+     "c2": 10
+    },
+    "dof": 0
+   }
+  },
+  {
+   "id": "N09-nondriving-arc-length",
+   "group": "N",
+   "title": "Reference arc length (README of the package lists this type as faulty)",
+   "elements": [
+    {
+     "id": "O",
+     "type": "point",
+     "x": 0,
+     "y": 0,
+     "fixed": true
+    },
+    {
+     "id": "S",
+     "type": "point",
+     "x": 5,
+     "y": 0,
+     "fixed": true
+    },
+    {
+     "id": "E",
+     "type": "point",
+     "x": 0.3,
+     "y": 4.8
+    },
+    {
+     "id": "A1",
+     "type": "arc",
+     "center": "O",
+     "start": "S",
+     "end": "E",
+     "radius": 5
+    }
+   ],
+   "constraints": [
+    {
+     "id": "c1",
+     "type": "distance_x",
+     "p1": "O",
+     "p2": "E",
+     "value": 0
+    },
+    {
+     "id": "c2",
+     "type": "arc_length",
+     "arc": "A1",
+     "value": 6,
+     "driving": false
+    }
+   ],
+   "expect": {
+    "solved": true,
+    "driven": {
+     "c2": 7.853981633974483
+    },
+    "dof": 0
+   }
+  },
+  {
+   "id": "N10-nondriving-radius-arc",
+   "group": "N",
+   "title": "Reference radius of an arc",
+   "elements": [
+    {
+     "id": "O",
+     "type": "point",
+     "x": 0,
+     "y": 0,
+     "fixed": true
+    },
+    {
+     "id": "S",
+     "type": "point",
+     "x": 5,
+     "y": 0,
+     "fixed": true
+    },
+    {
+     "id": "E",
+     "type": "point",
+     "x": 0.3,
+     "y": 4.8
+    },
+    {
+     "id": "A1",
+     "type": "arc",
+     "center": "O",
+     "start": "S",
+     "end": "E",
+     "radius": 4
+    }
+   ],
+   "constraints": [
+    {
+     "id": "c1",
+     "type": "distance_x",
+     "p1": "O",
+     "p2": "E",
+     "value": 0
+    },
+    {
+     "id": "c2",
+     "type": "radius",
+     "curve": "A1",
+     "value": 4,
+     "driving": false
+    }
+   ],
+   "expect": {
+    "solved": true,
+    "driven": {
+     "c2": 5
+    },
+    "dof": 0
+   }
+  },
+  {
+   "id": "N11-nondriving-on-free-line",
+   "group": "N",
+   "title": "Reference length on a free line: nothing moves, DOF stays 4",
+   "elements": [
+    {
+     "id": "P1",
+     "type": "point",
+     "x": 0,
+     "y": 0
+    },
+    {
+     "id": "P2",
+     "type": "point",
+     "x": 7,
+     "y": 1
+    },
+    {
+     "id": "L1",
+     "type": "line",
+     "p1": "P1",
+     "p2": "P2"
+    }
+   ],
+   "constraints": [
+    {
+     "id": "c1",
+     "type": "length",
+     "line": "L1",
+     "value": 3,
+     "driving": false
+    }
+   ],
+   "expect": {
+    "solved": true,
+    "driven": {
+     "c1": 7.0710678118654755
+    },
+    "checks": [
+     {
+      "kind": "unchanged",
+      "ids": [
+       "P1",
+       "P2"
+      ],
+      "tol": 1e-9
+     }
+    ],
+    "dof": 4
+   }
+  },
+  {
+   "id": "T01-free-line",
+   "group": "T",
+   "title": "A free line has 4 degrees of freedom",
+   "elements": [
+    {
+     "id": "P1",
+     "type": "point",
+     "x": 0,
+     "y": 0
+    },
+    {
+     "id": "P2",
+     "type": "point",
+     "x": 7,
+     "y": 3
+    },
+    {
+     "id": "L1",
+     "type": "line",
+     "p1": "P1",
+     "p2": "P2"
+    }
+   ],
+   "constraints": [],
+   "expect": {
+    "solved": true,
+    "dof": 4,
+    "checks": [
+     {
+      "kind": "unchanged",
+      "ids": [
+       "P1",
+       "P2"
+      ],
+      "tol": 1e-9
+     }
+    ]
+   }
+  },
+  {
+   "id": "T02-rectangle-to-zero-dof",
+   "group": "T",
+   "title": "Rectangle constrained step by step to 0 DOF, then a redundant and a contradicting dimension",
+   "notes": "Steps: free (8) -> horizontals (6) -> verticals (4) -> width (3) -> height (2) -> fix corner (0) -> redundant top length (0, redundant) -> contradicting top length (conflict).",
+   "elements": [
+    {
+     "id": "P1",
+     "type": "point",
+     "x": 0,
+     "y": 0
+    },
+    {
+     "id": "P2",
+     "type": "point",
+     "x": 20,
+     "y": 1
+    },
+    {
+     "id": "P3",
+     "type": "point",
+     "x": 19,
+     "y": 12
+    },
+    {
+     "id": "P4",
+     "type": "point",
+     "x": 1,
+     "y": 10
+    },
+    {
+     "id": "L1",
+     "type": "line",
+     "p1": "P1",
+     "p2": "P2"
+    },
+    {
+     "id": "L2",
+     "type": "line",
+     "p1": "P2",
+     "p2": "P3"
+    },
+    {
+     "id": "L3",
+     "type": "line",
+     "p1": "P3",
+     "p2": "P4"
+    },
+    {
+     "id": "L4",
+     "type": "line",
+     "p1": "P4",
+     "p2": "P1"
+    }
+   ],
+   "constraints": [
+    {
+     "id": "c1",
+     "type": "horizontal",
+     "line": "L1",
+     "enabled": false
+    },
+    {
+     "id": "c2",
+     "type": "horizontal",
+     "line": "L3",
+     "enabled": false
+    },
+    {
+     "id": "c3",
+     "type": "vertical",
+     "line": "L2",
+     "enabled": false
+    },
+    {
+     "id": "c4",
+     "type": "vertical",
+     "line": "L4",
+     "enabled": false
+    },
+    {
+     "id": "c5",
+     "type": "length",
+     "line": "L1",
+     "value": 20,
+     "enabled": false
+    },
+    {
+     "id": "c6",
+     "type": "length",
+     "line": "L2",
+     "value": 10,
+     "enabled": false
+    },
+    {
+     "id": "c7",
+     "type": "fix",
+     "point": "P1",
+     "x": 0,
+     "y": 0,
+     "enabled": false
+    },
+    {
+     "id": "c8",
+     "type": "length",
+     "line": "L3",
+     "value": 20,
+     "enabled": false
+    },
+    {
+     "id": "c9",
+     "type": "length",
+     "line": "L3",
+     "value": 25,
+     "enabled": false
+    }
+   ],
+   "expect": {
+    "solved": true,
+    "step0": {
+     "dof": 8
+    },
+    "status_ok": [
+     "Success",
+     "Converged"
+    ],
+    "dof": null,
+    "conflicting": {
+     "mode": "any"
+    },
+    "redundant": {
+     "mode": "any"
+    }
+   },
+   "steps": [
+    {
+     "id": "s1",
+     "label": "horizontal bottom and top",
+     "enable": [
+      "c1",
+      "c2"
+     ],
+     "expect": {
+      "dof": 6
+     }
+    },
+    {
+     "id": "s2",
+     "label": "vertical left and right",
+     "enable": [
+      "c3",
+      "c4"
+     ],
+     "expect": {
+      "dof": 4
+     }
+    },
+    {
+     "id": "s3",
+     "label": "width 20",
+     "enable": [
+      "c5"
+     ],
+     "expect": {
+      "dof": 3
+     }
+    },
+    {
+     "id": "s4",
+     "label": "height 10",
+     "enable": [
+      "c6"
+     ],
+     "expect": {
+      "dof": 2
+     }
+    },
+    {
+     "id": "s5",
+     "label": "fix P1 at the origin",
+     "enable": [
+      "c7"
+     ],
+     "expect": {
+      "dof": 0
+     }
+    },
+    {
+     "id": "s6",
+     "label": "redundant: top length = 20 (consistent)",
+     "enable": [
+      "c8"
+     ],
+     "expect": {
+      "dof": 0,
+      "redundant": {
+       "mode": "within",
+       "ids": [
+        "c1",
+        "c2",
+        "c3",
+        "c4",
+        "c5",
+        "c8"
+       ],
+       "min": 1,
+       "count": 1
+      }
+     }
+    },
+    {
+     "id": "s7",
+     "label": "contradiction: top length = 25 instead",
+     "disable": [
+      "c8"
+     ],
+     "enable": [
+      "c9"
+     ],
+     "expect": {
+      "solved": false,
+      "conflicting": {
+       "mode": "within",
+       "ids": [
+        "c1",
+        "c2",
+        "c3",
+        "c4",
+        "c5",
+        "c9"
+       ],
+       "min": 1
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "C01-contradicting-lengths",
+   "group": "C",
+   "title": "Two length dimensions of one line (10 and 20)",
+   "elements": [
+    {
+     "id": "P1",
+     "type": "point",
+     "x": 0,
+     "y": 0,
+     "fixed": true
+    },
+    {
+     "id": "P2",
+     "type": "point",
+     "x": 10,
+     "y": 0.5
+    },
+    {
+     "id": "L1",
+     "type": "line",
+     "p1": "P1",
+     "p2": "P2"
+    }
+   ],
+   "constraints": [
+    {
+     "id": "c1",
+     "type": "length",
+     "line": "L1",
+     "value": 10
+    },
+    {
+     "id": "c2",
+     "type": "length",
+     "line": "L1",
+     "value": 20
+    }
+   ],
+   "expect": {
+    "solved": false,
+    "dof": null,
+    "conflicting": {
+     "mode": "exact",
+     "ids": [
+      "c1",
+      "c2"
+     ]
+    }
+   }
+  },
+  {
+   "id": "C02a-horizontal-vertical-length",
+   "group": "C",
+   "title": "Horizontal + vertical + length 10 on one line (contradiction)",
+   "elements": [
+    {
+     "id": "P1",
+     "type": "point",
+     "x": 0,
+     "y": 0,
+     "fixed": true
+    },
+    {
+     "id": "P2",
+     "type": "point",
+     "x": 8,
+     "y": 3
+    },
+    {
+     "id": "L1",
+     "type": "line",
+     "p1": "P1",
+     "p2": "P2"
+    }
+   ],
+   "constraints": [
+    {
+     "id": "c1",
+     "type": "horizontal",
+     "line": "L1"
+    },
+    {
+     "id": "c2",
+     "type": "vertical",
+     "line": "L1"
+    },
+    {
+     "id": "c3",
+     "type": "length",
+     "line": "L1",
+     "value": 10
+    }
+   ],
+   "expect": {
+    "solved": false,
+    "dof": null,
+    "conflicting": {
+     "mode": "within",
+     "ids": [
+      "c1",
+      "c2",
+      "c3"
+     ],
+     "min": 1
+    }
+   }
+  },
+  {
+   "id": "C02b-horizontal-vertical-degenerate",
+   "group": "C",
+   "title": "Horizontal + vertical on one free line (no contradiction, the line collapses to a point)",
+   "notes": "Mathematically consistent (dx = 0 and dy = 0). A CAD would have to refuse this; we only record what the solver does.",
+   "elements": [
+    {
+     "id": "P1",
+     "type": "point",
+     "x": 1,
+     "y": 1
+    },
+    {
+     "id": "P2",
+     "type": "point",
+     "x": 8,
+     "y": 3
+    },
+    {
+     "id": "L1",
+     "type": "line",
+     "p1": "P1",
+     "p2": "P2"
+    }
+   ],
+   "constraints": [
+    {
+     "id": "c1",
+     "type": "horizontal",
+     "line": "L1"
+    },
+    {
+     "id": "c2",
+     "type": "vertical",
+     "line": "L1"
+    }
+   ],
+   "expect": {
+    "solved": true,
+    "checks": [
+     {
+      "kind": "holds",
+      "constraint": {
+       "type": "coincident",
+       "p1": "P1",
+       "p2": "P2"
+      }
+     }
+    ],
+    "dof": 2
+   }
+  },
+  {
+   "id": "C03-contradicting-triangle",
+   "group": "C",
+   "title": "Triangle with sides 3, 4 and 10 (violates the triangle inequality)",
+   "notes": "No structural dependency at the start: diagnosis by Jacobian rank (GCS.cpp:4738) cannot name the conflict, so the conflict check is soft.",
+   "elements": [
+    {
+     "id": "P1",
+     "type": "point",
+     "x": 0,
+     "y": 0,
+     "fixed": true
+    },
+    {
+     "id": "P2",
+     "type": "point",
+     "x": 3.2,
+     "y": 0.2
+    },
+    {
+     "id": "P3",
+     "type": "point",
+     "x": 0.5,
+     "y": 4.1
+    },
+    {
+     "id": "L12",
+     "type": "line",
+     "p1": "P1",
+     "p2": "P2"
+    },
+    {
+     "id": "L23",
+     "type": "line",
+     "p1": "P2",
+     "p2": "P3"
+    },
+    {
+     "id": "L31",
+     "type": "line",
+     "p1": "P3",
+     "p2": "P1"
+    }
+   ],
+   "constraints": [
+    {
+     "id": "c1",
+     "type": "length",
+     "line": "L12",
+     "value": 3
+    },
+    {
+     "id": "c2",
+     "type": "length",
+     "line": "L23",
+     "value": 4
+    },
+    {
+     "id": "c3",
+     "type": "length",
+     "line": "L31",
+     "value": 10
+    }
+   ],
+   "expect": {
+    "solved": false,
+    "dof": null,
+    "conflicting": {
+     "mode": "within",
+     "ids": [
+      "c1",
+      "c2",
+      "c3"
+     ],
+     "min": 1
+    },
+    "soft": [
+     "conflicting"
+    ]
+   }
+  },
+  {
+   "id": "C04-redundant-parallel",
+   "group": "C",
+   "title": "Both lines horizontal AND parallel: one of the three constraints is redundant (consistent)",
+   "elements": [
+    {
+     "id": "P1",
+     "type": "point",
+     "x": 0,
+     "y": 0
+    },
+    {
+     "id": "P2",
+     "type": "point",
+     "x": 10,
+     "y": 1
+    },
+    {
+     "id": "P3",
+     "type": "point",
+     "x": 0,
+     "y": 5
+    },
+    {
+     "id": "P4",
+     "type": "point",
+     "x": 9,
+     "y": 6.5
+    },
+    {
+     "id": "L1",
+     "type": "line",
+     "p1": "P1",
+     "p2": "P2"
+    },
+    {
+     "id": "L2",
+     "type": "line",
+     "p1": "P3",
+     "p2": "P4"
+    }
+   ],
+   "constraints": [
+    {
+     "id": "c1",
+     "type": "horizontal",
+     "line": "L1"
+    },
+    {
+     "id": "c2",
+     "type": "horizontal",
+     "line": "L2"
+    },
+    {
+     "id": "c3",
+     "type": "parallel",
+     "l1": "L1",
+     "l2": "L2"
+    }
+   ],
+   "expect": {
+    "solved": true,
+    "dof": 6,
+    "status_ok": [
+     "Success",
+     "Converged"
+    ],
+    "redundant": {
+     "mode": "within",
+     "ids": [
+      "c1",
+      "c2",
+      "c3"
+     ],
+     "min": 1,
+     "count": 1
+    }
+   }
+  },
+  {
+   "id": "C05-duplicate-dimension",
+   "group": "C",
+   "title": "The same horizontal distance dimensioned twice (consistent duplicate)",
+   "elements": [
+    {
+     "id": "P1",
+     "type": "point",
+     "x": 0,
+     "y": 0,
+     "fixed": true
+    },
+    {
+     "id": "P2",
+     "type": "point",
+     "x": 9,
+     "y": 1
+    }
+   ],
+   "constraints": [
+    {
+     "id": "c1",
+     "type": "distance_x",
+     "p1": "P1",
+     "p2": "P2",
+     "value": 10
+    },
+    {
+     "id": "c2",
+     "type": "distance_x",
+     "p1": "P1",
+     "p2": "P2",
+     "value": 10
+    }
+   ],
+   "expect": {
+    "solved": true,
+    "dof": 1,
+    "status_ok": [
+     "Success",
+     "Converged"
+    ],
+    "redundant": {
+     "mode": "within",
+     "ids": [
+      "c1",
+      "c2"
+     ],
+     "min": 1,
+     "count": 1
+    }
+   }
+  },
+  {
+   "id": "C06-partially-redundant",
+   "group": "C",
+   "title": "Symmetry (2 equations) plus midpoint (2 equations) share one equation: partially redundant",
+   "notes": "symmetric(A,B about the vertical axis) = {A.y = B.y, A.x + B.x = 0}; midpoint(M of AB, M = (0,5)) = {x sum = 0, y sum = 10}. One equation is shared, the other of each tag is not.",
+   "elements": [
+    {
+     "id": "X1",
+     "type": "point",
+     "x": 0,
+     "y": 0,
+     "fixed": true
+    },
+    {
+     "id": "X2",
+     "type": "point",
+     "x": 0,
+     "y": 10,
+     "fixed": true
+    },
+    {
+     "id": "Axis",
+     "type": "line",
+     "p1": "X1",
+     "p2": "X2"
+    },
+    {
+     "id": "A",
+     "type": "point",
+     "x": -2,
+     "y": 6
+    },
+    {
+     "id": "B",
+     "type": "point",
+     "x": 3,
+     "y": 4
+    },
+    {
+     "id": "LAB",
+     "type": "line",
+     "p1": "A",
+     "p2": "B"
+    },
+    {
+     "id": "M",
+     "type": "point",
+     "x": 0,
+     "y": 5,
+     "fixed": true
+    }
+   ],
+   "constraints": [
+    {
+     "id": "c1",
+     "type": "symmetric",
+     "p1": "A",
+     "p2": "B",
+     "line": "Axis"
+    },
+    {
+     "id": "c2",
+     "type": "midpoint",
+     "point": "M",
+     "line": "LAB"
+    }
+   ],
+   "expect": {
+    "solved": true,
+    "dof": 1,
+    "redundant": {
+     "mode": "any"
+    },
+    "partially_redundant": {
+     "mode": "within",
+     "ids": [
+      "c1",
+      "c2"
+     ],
+     "min": 1,
+     "count": 1
+    },
+    "status_ok": [
+     "Success",
+     "Converged"
+    ],
+    "soft": [
+     "redundant",
+     "partially_redundant"
+    ]
+   }
+  },
+  {
+   "id": "B01-spline-end-on-line",
+   "group": "B",
+   "title": "Open cubic Bezier: its first pole coincident with the end of a line",
+   "notes": "Pole 1 is the curve start (clamped knots), so a point-point coincident is enough.",
+   "elements": [
+    {
+     "id": "Q1",
+     "type": "point",
+     "x": -6,
+     "y": -3,
+     "fixed": true
+    },
+    {
+     "id": "Q2",
+     "type": "point",
+     "x": 0.4,
+     "y": 0.3
+    },
+    {
+     "id": "L1",
+     "type": "line",
+     "p1": "Q1",
+     "p2": "Q2"
+    },
+    {
+     "id": "P1",
+     "type": "point",
+     "x": 0,
+     "y": 0,
+     "fixed": true
+    },
+    {
+     "id": "P2",
+     "type": "point",
+     "x": 2,
+     "y": 5
+    },
+    {
+     "id": "P3",
+     "type": "point",
+     "x": 6,
+     "y": 5.5
+    },
+    {
+     "id": "P4",
+     "type": "point",
+     "x": 9,
+     "y": 0.3
+    },
+    {
+     "id": "B1",
+     "type": "bspline",
+     "poles": [
+      "P1",
+      "P2",
+      "P3",
+      "P4"
+     ],
+     "weights": [
+      1,
+      1,
+      1,
+      1
+     ],
+     "knots": [
+      0,
+      1
+     ],
+     "mult": [
+      4,
+      4
+     ],
+     "degree": 3,
+     "periodic": false
+    }
+   ],
+   "constraints": [
+    {
+     "id": "c1",
+     "type": "coincident",
+     "p1": "Q2",
+     "p2": "P1"
+    }
+   ],
+   "expect": {
+    "solved": true,
+    "dof": 6
+   }
+  },
+  {
+   "id": "B02-spline-tangent-to-line-at-end",
+   "group": "B",
+   "title": "Open cubic Bezier: line ends tangentially at the spline start (G1)",
+   "notes": "FreeCAD refuses slope constraints at end knots (Sketch.cpp:3091); the end tangent is the direction of the first control leg (Geo.cpp:713).",
+   "elements": [
+    {
+     "id": "Q1",
+     "type": "point",
+     "x": -6,
+     "y": -3,
+     "fixed": true
+    },
+    {
+     "id": "Q2",
+     "type": "point",
+     "x": 0.3,
+     "y": 0.2
+    },
+    {
+     "id": "L1",
+     "type": "line",
+     "p1": "Q1",
+     "p2": "Q2"
+    },
+    {
+     "id": "P1",
+     "type": "point",
+     "x": 0,
+     "y": 0,
+     "fixed": true
+    },
+    {
+     "id": "P2",
+     "type": "point",
+     "x": 2,
+     "y": 5
+    },
+    {
+     "id": "P3",
+     "type": "point",
+     "x": 6,
+     "y": 5.5
+    },
+    {
+     "id": "P4",
+     "type": "point",
+     "x": 9,
+     "y": 0.3
+    },
+    {
+     "id": "B1",
+     "type": "bspline",
+     "poles": [
+      "P1",
+      "P2",
+      "P3",
+      "P4"
+     ],
+     "weights": [
+      1,
+      1,
+      1,
+      1
+     ],
+     "knots": [
+      0,
+      1
+     ],
+     "mult": [
+      4,
+      4
+     ],
+     "degree": 3,
+     "periodic": false
+    }
+   ],
+   "constraints": [
+    {
+     "id": "c1",
+     "type": "tangent_at",
+     "a": "L1",
+     "b": "B1",
+     "p1": "Q2",
+     "p2": "P1"
+    }
+   ],
+   "expect": {
+    "solved": true,
+    "checks": [
+     {
+      "kind": "holds",
+      "constraint": {
+       "type": "no_cusp",
+       "a": "L1",
+       "b": "B1",
+       "p1": "Q2",
+       "p2": "P1"
+      }
+     }
+    ],
+    "dof": 5
+   }
+  },
+  {
+   "id": "B03a-periodic-spline-dimension",
+   "group": "B",
+   "title": "Periodic (closed) cubic B-spline, 6 poles; distance between pole 1 and pole 4 = 12",
+   "notes": "Periodic knots 0..6, multiplicity 1 each, 6 poles (OCCT convention used by planegcs).",
+   "elements": [
+    {
+     "id": "P1",
+     "type": "point",
+     "x": 6,
+     "y": 0,
+     "fixed": true
+    },
+    {
+     "id": "P2",
+     "type": "point",
+     "x": 3.2,
+     "y": 5.4
+    },
+    {
+     "id": "P3",
+     "type": "point",
+     "x": -3.3,
+     "y": 5.1
+    },
+    {
+     "id": "P4",
+     "type": "point",
+     "x": -6.2,
+     "y": 0.3
+    },
+    {
+     "id": "P5",
+     "type": "point",
+     "x": -2.9,
+     "y": -5.3
+    },
+    {
+     "id": "P6",
+     "type": "point",
+     "x": 3.4,
+     "y": -5
+    },
+    {
+     "id": "B1",
+     "type": "bspline",
+     "poles": [
+      "P1",
+      "P2",
+      "P3",
+      "P4",
+      "P5",
+      "P6"
+     ],
+     "weights": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+     ],
+     "knots": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+     ],
+     "mult": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+     ],
+     "degree": 3,
+     "periodic": true
+    }
+   ],
+   "constraints": [
+    {
+     "id": "c1",
+     "type": "distance",
+     "p1": "P1",
+     "p2": "P4",
+     "value": 12
+    }
+   ],
+   "expect": {
+    "solved": true,
+    "checks": [
+     {
+      "kind": "closed_curve",
+      "bspline": "B1"
+     }
+    ],
+    "dof": 9
+   }
+  },
+  {
+   "id": "B03b-periodic-spline-point-on-curve",
+   "group": "B",
+   "title": "Point on a periodic cubic B-spline (poles fixed)",
+   "elements": [
+    {
+     "id": "P1",
+     "type": "point",
+     "x": 6,
+     "y": 0,
+     "fixed": true
+    },
+    {
+     "id": "P2",
+     "type": "point",
+     "x": 3.2,
+     "y": 5.4,
+     "fixed": true
+    },
+    {
+     "id": "P3",
+     "type": "point",
+     "x": -3.3,
+     "y": 5.1,
+     "fixed": true
+    },
+    {
+     "id": "P4",
+     "type": "point",
+     "x": -6.2,
+     "y": 0.3,
+     "fixed": true
+    },
+    {
+     "id": "P5",
+     "type": "point",
+     "x": -2.9,
+     "y": -5.3,
+     "fixed": true
+    },
+    {
+     "id": "P6",
+     "type": "point",
+     "x": 3.4,
+     "y": -5,
+     "fixed": true
+    },
+    {
+     "id": "Pt",
+     "type": "point",
+     "x": 5.2,
+     "y": -2.4
+    },
+    {
+     "id": "B1",
+     "type": "bspline",
+     "poles": [
+      "P1",
+      "P2",
+      "P3",
+      "P4",
+      "P5",
+      "P6"
+     ],
+     "weights": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+     ],
+     "knots": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+     ],
+     "mult": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+     ],
+     "degree": 3,
+     "periodic": true
+    }
+   ],
+   "constraints": [
+    {
+     "id": "c1",
+     "type": "point_on_curve",
+     "point": "Pt",
+     "curve": "B1",
+     "u0": 4.556125413866559
+    }
+   ],
+   "expect": {
+    "solved": true,
+    "dof": 1
+   }
+  },
+  {
+   "id": "B04-quadratic-spline-tangent-at-interior-knot",
+   "group": "B",
+   "title": "Degree 2 spline with interior knots: a line touches it tangentially at knot index 2",
+   "notes": "Interior knot multiplicity 1 < degree 2, so the slope is defined there (ConstraintSlopeAtBSplineKnot, Constraints.cpp:262).",
+   "elements": [
+    {
+     "id": "P1",
+     "type": "point",
+     "x": 0,
+     "y": 0,
+     "fixed": true
+    },
+    {
+     "id": "P2",
+     "type": "point",
+     "x": 2,
+     "y": 4
+    },
+    {
+     "id": "P3",
+     "type": "point",
+     "x": 5,
+     "y": 5
+    },
+    {
+     "id": "P4",
+     "type": "point",
+     "x": 8,
+     "y": 3.5
+    },
+    {
+     "id": "P5",
+     "type": "point",
+     "x": 10,
+     "y": 0,
+     "fixed": true
+    },
+    {
+     "id": "B1",
+     "type": "bspline",
+     "poles": [
+      "P1",
+      "P2",
+      "P3",
+      "P4",
+      "P5"
+     ],
+     "weights": [
+      1,
+      1,
+      1,
+      1,
+      1
+     ],
+     "knots": [
+      0,
+      1,
+      2,
+      3
+     ],
+     "mult": [
+      3,
+      1,
+      1,
+      3
+     ],
+     "degree": 2,
+     "periodic": false
+    },
+    {
+     "id": "Q1",
+     "type": "point",
+     "x": 1,
+     "y": 6.8,
+     "fixed": true
+    },
+    {
+     "id": "Q2",
+     "type": "point",
+     "x": 11,
+     "y": 2.2
+    },
+    {
+     "id": "L1",
+     "type": "line",
+     "p1": "Q1",
+     "p2": "Q2"
+    }
+   ],
+   "constraints": [
+    {
+     "id": "c1",
+     "type": "tangent_at_knot",
+     "line": "L1",
+     "bspline": "B1",
+     "knot": 2
+    }
+   ],
+   "expect": {
+    "solved": true,
+    "dof": 6
+   }
+  },
+  {
+   "id": "B05-cubic-spline-tangent-at-c1-knot",
+   "group": "B",
+   "title": "Cubic spline, interior knot multiplicity 2 (C1): a line touches it tangentially at that knot",
+   "notes": "Knots 0,1,2 with multiplicities 4,2,4: sum 10 = 6 poles + degree 3 + 1.",
+   "elements": [
+    {
+     "id": "P1",
+     "type": "point",
+     "x": 0,
+     "y": 0,
+     "fixed": true
+    },
+    {
+     "id": "P2",
+     "type": "point",
+     "x": 1.5,
+     "y": 3
+    },
+    {
+     "id": "P3",
+     "type": "point",
+     "x": 3.5,
+     "y": 4.5
+    },
+    {
+     "id": "P4",
+     "type": "point",
+     "x": 6,
+     "y": 4
+    },
+    {
+     "id": "P5",
+     "type": "point",
+     "x": 8.5,
+     "y": 2.5
+    },
+    {
+     "id": "P6",
+     "type": "point",
+     "x": 10,
+     "y": 0,
+     "fixed": true
+    },
+    {
+     "id": "B1",
+     "type": "bspline",
+     "poles": [
+      "P1",
+      "P2",
+      "P3",
+      "P4",
+      "P5",
+      "P6"
+     ],
+     "weights": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+     ],
+     "knots": [
+      0,
+      1,
+      2
+     ],
+     "mult": [
+      4,
+      2,
+      4
+     ],
+     "degree": 3,
+     "periodic": false
+    },
+    {
+     "id": "Q1",
+     "type": "point",
+     "x": 1,
+     "y": 6.5,
+     "fixed": true
+    },
+    {
+     "id": "Q2",
+     "type": "point",
+     "x": 10,
+     "y": 5
+    },
+    {
+     "id": "L1",
+     "type": "line",
+     "p1": "Q1",
+     "p2": "Q2"
+    }
+   ],
+   "constraints": [
+    {
+     "id": "c1",
+     "type": "tangent_at_knot",
+     "line": "L1",
+     "bspline": "B1",
+     "knot": 1
+    }
+   ],
+   "expect": {
+    "solved": true,
+    "dof": 8
+   }
+  },
+  {
+   "id": "B06-knot-multiplicity-equals-degree",
+   "group": "B",
+   "title": "Cubic spline with an interior knot of multiplicity 3 (C0 kink at pole 4): a line tangent at the kink",
+   "notes": "The slope at a kink is not defined: FreeCAD refuses it (Sketch.cpp:3081-3103) and ConstraintSlopeAtBSplineKnot asserts numpoles >= 2. A track may answer \"no\"; if it answers \"yes\" the checker tests both one-sided slopes.",
+   "elements": [
+    {
+     "id": "P1",
+     "type": "point",
+     "x": 0,
+     "y": 0,
+     "fixed": true
+    },
+    {
+     "id": "P2",
+     "type": "point",
+     "x": 1.5,
+     "y": 3
+    },
+    {
+     "id": "P3",
+     "type": "point",
+     "x": 3,
+     "y": 4.5
+    },
+    {
+     "id": "P4",
+     "type": "point",
+     "x": 5,
+     "y": 4
+    },
+    {
+     "id": "P5",
+     "type": "point",
+     "x": 7,
+     "y": 3
+    },
+    {
+     "id": "P6",
+     "type": "point",
+     "x": 8.5,
+     "y": 1
+    },
+    {
+     "id": "P7",
+     "type": "point",
+     "x": 10,
+     "y": 0,
+     "fixed": true
+    },
+    {
+     "id": "B1",
+     "type": "bspline",
+     "poles": [
+      "P1",
+      "P2",
+      "P3",
+      "P4",
+      "P5",
+      "P6",
+      "P7"
+     ],
+     "weights": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+     ],
+     "knots": [
+      0,
+      1,
+      2
+     ],
+     "mult": [
+      4,
+      3,
+      4
+     ],
+     "degree": 3,
+     "periodic": false
+    },
+    {
+     "id": "Q1",
+     "type": "point",
+     "x": 3,
+     "y": 6.5,
+     "fixed": true
+    },
+    {
+     "id": "Q2",
+     "type": "point",
+     "x": 9,
+     "y": 5.5
+    },
+    {
+     "id": "L1",
+     "type": "line",
+     "p1": "Q1",
+     "p2": "Q2"
+    }
+   ],
+   "constraints": [
+    {
+     "id": "c1",
+     "type": "tangent_at_knot",
+     "line": "L1",
+     "bspline": "B1",
+     "knot": 1
+    }
+   ],
+   "expect": {
+    "solved": true,
+    "dof": 10
+   }
+  },
+  {
+   "id": "B07-rational-quarter-circle",
+   "group": "B",
+   "title": "Rational quadratic B-spline = exact quarter circle of radius 5; a free point on it must end up at distance 5 from the origin",
+   "notes": "Tests weights: the poles carry weights 1, sqrt(2)/2, 1.",
+   "elements": [
+    {
+     "id": "O",
+     "type": "point",
+     "x": 0,
+     "y": 0,
+     "fixed": true
+    },
+    {
+     "id": "P1",
+     "type": "point",
+     "x": 5,
+     "y": 0,
+     "fixed": true
+    },
+    {
+     "id": "P2",
+     "type": "point",
+     "x": 5,
+     "y": 5,
+     "fixed": true
+    },
+    {
+     "id": "P3",
+     "type": "point",
+     "x": 0,
+     "y": 5,
+     "fixed": true
+    },
+    {
+     "id": "Pt",
+     "type": "point",
+     "x": 3.6,
+     "y": 3.7
+    },
+    {
+     "id": "B1",
+     "type": "bspline",
+     "poles": [
+      "P1",
+      "P2",
+      "P3"
+     ],
+     "weights": [
+      1,
+      0.7071067811865476,
+      1
+     ],
+     "knots": [
+      0,
+      1
+     ],
+     "mult": [
+      3,
+      3
+     ],
+     "degree": 2,
+     "periodic": false
+    }
+   ],
+   "constraints": [
+    {
+     "id": "c1",
+     "type": "point_on_curve",
+     "point": "Pt",
+     "curve": "B1",
+     "u0": 0.5082674675937191
+    }
+   ],
+   "expect": {
+    "solved": true,
+    "checks": [
+     {
+      "kind": "holds",
+      "constraint": {
+       "type": "distance",
+       "p1": "O",
+       "p2": "Pt",
+       "value": 5
+      },
+      "tol": 0.000001
+     }
+    ],
+    "dof": 1
+   }
+  },
+  {
+   "id": "S01-triangle-side-sweep",
+   "group": "S",
+   "title": "Isosceles triangle, one side stepped 10 -> 100 in 10 steps, each solve starts from the previous result",
+   "notes": "The apex P3 must stay above the base (no mirror flip) and move continuously.",
+   "elements": [
+    {
+     "id": "P1",
+     "type": "point",
+     "x": 0,
+     "y": 0,
+     "fixed": true
+    },
+    {
+     "id": "P2",
+     "type": "point",
+     "x": 100,
+     "y": 0
+    },
+    {
+     "id": "P3",
+     "type": "point",
+     "x": 80,
+     "y": 25
+    },
+    {
+     "id": "L12",
+     "type": "line",
+     "p1": "P1",
+     "p2": "P2"
+    },
+    {
+     "id": "L23",
+     "type": "line",
+     "p1": "P2",
+     "p2": "P3"
+    },
+    {
+     "id": "L31",
+     "type": "line",
+     "p1": "P3",
+     "p2": "P1"
+    }
+   ],
+   "constraints": [
+    {
+     "id": "c1",
+     "type": "horizontal",
+     "line": "L12"
+    },
+    {
+     "id": "c2",
+     "type": "length",
+     "line": "L12",
+     "value": 100
+    },
+    {
+     "id": "c3",
+     "type": "length",
+     "line": "L31",
+     "value": 100
+    },
+    {
+     "id": "c4",
+     "type": "length",
+     "line": "L23",
+     "value": 10
+    }
+   ],
+   "expect": {
+    "solved": true,
+    "dof": 0,
+    "step0": {
+     "dof": 0
+    }
+   },
+   "steps": [
+    {
+     "id": "s1",
+     "label": "side = 20",
+     "set": {
+      "c4": 20
+     }
+    },
+    {
+     "id": "s2",
+     "label": "side = 30",
+     "set": {
+      "c4": 30
+     }
+    },
+    {
+     "id": "s3",
+     "label": "side = 40",
+     "set": {
+      "c4": 40
+     }
+    },
+    {
+     "id": "s4",
+     "label": "side = 50",
+     "set": {
+      "c4": 50
+     }
+    },
+    {
+     "id": "s5",
+     "label": "side = 60",
+     "set": {
+      "c4": 60
+     }
+    },
+    {
+     "id": "s6",
+     "label": "side = 70",
+     "set": {
+      "c4": 70
+     }
+    },
+    {
+     "id": "s7",
+     "label": "side = 80",
+     "set": {
+      "c4": 80
+     }
+    },
+    {
+     "id": "s8",
+     "label": "side = 90",
+     "set": {
+      "c4": 90
+     }
+    },
+    {
+     "id": "s9",
+     "label": "side = 100",
+     "set": {
+      "c4": 100
+     }
+    }
+   ],
+   "step_checks": [
+    {
+     "kind": "orientation",
+     "points": [
+      "P1",
+      "P2",
+      "P3"
+     ],
+     "sign": 1
+    },
+    {
+     "kind": "max_jump",
+     "points": [
+      "P3"
+     ],
+     "max": 14
+    }
+   ]
+  },
+  {
+   "id": "S02-line-angle-sweep",
+   "group": "S",
+   "title": "Line of length 40 rotated in 15 degree steps from 10 to 355 degrees (passes +-pi)",
+   "notes": "Angles are compared modulo 2*pi; the free end must move along the circle without jumping.",
+   "elements": [
+    {
+     "id": "P1",
+     "type": "point",
+     "x": 0,
+     "y": 0,
+     "fixed": true
+    },
+    {
+     "id": "P2",
+     "type": "point",
+     "x": 30,
+     "y": 15
+    },
+    {
+     "id": "L1",
+     "type": "line",
+     "p1": "P1",
+     "p2": "P2"
+    }
+   ],
+   "constraints": [
+    {
+     "id": "c1",
+     "type": "length",
+     "line": "L1",
+     "value": 40
+    },
+    {
+     "id": "c2",
+     "type": "angle_line",
+     "line": "L1",
+     "value": 0.17453292519943295
+    }
+   ],
+   "expect": {
+    "solved": true,
+    "dof": 0,
+    "step0": {
+     "dof": 0
+    }
+   },
+   "steps": [
+    {
+     "id": "s1",
+     "label": "angle = 25 deg",
+     "set": {
+      "c2": 0.4363323129985824
+     }
+    },
+    {
+     "id": "s2",
+     "label": "angle = 40 deg",
+     "set": {
+      "c2": 0.6981317007977318
+     }
+    },
+    {
+     "id": "s3",
+     "label": "angle = 55 deg",
+     "set": {
+      "c2": 0.9599310885968813
+     }
+    },
+    {
+     "id": "s4",
+     "label": "angle = 70 deg",
+     "set": {
+      "c2": 1.2217304763960306
+     }
+    },
+    {
+     "id": "s5",
+     "label": "angle = 85 deg",
+     "set": {
+      "c2": 1.4835298641951802
+     }
+    },
+    {
+     "id": "s6",
+     "label": "angle = 100 deg",
+     "set": {
+      "c2": 1.7453292519943295
+     }
+    },
+    {
+     "id": "s7",
+     "label": "angle = 115 deg",
+     "set": {
+      "c2": 2.007128639793479
+     }
+    },
+    {
+     "id": "s8",
+     "label": "angle = 130 deg",
+     "set": {
+      "c2": 2.2689280275926285
+     }
+    },
+    {
+     "id": "s9",
+     "label": "angle = 145 deg",
+     "set": {
+      "c2": 2.5307274153917776
+     }
+    },
+    {
+     "id": "s10",
+     "label": "angle = 160 deg",
+     "set": {
+      "c2": 2.792526803190927
+     }
+    },
+    {
+     "id": "s11",
+     "label": "angle = 175 deg",
+     "set": {
+      "c2": 3.0543261909900763
+     }
+    },
+    {
+     "id": "s12",
+     "label": "angle = 190 deg",
+     "set": {
+      "c2": 3.3161255787892263
+     }
+    },
+    {
+     "id": "s13",
+     "label": "angle = 205 deg",
+     "set": {
+      "c2": 3.5779249665883754
+     }
+    },
+    {
+     "id": "s14",
+     "label": "angle = 220 deg",
+     "set": {
+      "c2": 3.839724354387525
+     }
+    },
+    {
+     "id": "s15",
+     "label": "angle = 235 deg",
+     "set": {
+      "c2": 4.101523742186674
+     }
+    },
+    {
+     "id": "s16",
+     "label": "angle = 250 deg",
+     "set": {
+      "c2": 4.363323129985823
+     }
+    },
+    {
+     "id": "s17",
+     "label": "angle = 265 deg",
+     "set": {
+      "c2": 4.625122517784973
+     }
+    },
+    {
+     "id": "s18",
+     "label": "angle = 280 deg",
+     "set": {
+      "c2": 4.886921905584122
+     }
+    },
+    {
+     "id": "s19",
+     "label": "angle = 295 deg",
+     "set": {
+      "c2": 5.1487212933832724
+     }
+    },
+    {
+     "id": "s20",
+     "label": "angle = 310 deg",
+     "set": {
+      "c2": 5.410520681182422
+     }
+    },
+    {
+     "id": "s21",
+     "label": "angle = 325 deg",
+     "set": {
+      "c2": 5.672320068981571
+     }
+    },
+    {
+     "id": "s22",
+     "label": "angle = 340 deg",
+     "set": {
+      "c2": 5.934119456780721
+     }
+    },
+    {
+     "id": "s23",
+     "label": "angle = 355 deg",
+     "set": {
+      "c2": 6.19591884457987
+     }
+    }
+   ],
+   "step_checks": [
+    {
+     "kind": "max_jump",
+     "points": [
+      "P2"
+     ],
+     "max": 12
+    }
+   ]
+  },
+  {
+   "id": "S03-circle-tangent-radius-sweep",
+   "group": "S",
+   "title": "Circle tangent to a line, radius stepped 10 -> 50 (centre x fixed at 0); it must stay on the same side of the line",
+   "elements": [
+    {
+     "id": "A",
+     "type": "point",
+     "x": -100,
+     "y": 0,
+     "fixed": true
+    },
+    {
+     "id": "B",
+     "type": "point",
+     "x": 100,
+     "y": 0,
+     "fixed": true
+    },
+    {
+     "id": "L1",
+     "type": "line",
+     "p1": "A",
+     "p2": "B"
+    },
+    {
+     "id": "M",
+     "type": "point",
+     "x": 0,
+     "y": 0,
+     "fixed": true
+    },
+    {
+     "id": "C",
+     "type": "point",
+     "x": 0,
+     "y": 6
+    },
+    {
+     "id": "K1",
+     "type": "circle",
+     "center": "C",
+     "radius": 5
+    }
+   ],
+   "constraints": [
+    {
+     "id": "c1",
+     "type": "tangent",
+     "a": "L1",
+     "b": "K1"
+    },
+    {
+     "id": "c2",
+     "type": "radius",
+     "curve": "K1",
+     "value": 5
+    },
+    {
+     "id": "c3",
+     "type": "distance_x",
+     "p1": "M",
+     "p2": "C",
+     "value": 0
+    }
+   ],
+   "expect": {
+    "solved": true,
+    "dof": 0,
+    "step0": {
+     "dof": 0
+    }
+   },
+   "steps": [
+    {
+     "id": "s1",
+     "label": "radius = 10",
+     "set": {
+      "c2": 10
+     }
+    },
+    {
+     "id": "s2",
+     "label": "radius = 15",
+     "set": {
+      "c2": 15
+     }
+    },
+    {
+     "id": "s3",
+     "label": "radius = 20",
+     "set": {
+      "c2": 20
+     }
+    },
+    {
+     "id": "s4",
+     "label": "radius = 25",
+     "set": {
+      "c2": 25
+     }
+    },
+    {
+     "id": "s5",
+     "label": "radius = 30",
+     "set": {
+      "c2": 30
+     }
+    },
+    {
+     "id": "s6",
+     "label": "radius = 35",
+     "set": {
+      "c2": 35
+     }
+    },
+    {
+     "id": "s7",
+     "label": "radius = 40",
+     "set": {
+      "c2": 40
+     }
+    },
+    {
+     "id": "s8",
+     "label": "radius = 45",
+     "set": {
+      "c2": 45
+     }
+    },
+    {
+     "id": "s9",
+     "label": "radius = 50",
+     "set": {
+      "c2": 50
+     }
+    }
+   ],
+   "step_checks": [
+    {
+     "kind": "orientation",
+     "points": [
+      "A",
+      "B",
+      "C"
+     ],
+     "sign": 1
+    },
+    {
+     "kind": "max_jump",
+     "points": [
+      "C"
+     ],
+     "max": 6
+    }
+   ]
+  },
+  {
+   "id": "S04-drag-fixed-length-line",
+   "group": "S",
+   "title": "Drag the free end of a line of fixed length 10 around, mouse always at distance 14 (end must follow along the circle of radius 10)",
+   "notes": "Drag = temporary constraints (tag -1 / temporary:true) on the point; they must not make the system fail and are not kept.",
+   "elements": [
+    {
+     "id": "P1",
+     "type": "point",
+     "x": 0,
+     "y": 0,
+     "fixed": true
+    },
+    {
+     "id": "P2",
+     "type": "point",
+     "x": 10,
+     "y": 0
+    },
+    {
+     "id": "L1",
+     "type": "line",
+     "p1": "P1",
+     "p2": "P2"
+    }
+   ],
+   "constraints": [
+    {
+     "id": "c1",
+     "type": "length",
+     "line": "L1",
+     "value": 10
+    }
+   ],
+   "expect": {
+    "solved": true,
+    "dof": 1,
+    "step0": {
+     "dof": 1
+    }
+   },
+   "steps": [
+    {
+     "id": "s1",
+     "label": "mouse at 30 deg",
+     "drag": {
+      "point": "P2",
+      "x": 12.124355652982143,
+      "y": 6.999999999999999
+     },
+     "expect": {
+      "points": {
+       "P2": [
+        8.660254037844387,
+        4.999999999999999
+       ]
+      },
+      "tol": 0.001
+     }
+    },
+    {
+     "id": "s2",
+     "label": "mouse at 60 deg",
+     "drag": {
+      "point": "P2",
+      "x": 7.000000000000002,
+      "y": 12.12435565298214
+     },
+     "expect": {
+      "points": {
+       "P2": [
+        5.000000000000001,
+        8.660254037844386
+       ]
+      },
+      "tol": 0.001
+     }
+    },
+    {
+     "id": "s3",
+     "label": "mouse at 90 deg",
+     "drag": {
+      "point": "P2",
+      "x": 8.572527594031472e-16,
+      "y": 14
+     },
+     "expect": {
+      "points": {
+       "P2": [
+        6.123233995736766e-16,
+        10
+       ]
+      },
+      "tol": 0.001
+     }
+    },
+    {
+     "id": "s4",
+     "label": "mouse at 120 deg",
+     "drag": {
+      "point": "P2",
+      "x": -6.9999999999999964,
+      "y": 12.124355652982143
+     },
+     "expect": {
+      "points": {
+       "P2": [
+        -4.999999999999998,
+        8.660254037844387
+       ]
+      },
+      "tol": 0.001
+     }
+    },
+    {
+     "id": "s5",
+     "label": "mouse at 150 deg",
+     "drag": {
+      "point": "P2",
+      "x": -12.124355652982143,
+      "y": 6.999999999999999
+     },
+     "expect": {
+      "points": {
+       "P2": [
+        -8.660254037844387,
+        4.999999999999999
+       ]
+      },
+      "tol": 0.001
+     }
+    },
+    {
+     "id": "s6",
+     "label": "mouse at 180 deg",
+     "drag": {
+      "point": "P2",
+      "x": -14,
+      "y": 1.7145055188062944e-15
+     },
+     "expect": {
+      "points": {
+       "P2": [
+        -10,
+        1.2246467991473533e-15
+       ]
+      },
+      "tol": 0.001
+     }
+    },
+    {
+     "id": "s7",
+     "label": "mouse at 210 deg",
+     "drag": {
+      "point": "P2",
+      "x": -12.12435565298214,
+      "y": -7.000000000000002
+     },
+     "expect": {
+      "points": {
+       "P2": [
+        -8.660254037844386,
+        -5.000000000000001
+       ]
+      },
+      "tol": 0.001
+     }
+    },
+    {
+     "id": "s8",
+     "label": "mouse at 240 deg",
+     "drag": {
+      "point": "P2",
+      "x": -7.000000000000006,
+      "y": -12.124355652982139
+     },
+     "expect": {
+      "points": {
+       "P2": [
+        -5.000000000000004,
+        -8.660254037844386
+       ]
+      },
+      "tol": 0.001
+     }
+    },
+    {
+     "id": "s9",
+     "label": "mouse at 270 deg",
+     "drag": {
+      "point": "P2",
+      "x": -2.5717582782094417e-15,
+      "y": -14
+     },
+     "expect": {
+      "points": {
+       "P2": [
+        -1.8369701987210296e-15,
+        -10
+       ]
+      },
+      "tol": 0.001
+     }
+    },
+    {
+     "id": "s10",
+     "label": "mouse at 300 deg",
+     "drag": {
+      "point": "P2",
+      "x": 7.000000000000002,
+      "y": -12.12435565298214
+     },
+     "expect": {
+      "points": {
+       "P2": [
+        5.000000000000001,
+        -8.660254037844386
+       ]
+      },
+      "tol": 0.001
+     }
+    },
+    {
+     "id": "s11",
+     "label": "mouse at 330 deg",
+     "drag": {
+      "point": "P2",
+      "x": 12.124355652982137,
+      "y": -7.000000000000006
+     },
+     "expect": {
+      "points": {
+       "P2": [
+        8.660254037844384,
+        -5.000000000000004
+       ]
+      },
+      "tol": 0.001
+     }
+    },
+    {
+     "id": "s12",
+     "label": "mouse at 360 deg",
+     "drag": {
+      "point": "P2",
+      "x": 14,
+      "y": -3.429011037612589e-15
+     },
+     "expect": {
+      "points": {
+       "P2": [
+        10,
+        -2.4492935982947065e-15
+       ]
+      },
+      "tol": 0.001
+     }
+    }
+   ]
+  },
+  {
+   "id": "S05-drag-chain-reachable",
+   "group": "S",
+   "title": "Chain of 10 links (length 5), origin fixed; the tip is dragged in small steps along an outward spiral inside the reach: it must reach the mouse position",
+   "notes": "Dragging a point with abundant DOF: expected tip = mouse within 1e-3. The chain starts slightly curved and a little off in length.",
+   "elements": [
+    {
+     "id": "Q0",
+     "type": "point",
+     "x": 0,
+     "y": 0,
+     "fixed": true
+    },
+    {
+     "id": "Q1",
+     "type": "point",
+     "x": 5.15761299347505,
+     "y": -0.20423554801382124
+    },
+    {
+     "id": "Q2",
+     "type": "point",
+     "x": 10.027013684039387,
+     "y": 0.7056126225249393
+    },
+    {
+     "id": "Q3",
+     "type": "point",
+     "x": 14.814303218213686,
+     "y": 1.5824386744244605
+    },
+    {
+     "id": "Q4",
+     "type": "point",
+     "x": 19.317593106322544,
+     "y": 3.6543358902629883
+    },
+    {
+     "id": "Q5",
+     "type": "point",
+     "x": 23.817607162698575,
+     "y": 5.8157979799670025
+    },
+    {
+     "id": "Q6",
+     "type": "point",
+     "x": 28.327743411546415,
+     "y": 8.797807008475594
+    },
+    {
+     "id": "Q7",
+     "type": "point",
+     "x": 31.845315403234963,
+     "y": 12.004354437517026
+    },
+    {
+     "id": "Q8",
+     "type": "point",
+     "x": 35.35569233692252,
+     "y": 15.716597464927315
+    },
+    {
+     "id": "Q9",
+     "type": "point",
+     "x": 38.29900360657785,
+     "y": 19.772584673556967
+    },
+    {
+     "id": "Q10",
+     "type": "point",
+     "x": 40.484091279063115,
+     "y": 24.23136022142872
+    },
+    {
+     "id": "L1",
+     "type": "line",
+     "p1": "Q0",
+     "p2": "Q1"
+    },
+    {
+     "id": "L2",
+     "type": "line",
+     "p1": "Q1",
+     "p2": "Q2"
+    },
+    {
+     "id": "L3",
+     "type": "line",
+     "p1": "Q2",
+     "p2": "Q3"
+    },
+    {
+     "id": "L4",
+     "type": "line",
+     "p1": "Q3",
+     "p2": "Q4"
+    },
+    {
+     "id": "L5",
+     "type": "line",
+     "p1": "Q4",
+     "p2": "Q5"
+    },
+    {
+     "id": "L6",
+     "type": "line",
+     "p1": "Q5",
+     "p2": "Q6"
+    },
+    {
+     "id": "L7",
+     "type": "line",
+     "p1": "Q6",
+     "p2": "Q7"
+    },
+    {
+     "id": "L8",
+     "type": "line",
+     "p1": "Q7",
+     "p2": "Q8"
+    },
+    {
+     "id": "L9",
+     "type": "line",
+     "p1": "Q8",
+     "p2": "Q9"
+    },
+    {
+     "id": "L10",
+     "type": "line",
+     "p1": "Q9",
+     "p2": "Q10"
+    }
+   ],
+   "constraints": [
+    {
+     "id": "c1",
+     "type": "length",
+     "line": "L1",
+     "value": 5
+    },
+    {
+     "id": "c2",
+     "type": "length",
+     "line": "L2",
+     "value": 5
+    },
+    {
+     "id": "c3",
+     "type": "length",
+     "line": "L3",
+     "value": 5
+    },
+    {
+     "id": "c4",
+     "type": "length",
+     "line": "L4",
+     "value": 5
+    },
+    {
+     "id": "c5",
+     "type": "length",
+     "line": "L5",
+     "value": 5
+    },
+    {
+     "id": "c6",
+     "type": "length",
+     "line": "L6",
+     "value": 5
+    },
+    {
+     "id": "c7",
+     "type": "length",
+     "line": "L7",
+     "value": 5
+    },
+    {
+     "id": "c8",
+     "type": "length",
+     "line": "L8",
+     "value": 5
+    },
+    {
+     "id": "c9",
+     "type": "length",
+     "line": "L9",
+     "value": 5
+    },
+    {
+     "id": "c10",
+     "type": "length",
+     "line": "L10",
+     "value": 5
+    }
+   ],
+   "expect": {
+    "solved": true,
+    "dof": 10,
+    "step0": {
+     "dof": 10
+    }
+   },
+   "steps": [
+    {
+     "id": "s1",
+     "label": "mouse 1",
+     "drag": {
+      "point": "Q10",
+      "x": 38.223241969356394,
+      "y": 27.250166952701687
+     },
+     "expect": {
+      "points": {
+       "Q10": [
+        38.223241969356394,
+        27.250166952701687
+       ]
+      },
+      "tol": 0.001
+     }
+    },
+    {
+     "id": "s2",
+     "label": "mouse 2",
+     "drag": {
+      "point": "Q10",
+      "x": 35.74010552661808,
+      "y": 30.06351045706503
+     },
+     "expect": {
+      "points": {
+       "Q10": [
+        35.74010552661808,
+        30.06351045706503
+       ]
+      },
+      "tol": 0.001
+     }
+    },
+    {
+     "id": "s3",
+     "label": "mouse 3",
+     "drag": {
+      "point": "Q10",
+      "x": 33.052984266732665,
+      "y": 32.65526957948114
+     },
+     "expect": {
+      "points": {
+       "Q10": [
+        33.052984266732665,
+        32.65526957948114
+       ]
+      },
+      "tol": 0.001
+     }
+    },
+    {
+     "id": "s4",
+     "label": "mouse 4",
+     "drag": {
+      "point": "Q10",
+      "x": 30.181327765042198,
+      "y": 35.010927844117546
+     },
+     "expect": {
+      "points": {
+       "Q10": [
+        30.181327765042198,
+        35.010927844117546
+       ]
+      },
+      "tol": 0.001
+     }
+    },
+    {
+     "id": "s5",
+     "label": "mouse 5",
+     "drag": {
+      "point": "Q10",
+      "x": 27.14559398167034,
+      "y": 37.11765312088713
+     },
+     "expect": {
+      "points": {
+       "Q10": [
+        27.14559398167034,
+        37.11765312088713
+       ]
+      },
+      "tol": 0.001
+     }
+    },
+    {
+     "id": "s6",
+     "label": "mouse 6",
+     "drag": {
+      "point": "Q10",
+      "x": 23.967105036908606,
+      "y": 38.96436540423975
+     },
+     "expect": {
+      "points": {
+       "Q10": [
+        23.967105036908606,
+        38.96436540423975
+       ]
+      },
+      "tol": 0.001
+     }
+    },
+    {
+     "id": "s7",
+     "label": "mouse 7",
+     "drag": {
+      "point": "Q10",
+      "x": 20.667898644690748,
+      "y": 40.54179236214256
+     },
+     "expect": {
+      "points": {
+       "Q10": [
+        20.667898644690748,
+        40.54179236214256
+       ]
+      },
+      "tol": 0.001
+     }
+    },
+    {
+     "id": "s8",
+     "label": "mouse 8",
+     "drag": {
+      "point": "Q10",
+      "x": 17.27057623236999,
+      "y": 41.842512397954664
+     },
+     "expect": {
+      "points": {
+       "Q10": [
+        17.27057623236999,
+        41.842512397954664
+       ]
+      },
+      "tol": 0.001
+     }
+    },
+    {
+     "id": "s9",
+     "label": "mouse 9",
+     "drag": {
+      "point": "Q10",
+      "x": 13.798148788126866,
+      "y": 42.860985053687806
+     },
+     "expect": {
+      "points": {
+       "Q10": [
+        13.798148788126866,
+        42.860985053687806
+       ]
+      },
+      "tol": 0.001
+     }
+    },
+    {
+     "id": "s10",
+     "label": "mouse 10",
+     "drag": {
+      "point": "Q10",
+      "x": 10.273881483341253,
+      "y": 43.59356866936309
+     },
+     "expect": {
+      "points": {
+       "Q10": [
+        10.273881483341253,
+        43.59356866936309
+       ]
+      },
+      "tol": 0.001
+     }
+    },
+    {
+     "id": "s11",
+     "label": "mouse 11",
+     "drag": {
+      "point": "Q10",
+      "x": 6.721138116176728,
+      "y": 44.03852529924014
+     },
+     "expect": {
+      "points": {
+       "Q10": [
+        6.721138116176728,
+        44.03852529924014
+       ]
+      },
+      "tol": 0.001
+     }
+    },
+    {
+     "id": "s12",
+     "label": "mouse 12",
+     "drag": {
+      "point": "Q10",
+      "x": 3.163226414511938,
+      "y": 44.1960129710275
+     },
+     "expect": {
+      "points": {
+       "Q10": [
+        3.163226414511938,
+        44.1960129710275
+       ]
+      },
+      "tol": 0.001
+     }
+    },
+    {
+     "id": "s13",
+     "label": "mouse 13",
+     "drag": {
+      "point": "Q10",
+      "x": -0.3767547786749557,
+      "y": 44.06806545821407
+     },
+     "expect": {
+      "points": {
+       "Q10": [
+        -0.3767547786749557,
+        44.06806545821407
+       ]
+      },
+      "tol": 0.001
+     }
+    },
+    {
+     "id": "s14",
+     "label": "mouse 14",
+     "drag": {
+      "point": "Q10",
+      "x": -3.8760654361516096,
+      "y": 43.65855981783185
+     },
+     "expect": {
+      "points": {
+       "Q10": [
+        -3.8760654361516096,
+        43.65855981783185
+       ]
+      },
+      "tol": 0.001
+     }
+    },
+    {
+     "id": "s15",
+     "label": "mouse 15",
+     "drag": {
+      "point": "Q10",
+      "x": -7.31247042053483,
+      "y": 42.973172025730314
+     },
+     "expect": {
+      "points": {
+       "Q10": [
+        -7.31247042053483,
+        42.973172025730314
+       ]
+      },
+      "tol": 0.001
+     }
+    },
+    {
+     "id": "s16",
+     "label": "mouse 16",
+     "drag": {
+      "point": "Q10",
+      "x": -10.664380763338944,
+      "y": 42.01932111829328
+     },
+     "expect": {
+      "points": {
+       "Q10": [
+        -10.664380763338944,
+        42.01932111829328
+       ]
+      },
+      "tol": 0.001
+     }
+    },
+    {
+     "id": "s17",
+     "label": "mouse 17",
+     "drag": {
+      "point": "Q10",
+      "x": -13.910989251341716,
+      "y": 40.806102322963035
+     },
+     "expect": {
+      "points": {
+       "Q10": [
+        -13.910989251341716,
+        40.806102322963035
+       ]
+      },
+      "tol": 0.001
+     }
+    },
+    {
+     "id": "s18",
+     "label": "mouse 18",
+     "drag": {
+      "point": "Q10",
+      "x": -17.03239946902931,
+      "y": 39.34420972948467
+     },
+     "expect": {
+      "points": {
+       "Q10": [
+        -17.03239946902931,
+        39.34420972948467
+       ]
+      },
+      "tol": 0.001
+     }
+    },
+    {
+     "id": "s19",
+     "label": "mouse 19",
+     "drag": {
+      "point": "Q10",
+      "x": -20.009747497612416,
+      "y": 37.64584911900767
+     },
+     "expect": {
+      "points": {
+       "Q10": [
+        -20.009747497612416,
+        37.64584911900767
+       ]
+      },
+      "tol": 0.001
+     }
+    },
+    {
+     "id": "s20",
+     "label": "mouse 20",
+     "drag": {
+      "point": "Q10",
+      "x": -22.825315527784998,
+      "y": 35.72464162867451
+     },
+     "expect": {
+      "points": {
+       "Q10": [
+        -22.825315527784998,
+        35.72464162867451
+       ]
+      },
+      "tol": 0.001
+     }
+    },
+    {
+     "id": "s21",
+     "label": "mouse 21",
+     "drag": {
+      "point": "Q10",
+      "x": -25.46263670460034,
+      "y": 33.59551898471602
+     },
+     "expect": {
+      "points": {
+       "Q10": [
+        -25.46263670460034,
+        33.59551898471602
+       ]
+      },
+      "tol": 0.001
+     }
+    },
+    {
+     "id": "s22",
+     "label": "mouse 22",
+     "drag": {
+      "point": "Q10",
+      "x": -27.906590588113126,
+      "y": 31.274611087028067
+     },
+     "expect": {
+      "points": {
+       "Q10": [
+        -27.906590588113126,
+        31.274611087028067
+       ]
+      },
+      "tol": 0.001
+     }
+    },
+    {
+     "id": "s23",
+     "label": "mouse 23",
+     "drag": {
+      "point": "Q10",
+      "x": -30.14348868230612,
+      "y": 28.77912677242817
+     },
+     "expect": {
+      "points": {
+       "Q10": [
+        -30.14348868230612,
+        28.77912677242817
+       ]
+      },
+      "tol": 0.001
+     }
+    },
+    {
+     "id": "s24",
+     "label": "mouse 24",
+     "drag": {
+      "point": "Q10",
+      "x": -32.16114955678803,
+      "y": 26.12722862203236
+     },
+     "expect": {
+      "points": {
+       "Q10": [
+        -32.16114955678803,
+        26.12722862203236
+       ]
+      },
+      "tol": 0.001
+     }
+    },
+    {
+     "id": "s25",
+     "label": "mouse 25",
+     "drag": {
+      "point": "Q10",
+      "x": -33.948963160300416,
+      "y": 23.337902710240755
+     },
+     "expect": {
+      "points": {
+       "Q10": [
+        -33.948963160300416,
+        23.337902710240755
+       ]
+      },
+      "tol": 0.001
+     }
+    },
+    {
+     "id": "s26",
+     "label": "mouse 26",
+     "drag": {
+      "point": "Q10",
+      "x": -35.49794400167919,
+      "y": 20.430824218509862
+     },
+     "expect": {
+      "points": {
+       "Q10": [
+        -35.49794400167919,
+        20.430824218509862
+       ]
+      },
+      "tol": 0.001
+     }
+    },
+    {
+     "id": "s27",
+     "label": "mouse 27",
+     "drag": {
+      "point": "Q10",
+      "x": -36.80077295204172,
+      "y": 17.426219856297482
+     },
+     "expect": {
+      "points": {
+       "Q10": [
+        -36.80077295204172,
+        17.426219856297482
+       ]
+      },
+      "tol": 0.001
+     }
+    },
+    {
+     "id": "s28",
+     "label": "mouse 28",
+     "drag": {
+      "point": "Q10",
+      "x": -37.85182750107023,
+      "y": 14.34472804421699
+     },
+     "expect": {
+      "points": {
+       "Q10": [
+        -37.85182750107023,
+        14.34472804421699
+       ]
+      },
+      "tol": 0.001
+     }
+    },
+    {
+     "id": "s29",
+     "label": "mouse 29",
+     "drag": {
+      "point": "Q10",
+      "x": -38.64720037978939,
+      "y": 11.207257820499565
+     },
+     "expect": {
+      "points": {
+       "Q10": [
+        -38.64720037978939,
+        11.207257820499565
+       ]
+      },
+      "tol": 0.001
+     }
+    },
+    {
+     "id": "s30",
+     "label": "mouse 30",
+     "drag": {
+      "point": "Q10",
+      "x": -39.18470654164614,
+      "y": 8.034847431350132
+     },
+     "expect": {
+      "points": {
+       "Q10": [
+        -39.18470654164614,
+        8.034847431350132
+       ]
+      },
+      "tol": 0.001
+     }
+    }
+   ]
+  },
+  {
+   "id": "P01-grid-50",
+   "group": "P",
+   "title": "Connected chain of 6 fully dimensioned rectangles (48 elements)",
+   "file": "large-p01-grid-50.json",
+   "elements_count": 48,
+   "constraints_count": 42
+  },
+  {
+   "id": "P02-grid-200",
+   "group": "P",
+   "title": "Connected 5x5 grid of fully dimensioned rectangles (200 elements)",
+   "file": "large-p02-grid-200.json",
+   "elements_count": 200,
+   "constraints_count": 175
+  },
+  {
+   "id": "P03-grid-1000",
+   "group": "P",
+   "title": "Connected 5x25 grid of fully dimensioned rectangles (1000 elements)",
+   "file": "large-p03-grid-1000.json",
+   "elements_count": 1000,
+   "constraints_count": 875
+  },
+  {
+   "id": "P04-drag-chain-100-steps",
+   "group": "P",
+   "title": "Chain of 40 links (length 5), origin fixed; 100 drag steps of the tip along an outward spiral (timing of a drag sequence)",
+   "notes": "Positions stay inside the reach (200).",
+   "elements": [
+    {
+     "id": "Q0",
+     "type": "point",
+     "x": 0,
+     "y": 0,
+     "fixed": true
+    },
+    {
+     "id": "Q1",
+     "type": "point",
+     "x": 4.82516356902197,
+     "y": -0.20755423894152045
+    },
+    {
+     "id": "Q2",
+     "type": "point",
+     "x": 9.860211890502365,
+     "y": -0.07729535624748066
+    },
+    {
+     "id": "Q3",
+     "type": "point",
+     "x": 14.73091817411925,
+     "y": 0.34885846516493113
+    },
+    {
+     "id": "Q4",
+     "type": "point",
+     "x": 20.166304285995636,
+     "y": 1.1464476996341386
+    },
+    {
+     "id": "Q5",
+     "type": "point",
+     "x": 25.128954517708515,
+     "y": 1.3940920410427415
+    },
+    {
+     "id": "Q6",
+     "type": "point",
+     "x": 29.91804864105288,
+     "y": 2.0744245993065613
+    },
+    {
+     "id": "Q7",
+     "type": "point",
+     "x": 34.542932893932715,
+     "y": 3.241278316276919
+    },
+    {
+     "id": "Q8",
+     "type": "point",
+     "x": 39.461209100682645,
+     "y": 4.170787928643515
+    },
+    {
+     "id": "Q9",
+     "type": "point",
+     "x": 44.53292052736767,
+     "y": 5.507576503340323
+    },
+    {
+     "id": "Q10",
+     "type": "point",
+     "x": 49.44560685498914,
+     "y": 6.661662261847603
+    },
+    {
+     "id": "Q11",
+     "type": "point",
+     "x": 53.94261008212377,
+     "y": 8.250958795896945
+    },
+    {
+     "id": "Q12",
+     "type": "point",
+     "x": 58.69640442124325,
+     "y": 9.881638637949878
+    },
+    {
+     "id": "Q13",
+     "type": "point",
+     "x": 63.253043420255324,
+     "y": 11.38695851512827
+    },
+    {
+     "id": "Q14",
+     "type": "point",
+     "x": 67.9884174700293,
+     "y": 13.633797973474696
+    },
+    {
+     "id": "Q15",
+     "type": "point",
+     "x": 72.9597980802586,
+     "y": 15.77395949922732
+    },
+    {
+     "id": "Q16",
+     "type": "point",
+     "x": 77.14492158996589,
+     "y": 17.46820770043051
+    },
+    {
+     "id": "Q17",
+     "type": "point",
+     "x": 81.71162276129778,
+     "y": 19.6976447487499
+    },
+    {
+     "id": "Q18",
+     "type": "point",
+     "x": 85.97108491248771,
+     "y": 22.302005588070955
+    },
+    {
+     "id": "Q19",
+     "type": "point",
+     "x": 90.60585864673794,
+     "y": 24.69904198493046
+    },
+    {
+     "id": "Q20",
+     "type": "point",
+     "x": 94.68870910366545,
+     "y": 27.849273651823548
+    },
+    {
+     "id": "Q21",
+     "type": "point",
+     "x": 98.76737190606217,
+     "y": 30.795979464416803
+    },
+    {
+     "id": "Q22",
+     "type": "point",
+     "x": 102.77921797240884,
+     "y": 33.5530488085973
+    },
+    {
+     "id": "Q23",
+     "type": "point",
+     "x": 106.88028097339618,
+     "y": 36.44379982344783
+    },
+    {
+     "id": "Q24",
+     "type": "point",
+     "x": 110.78264949814,
+     "y": 39.81963591653288
+    },
+    {
+     "id": "Q25",
+     "type": "point",
+     "x": 114.40784619468498,
+     "y": 43.143542714962166
+    },
+    {
+     "id": "Q26",
+     "type": "point",
+     "x": 118.01783695413533,
+     "y": 46.61019586531273
+    },
+    {
+     "id": "Q27",
+     "type": "point",
+     "x": 121.57518712731624,
+     "y": 49.98969122309955
+    },
+    {
+     "id": "Q28",
+     "type": "point",
+     "x": 125.0055494482998,
+     "y": 53.715412429466575
+    },
+    {
+     "id": "Q29",
+     "type": "point",
+     "x": 128.11722983354218,
+     "y": 57.4874185343371
+    },
+    {
+     "id": "Q30",
+     "type": "point",
+     "x": 131.2216941760204,
+     "y": 60.9950776603066
+    },
+    {
+     "id": "Q31",
+     "type": "point",
+     "x": 134.85540326271948,
+     "y": 64.91769946236884
+    },
+    {
+     "id": "Q32",
+     "type": "point",
+     "x": 137.8341384906505,
+     "y": 69.32187371817821
+    },
+    {
+     "id": "Q33",
+     "type": "point",
+     "x": 140.241911282017,
+     "y": 72.943630042783
+    },
+    {
+     "id": "Q34",
+     "type": "point",
+     "x": 143.12557916529946,
+     "y": 77.07275086016259
+    },
+    {
+     "id": "Q35",
+     "type": "point",
+     "x": 145.58479323330081,
+     "y": 81.68437791648624
+    },
+    {
+     "id": "Q36",
+     "type": "point",
+     "x": 148.56935483613194,
+     "y": 86.13045717650063
+    },
+    {
+     "id": "Q37",
+     "type": "point",
+     "x": 150.40147364331017,
+     "y": 90.5581668337603
+    },
+    {
+     "id": "Q38",
+     "type": "point",
+     "x": 152.9720596706495,
+     "y": 94.93996027480864
+    },
+    {
+     "id": "Q39",
+     "type": "point",
+     "x": 154.90290946719526,
+     "y": 99.44508703364562
+    },
+    {
+     "id": "Q40",
+     "type": "point",
+     "x": 156.70024947062325,
+     "y": 104.0844512295973
+    },
+    {
+     "id": "L1",
+     "type": "line",
+     "p1": "Q0",
+     "p2": "Q1"
+    },
+    {
+     "id": "L2",
+     "type": "line",
+     "p1": "Q1",
+     "p2": "Q2"
+    },
+    {
+     "id": "L3",
+     "type": "line",
+     "p1": "Q2",
+     "p2": "Q3"
+    },
+    {
+     "id": "L4",
+     "type": "line",
+     "p1": "Q3",
+     "p2": "Q4"
+    },
+    {
+     "id": "L5",
+     "type": "line",
+     "p1": "Q4",
+     "p2": "Q5"
+    },
+    {
+     "id": "L6",
+     "type": "line",
+     "p1": "Q5",
+     "p2": "Q6"
+    },
+    {
+     "id": "L7",
+     "type": "line",
+     "p1": "Q6",
+     "p2": "Q7"
+    },
+    {
+     "id": "L8",
+     "type": "line",
+     "p1": "Q7",
+     "p2": "Q8"
+    },
+    {
+     "id": "L9",
+     "type": "line",
+     "p1": "Q8",
+     "p2": "Q9"
+    },
+    {
+     "id": "L10",
+     "type": "line",
+     "p1": "Q9",
+     "p2": "Q10"
+    },
+    {
+     "id": "L11",
+     "type": "line",
+     "p1": "Q10",
+     "p2": "Q11"
+    },
+    {
+     "id": "L12",
+     "type": "line",
+     "p1": "Q11",
+     "p2": "Q12"
+    },
+    {
+     "id": "L13",
+     "type": "line",
+     "p1": "Q12",
+     "p2": "Q13"
+    },
+    {
+     "id": "L14",
+     "type": "line",
+     "p1": "Q13",
+     "p2": "Q14"
+    },
+    {
+     "id": "L15",
+     "type": "line",
+     "p1": "Q14",
+     "p2": "Q15"
+    },
+    {
+     "id": "L16",
+     "type": "line",
+     "p1": "Q15",
+     "p2": "Q16"
+    },
+    {
+     "id": "L17",
+     "type": "line",
+     "p1": "Q16",
+     "p2": "Q17"
+    },
+    {
+     "id": "L18",
+     "type": "line",
+     "p1": "Q17",
+     "p2": "Q18"
+    },
+    {
+     "id": "L19",
+     "type": "line",
+     "p1": "Q18",
+     "p2": "Q19"
+    },
+    {
+     "id": "L20",
+     "type": "line",
+     "p1": "Q19",
+     "p2": "Q20"
+    },
+    {
+     "id": "L21",
+     "type": "line",
+     "p1": "Q20",
+     "p2": "Q21"
+    },
+    {
+     "id": "L22",
+     "type": "line",
+     "p1": "Q21",
+     "p2": "Q22"
+    },
+    {
+     "id": "L23",
+     "type": "line",
+     "p1": "Q22",
+     "p2": "Q23"
+    },
+    {
+     "id": "L24",
+     "type": "line",
+     "p1": "Q23",
+     "p2": "Q24"
+    },
+    {
+     "id": "L25",
+     "type": "line",
+     "p1": "Q24",
+     "p2": "Q25"
+    },
+    {
+     "id": "L26",
+     "type": "line",
+     "p1": "Q25",
+     "p2": "Q26"
+    },
+    {
+     "id": "L27",
+     "type": "line",
+     "p1": "Q26",
+     "p2": "Q27"
+    },
+    {
+     "id": "L28",
+     "type": "line",
+     "p1": "Q27",
+     "p2": "Q28"
+    },
+    {
+     "id": "L29",
+     "type": "line",
+     "p1": "Q28",
+     "p2": "Q29"
+    },
+    {
+     "id": "L30",
+     "type": "line",
+     "p1": "Q29",
+     "p2": "Q30"
+    },
+    {
+     "id": "L31",
+     "type": "line",
+     "p1": "Q30",
+     "p2": "Q31"
+    },
+    {
+     "id": "L32",
+     "type": "line",
+     "p1": "Q31",
+     "p2": "Q32"
+    },
+    {
+     "id": "L33",
+     "type": "line",
+     "p1": "Q32",
+     "p2": "Q33"
+    },
+    {
+     "id": "L34",
+     "type": "line",
+     "p1": "Q33",
+     "p2": "Q34"
+    },
+    {
+     "id": "L35",
+     "type": "line",
+     "p1": "Q34",
+     "p2": "Q35"
+    },
+    {
+     "id": "L36",
+     "type": "line",
+     "p1": "Q35",
+     "p2": "Q36"
+    },
+    {
+     "id": "L37",
+     "type": "line",
+     "p1": "Q36",
+     "p2": "Q37"
+    },
+    {
+     "id": "L38",
+     "type": "line",
+     "p1": "Q37",
+     "p2": "Q38"
+    },
+    {
+     "id": "L39",
+     "type": "line",
+     "p1": "Q38",
+     "p2": "Q39"
+    },
+    {
+     "id": "L40",
+     "type": "line",
+     "p1": "Q39",
+     "p2": "Q40"
+    }
+   ],
+   "constraints": [
+    {
+     "id": "c1",
+     "type": "length",
+     "line": "L1",
+     "value": 5
+    },
+    {
+     "id": "c2",
+     "type": "length",
+     "line": "L2",
+     "value": 5
+    },
+    {
+     "id": "c3",
+     "type": "length",
+     "line": "L3",
+     "value": 5
+    },
+    {
+     "id": "c4",
+     "type": "length",
+     "line": "L4",
+     "value": 5
+    },
+    {
+     "id": "c5",
+     "type": "length",
+     "line": "L5",
+     "value": 5
+    },
+    {
+     "id": "c6",
+     "type": "length",
+     "line": "L6",
+     "value": 5
+    },
+    {
+     "id": "c7",
+     "type": "length",
+     "line": "L7",
+     "value": 5
+    },
+    {
+     "id": "c8",
+     "type": "length",
+     "line": "L8",
+     "value": 5
+    },
+    {
+     "id": "c9",
+     "type": "length",
+     "line": "L9",
+     "value": 5
+    },
+    {
+     "id": "c10",
+     "type": "length",
+     "line": "L10",
+     "value": 5
+    },
+    {
+     "id": "c11",
+     "type": "length",
+     "line": "L11",
+     "value": 5
+    },
+    {
+     "id": "c12",
+     "type": "length",
+     "line": "L12",
+     "value": 5
+    },
+    {
+     "id": "c13",
+     "type": "length",
+     "line": "L13",
+     "value": 5
+    },
+    {
+     "id": "c14",
+     "type": "length",
+     "line": "L14",
+     "value": 5
+    },
+    {
+     "id": "c15",
+     "type": "length",
+     "line": "L15",
+     "value": 5
+    },
+    {
+     "id": "c16",
+     "type": "length",
+     "line": "L16",
+     "value": 5
+    },
+    {
+     "id": "c17",
+     "type": "length",
+     "line": "L17",
+     "value": 5
+    },
+    {
+     "id": "c18",
+     "type": "length",
+     "line": "L18",
+     "value": 5
+    },
+    {
+     "id": "c19",
+     "type": "length",
+     "line": "L19",
+     "value": 5
+    },
+    {
+     "id": "c20",
+     "type": "length",
+     "line": "L20",
+     "value": 5
+    },
+    {
+     "id": "c21",
+     "type": "length",
+     "line": "L21",
+     "value": 5
+    },
+    {
+     "id": "c22",
+     "type": "length",
+     "line": "L22",
+     "value": 5
+    },
+    {
+     "id": "c23",
+     "type": "length",
+     "line": "L23",
+     "value": 5
+    },
+    {
+     "id": "c24",
+     "type": "length",
+     "line": "L24",
+     "value": 5
+    },
+    {
+     "id": "c25",
+     "type": "length",
+     "line": "L25",
+     "value": 5
+    },
+    {
+     "id": "c26",
+     "type": "length",
+     "line": "L26",
+     "value": 5
+    },
+    {
+     "id": "c27",
+     "type": "length",
+     "line": "L27",
+     "value": 5
+    },
+    {
+     "id": "c28",
+     "type": "length",
+     "line": "L28",
+     "value": 5
+    },
+    {
+     "id": "c29",
+     "type": "length",
+     "line": "L29",
+     "value": 5
+    },
+    {
+     "id": "c30",
+     "type": "length",
+     "line": "L30",
+     "value": 5
+    },
+    {
+     "id": "c31",
+     "type": "length",
+     "line": "L31",
+     "value": 5
+    },
+    {
+     "id": "c32",
+     "type": "length",
+     "line": "L32",
+     "value": 5
+    },
+    {
+     "id": "c33",
+     "type": "length",
+     "line": "L33",
+     "value": 5
+    },
+    {
+     "id": "c34",
+     "type": "length",
+     "line": "L34",
+     "value": 5
+    },
+    {
+     "id": "c35",
+     "type": "length",
+     "line": "L35",
+     "value": 5
+    },
+    {
+     "id": "c36",
+     "type": "length",
+     "line": "L36",
+     "value": 5
+    },
+    {
+     "id": "c37",
+     "type": "length",
+     "line": "L37",
+     "value": 5
+    },
+    {
+     "id": "c38",
+     "type": "length",
+     "line": "L38",
+     "value": 5
+    },
+    {
+     "id": "c39",
+     "type": "length",
+     "line": "L39",
+     "value": 5
+    },
+    {
+     "id": "c40",
+     "type": "length",
+     "line": "L40",
+     "value": 5
+    }
+   ],
+   "expect": {
+    "solved": true,
+    "dof": 40,
+    "step0": {
+     "dof": 40
+    }
+   },
+   "steps": [
+    {
+     "id": "s1",
+     "label": "mouse 1",
+     "drag": {
+      "point": "Q40",
+      "x": 153.19662197290836,
+      "y": 108.51758353275876
+     },
+     "expect": {
+      "points": {
+       "Q40": [
+        153.19662197290836,
+        108.51758353275876
+       ]
+      },
+      "tol": 0.01
+     }
+    },
+    {
+     "id": "s2",
+     "label": "mouse 2",
+     "drag": {
+      "point": "Q40",
+      "x": 149.56834600722414,
+      "y": 112.83439698504473
+     },
+     "expect": {
+      "points": {
+       "Q40": [
+        149.56834600722414,
+        112.83439698504473
+       ]
+      },
+      "tol": 0.01
+     }
+    },
+    {
+     "id": "s3",
+     "label": "mouse 3",
+     "drag": {
+      "point": "Q40",
+      "x": 145.819240555861,
+      "y": 117.03141162731359
+     },
+     "expect": {
+      "points": {
+       "Q40": [
+        145.819240555861,
+        117.03141162731359
+       ]
+      },
+      "tol": 0.01
+     }
+    },
+    {
+     "id": "s4",
+     "label": "mouse 4",
+     "drag": {
+      "point": "Q40",
+      "x": 141.95322094568323,
+      "y": 121.10527173995625
+     },
+     "expect": {
+      "points": {
+       "Q40": [
+        141.95322094568323,
+        121.10527173995625
+       ]
+      },
+      "tol": 0.01
+     }
+    },
+    {
+     "id": "s5",
+     "label": "mouse 5",
+     "drag": {
+      "point": "Q40",
+      "x": 137.97429483738887,
+      "y": 125.05274848366656
+     },
+     "expect": {
+      "points": {
+       "Q40": [
+        137.97429483738887,
+        125.05274848366656
+       ]
+      },
+      "tol": 0.01
+     }
+    },
+    {
+     "id": "s6",
+     "label": "mouse 6",
+     "drag": {
+      "point": "Q40",
+      "x": 133.886558143268,
+      "y": 128.8707424115844
+     },
+     "expect": {
+      "points": {
+       "Q40": [
+        133.886558143268,
+        128.8707424115844
+       ]
+      },
+      "tol": 0.01
+     }
+    },
+    {
+     "id": "s7",
+     "label": "mouse 7",
+     "drag": {
+      "point": "Q40",
+      "x": 129.69419087756003,
+      "y": 132.5562858509049
+     },
+     "expect": {
+      "points": {
+       "Q40": [
+        129.69419087756003,
+        132.5562858509049
+       ]
+      },
+      "tol": 0.01
+     }
+    },
+    {
+     "id": "s8",
+     "label": "mouse 8",
+     "drag": {
+      "point": "Q40",
+      "x": 125.40145294356262,
+      "y": 136.10654515217806
+     },
+     "expect": {
+      "points": {
+       "Q40": [
+        125.40145294356262,
+        136.10654515217806
+       ]
+      },
+      "tol": 0.01
+     }
+    },
+    {
+     "id": "s9",
+     "label": "mouse 9",
+     "drag": {
+      "point": "Q40",
+      "x": 121.01267986168877,
+      "y": 139.5188228046522
+     },
+     "expect": {
+      "points": {
+       "Q40": [
+        121.01267986168877,
+        139.5188228046522
+       ]
+      },
+      "tol": 0.01
+     }
+    },
+    {
+     "id": "s10",
+     "label": "mouse 10",
+     "drag": {
+      "point": "Q40",
+      "x": 116.53227844271183,
+      "y": 142.79055941615093
+     },
+     "expect": {
+      "points": {
+       "Q40": [
+        116.53227844271183,
+        142.79055941615093
+       ]
+      },
+      "tol": 0.01
+     }
+    },
+    {
+     "id": "s11",
+     "label": "mouse 11",
+     "drag": {
+      "point": "Q40",
+      "x": 111.96472241047366,
+      "y": 145.91933555610308
+     },
+     "expect": {
+      "points": {
+       "Q40": [
+        111.96472241047366,
+        145.91933555610308
+       ]
+      },
+      "tol": 0.01
+     }
+    },
+    {
+     "id": "s12",
+     "label": "mouse 12",
+     "drag": {
+      "point": "Q40",
+      "x": 107.31454797836678,
+      "y": 148.90287346048189
+     },
+     "expect": {
+      "points": {
+       "Q40": [
+        107.31454797836678,
+        148.90287346048189
+       ]
+      },
+      "tol": 0.01
+     }
+    },
+    {
+     "id": "s13",
+     "label": "mouse 13",
+     "drag": {
+      "point": "Q40",
+      "x": 102.58634938392795,
+      "y": 151.73903859754424
+     },
+     "expect": {
+      "points": {
+       "Q40": [
+        102.58634938392795,
+        151.73903859754424
+       ]
+      },
+      "tol": 0.01
+     }
+    },
+    {
+     "id": "s14",
+     "label": "mouse 14",
+     "drag": {
+      "point": "Q40",
+      "x": 97.78477438590707,
+      "y": 154.42584109339646
+     },
+     "expect": {
+      "points": {
+       "Q40": [
+        97.78477438590707,
+        154.42584109339646
+       ]
+      },
+      "tol": 0.01
+     }
+    },
+    {
+     "id": "s15",
+     "label": "mouse 15",
+     "drag": {
+      "point": "Q40",
+      "x": 92.91451972819553,
+      "y": 156.9614370165495
+     },
+     "expect": {
+      "points": {
+       "Q40": [
+        92.91451972819553,
+        156.9614370165495
+       ]
+      },
+      "tol": 0.01
+     }
+    },
+    {
+     "id": "s16",
+     "label": "mouse 16",
+     "drag": {
+      "point": "Q40",
+      "x": 87.98032657501325,
+      "y": 159.34412952076312
+     },
+     "expect": {
+      "points": {
+       "Q40": [
+        87.98032657501325,
+        159.34412952076312
+       ]
+      },
+      "tol": 0.01
+     }
+    },
+    {
+     "id": "s17",
+     "label": "mouse 17",
+     "drag": {
+      "point": "Q40",
+      "x": 82.98697592176819,
+      "y": 161.57236984561516
+     },
+     "expect": {
+      "points": {
+       "Q40": [
+        82.98697592176819,
+        161.57236984561516
+       ]
+      },
+      "tol": 0.01
+     }
+    },
+    {
+     "id": "s18",
+     "label": "mouse 18",
+     "drag": {
+      "point": "Q40",
+      "x": 77.93928398600653,
+      "y": 163.64475817437034
+     },
+     "expect": {
+      "points": {
+       "Q40": [
+        77.93928398600653,
+        163.64475817437034
+       ]
+      },
+      "tol": 0.01
+     }
+    },
+    {
+     "id": "s19",
+     "label": "mouse 19",
+     "drag": {
+      "point": "Q40",
+      "x": 72.8420975828791,
+      "y": 165.5600443488568
+     },
+     "expect": {
+      "points": {
+       "Q40": [
+        72.8420975828791,
+        165.5600443488568
+       ]
+      },
+      "tol": 0.01
+     }
+    },
+    {
+     "id": "s20",
+     "label": "mouse 20",
+     "drag": {
+      "point": "Q40",
+      "x": 67.70028948954517,
+      "y": 167.31712844119974
+     },
+     "expect": {
+      "points": {
+       "Q40": [
+        67.70028948954517,
+        167.31712844119974
+       ]
+      },
+      "tol": 0.01
+     }
+    },
+    {
+     "id": "s21",
+     "label": "mouse 21",
+     "drag": {
+      "point": "Q40",
+      "x": 62.518753802933446,
+      "y": 168.91506118239377
+     },
+     "expect": {
+      "points": {
+       "Q40": [
+        62.518753802933446,
+        168.91506118239377
+       ]
+      },
+      "tol": 0.01
+     }
+    },
+    {
+     "id": "s22",
+     "label": "mouse 22",
+     "drag": {
+      "point": "Q40",
+      "x": 57.302401295268,
+      "y": 170.35304424783448
+     },
+     "expect": {
+      "points": {
+       "Q40": [
+        57.302401295268,
+        170.35304424783448
+       ]
+      },
+      "tol": 0.01
+     }
+    },
+    {
+     "id": "s23",
+     "label": "mouse 23",
+     "drag": {
+      "point": "Q40",
+      "x": 52.056154771755466,
+      "y": 171.6304304000634
+     },
+     "expect": {
+      "points": {
+       "Q40": [
+        52.056154771755466,
+        171.6304304000634
+       ]
+      },
+      "tol": 0.01
+     }
+    },
+    {
+     "id": "s24",
+     "label": "mouse 24",
+     "drag": {
+      "point": "Q40",
+      "x": 46.784944434812424,
+      "y": 172.74672348911665
+     },
+     "expect": {
+      "points": {
+       "Q40": [
+        46.784944434812424,
+        172.74672348911665
+       ]
+      },
+      "tol": 0.01
+     }
+    },
+    {
+     "id": "s25",
+     "label": "mouse 25",
+     "drag": {
+      "point": "Q40",
+      "x": 41.49370325918833,
+      "y": 173.7015783110002
+     },
+     "expect": {
+      "points": {
+       "Q40": [
+        41.49370325918833,
+        173.7015783110002
+       ]
+      },
+      "tol": 0.01
+     }
+    },
+    {
+     "id": "s26",
+     "label": "mouse 26",
+     "drag": {
+      "point": "Q40",
+      "x": 36.18736238231751,
+      "y": 174.49480032494859
+     },
+     "expect": {
+      "points": {
+       "Q40": [
+        36.18736238231751,
+        174.49480032494859
+       ]
+      },
+      "tol": 0.01
+     }
+    },
+    {
+     "id": "s27",
+     "label": "mouse 27",
+     "drag": {
+      "point": "Q40",
+      "x": 30.870846514199343,
+      "y": 175.12634523025594
+     },
+     "expect": {
+      "points": {
+       "Q40": [
+        30.870846514199343,
+        175.12634523025594
+       ]
+      },
+      "tol": 0.01
+     }
+    },
+    {
+     "id": "s28",
+     "label": "mouse 28",
+     "drag": {
+      "point": "Q40",
+      "x": 25.549069371076964,
+      "y": 175.59631840359745
+     },
+     "expect": {
+      "points": {
+       "Q40": [
+        25.549069371076964,
+        175.59631840359745
+       ]
+      },
+      "tol": 0.01
+     }
+    },
+    {
+     "id": "s29",
+     "label": "mouse 29",
+     "drag": {
+      "point": "Q40",
+      "x": 20.226929137143134,
+      "y": 175.9049741978912
+     },
+     "expect": {
+      "points": {
+       "Q40": [
+        20.226929137143134,
+        175.9049741978912
+       ]
+      },
+      "tol": 0.01
+     }
+    },
+    {
+     "id": "s30",
+     "label": "mouse 30",
+     "drag": {
+      "point": "Q40",
+      "x": 14.90930395846284,
+      "y": 176.05271510387587
+     },
+     "expect": {
+      "points": {
+       "Q40": [
+        14.90930395846284,
+        176.05271510387587
+       ]
+      },
+      "tol": 0.01
+     }
+    },
+    {
+     "id": "s31",
+     "label": "mouse 31",
+     "drag": {
+      "point": "Q40",
+      "x": 9.60104747325598,
+      "y": 176.04009077570825
+     },
+     "expect": {
+      "points": {
+       "Q40": [
+        9.60104747325598,
+        176.04009077570825
+       ]
+      },
+      "tol": 0.01
+     }
+    },
+    {
+     "id": "s32",
+     "label": "mouse 32",
+     "drag": {
+      "point": "Q40",
+      "x": 4.306984382633933,
+      "y": 175.86779692200759
+     },
+     "expect": {
+      "points": {
+       "Q40": [
+        4.306984382633933,
+        175.86779692200759
+       ]
+      },
+      "tol": 0.01
+     }
+    },
+    {
+     "id": "s33",
+     "label": "mouse 33",
+     "drag": {
+      "point": "Q40",
+      "x": -0.9680939341678511,
+      "y": 175.53667406389835
+     },
+     "expect": {
+      "points": {
+       "Q40": [
+        -0.9680939341678511,
+        175.53667406389835
+       ]
+      },
+      "tol": 0.01
+     }
+    },
+    {
+     "id": "s34",
+     "label": "mouse 34",
+     "drag": {
+      "point": "Q40",
+      "x": -6.219433756078338,
+      "y": 175.04770616172254
+     },
+     "expect": {
+      "points": {
+       "Q40": [
+        -6.219433756078338,
+        175.04770616172254
+       ]
+      },
+      "tol": 0.01
+     }
+    },
+    {
+     "id": "s35",
+     "label": "mouse 35",
+     "drag": {
+      "point": "Q40",
+      "x": -11.442323304073911,
+      "y": 174.4020191122134
+     },
+     "expect": {
+      "points": {
+       "Q40": [
+        -11.442323304073911,
+        174.4020191122134
+       ]
+      },
+      "tol": 0.01
+     }
+    },
+    {
+     "id": "s36",
+     "label": "mouse 36",
+     "drag": {
+      "point": "Q40",
+      "x": -16.632096968797907,
+      "y": 173.60087911803774
+     },
+     "expect": {
+      "points": {
+       "Q40": [
+        -16.632096968797907,
+        173.60087911803774
+       ]
+      },
+      "tol": 0.01
+     }
+    },
+    {
+     "id": "s37",
+     "label": "mouse 37",
+     "drag": {
+      "point": "Q40",
+      "x": -21.784139478121006,
+      "y": 172.6456909317302
+     },
+     "expect": {
+      "points": {
+       "Q40": [
+        -21.784139478121006,
+        172.6456909317302
+       ]
+      },
+      "tol": 0.01
+     }
+    },
+    {
+     "id": "s38",
+     "label": "mouse 38",
+     "drag": {
+      "point": "Q40",
+      "x": -26.8938900009224,
+      "y": 171.53799597615446
+     },
+     "expect": {
+      "points": {
+       "Q40": [
+        -26.8938900009224,
+        171.53799597615446
+       ]
+      },
+      "tol": 0.01
+     }
+    },
+    {
+     "id": "s39",
+     "label": "mouse 39",
+     "drag": {
+      "point": "Q40",
+      "x": -31.9568461834414,
+      "y": 170.27947034373628
+     },
+     "expect": {
+      "points": {
+       "Q40": [
+        -31.9568461834414,
+        170.27947034373628
+       ]
+      },
+      "tol": 0.01
+     }
+    },
+    {
+     "id": "s40",
+     "label": "mouse 40",
+     "drag": {
+      "point": "Q40",
+      "x": -36.96856811462903,
+      "y": 168.87192267682207
+     },
+     "expect": {
+      "points": {
+       "Q40": [
+        -36.96856811462903,
+        168.87192267682207
+       ]
+      },
+      "tol": 0.01
+     }
+    },
+    {
+     "id": "s41",
+     "label": "mouse 41",
+     "drag": {
+      "point": "Q40",
+      "x": -41.924682217009675,
+      "y": 167.31729193161954
+     },
+     "expect": {
+      "points": {
+       "Q40": [
+        -41.924682217009675,
+        167.31729193161954
+       ]
+      },
+      "tol": 0.01
+     }
+    },
+    {
+     "id": "s42",
+     "label": "mouse 42",
+     "drag": {
+      "point": "Q40",
+      "x": -46.820885059643665,
+      "y": 165.6176450282808
+     },
+     "expect": {
+      "points": {
+       "Q40": [
+        -46.820885059643665,
+        165.6176450282808
+       ]
+      },
+      "tol": 0.01
+     }
+    },
+    {
+     "id": "s43",
+     "label": "mouse 43",
+     "drag": {
+      "point": "Q40",
+      "x": -51.6529470898723,
+      "y": 163.7751743897873
+     },
+     "expect": {
+      "points": {
+       "Q40": [
+        -51.6529470898723,
+        163.7751743897873
+       ]
+      },
+      "tol": 0.01
+     }
+    },
+    {
+     "id": "s44",
+     "label": "mouse 44",
+     "drag": {
+      "point": "Q40",
+      "x": -56.416716280611595,
+      "y": 161.79219537239186
+     },
+     "expect": {
+      "points": {
+       "Q40": [
+        -56.416716280611595,
+        161.79219537239186
+       ]
+      },
+      "tol": 0.01
+     }
+    },
+    {
+     "id": "s45",
+     "label": "mouse 45",
+     "drag": {
+      "point": "Q40",
+      "x": -61.1081216900579,
+      "y": 159.6711435904673
+     },
+     "expect": {
+      "points": {
+       "Q40": [
+        -61.1081216900579,
+        159.6711435904673
+       ]
+      },
+      "tol": 0.01
+     }
+    },
+    {
+     "id": "s46",
+     "label": "mouse 46",
+     "drag": {
+      "point": "Q40",
+      "x": -65.72317693075907,
+      "y": 157.41457213870143
+     },
+     "expect": {
+      "points": {
+       "Q40": [
+        -65.72317693075907,
+        157.41457213870143
+       ]
+      },
+      "tol": 0.01
+     }
+    },
+    {
+     "id": "s47",
+     "label": "mouse 47",
+     "drag": {
+      "point": "Q40",
+      "x": -70.25798354510503,
+      "y": 155.02514871466582
+     },
+     "expect": {
+      "points": {
+       "Q40": [
+        -70.25798354510503,
+        155.02514871466582
+       ]
+      },
+      "tol": 0.01
+     }
+    },
+    {
+     "id": "s48",
+     "label": "mouse 48",
+     "drag": {
+      "point": "Q40",
+      "x": -74.70873428439177,
+      "y": 152.50565264486855
+     },
+     "expect": {
+      "points": {
+       "Q40": [
+        -74.70873428439177,
+        152.50565264486855
+       ]
+      },
+      "tol": 0.01
+     }
+    },
+    {
+     "id": "s49",
+     "label": "mouse 49",
+     "drag": {
+      "point": "Q40",
+      "x": -79.07171628871195,
+      "y": 149.85897181748481
+     },
+     "expect": {
+      "points": {
+       "Q40": [
+        -79.07171628871195,
+        149.85897181748481
+       ]
+      },
+      "tol": 0.01
+     }
+    },
+    {
+     "id": "s50",
+     "label": "mouse 50",
+     "drag": {
+      "point": "Q40",
+      "x": -83.3433141650348,
+      "y": 147.0880995250334
+     },
+     "expect": {
+      "points": {
+       "Q40": [
+        -83.3433141650348,
+        147.0880995250334
+       ]
+      },
+      "tol": 0.01
+     }
+    },
+    {
+     "id": "s51",
+     "label": "mouse 51",
+     "drag": {
+      "point": "Q40",
+      "x": -87.5200129609395,
+      "y": 144.19613122034448
+     },
+     "expect": {
+      "points": {
+       "Q40": [
+        -87.5200129609395,
+        144.19613122034448
+       ]
+      },
+      "tol": 0.01
+     }
+    },
+    {
+     "id": "s52",
+     "label": "mouse 52",
+     "drag": {
+      "point": "Q40",
+      "x": -91.59840103158035,
+      "y": 141.18626118923206
+     },
+     "expect": {
+      "points": {
+       "Q40": [
+        -91.59840103158035,
+        141.18626118923206
+       ]
+      },
+      "tol": 0.01
+     }
+    },
+    {
+     "id": "s53",
+     "label": "mouse 53",
+     "drag": {
+      "point": "Q40",
+      "x": -95.57517279756779,
+      "y": 138.06177914335393
+     },
+     "expect": {
+      "points": {
+       "Q40": [
+        -95.57517279756779,
+        138.06177914335393
+       ]
+      },
+      "tol": 0.01
+     }
+    },
+    {
+     "id": "s54",
+     "label": "mouse 54",
+     "drag": {
+      "point": "Q40",
+      "x": -99.44713139156661,
+      "y": 134.82606673680363
+     },
+     "expect": {
+      "points": {
+       "Q40": [
+        -99.44713139156661,
+        134.82606673680363
+       ]
+      },
+      "tol": 0.01
+     }
+    },
+    {
+     "id": "s55",
+     "label": "mouse 55",
+     "drag": {
+      "point": "Q40",
+      "x": -103.21119119152353,
+      "y": 131.48259401004043
+     },
+     "expect": {
+      "points": {
+       "Q40": [
+        -103.21119119152353,
+        131.48259401004043
+       ]
+      },
+      "tol": 0.01
+     }
+    },
+    {
+     "id": "s56",
+     "label": "mouse 56",
+     "drag": {
+      "point": "Q40",
+      "x": -106.86438023855395,
+      "y": 128.03491576481923
+     },
+     "expect": {
+      "points": {
+       "Q40": [
+        -106.86438023855395,
+        128.03491576481923
+       ]
+      },
+      "tol": 0.01
+     }
+    },
+    {
+     "id": "s57",
+     "label": "mouse 57",
+     "drag": {
+      "point": "Q40",
+      "x": -110.40384253763624,
+      "y": 124.48666787383353
+     },
+     "expect": {
+      "points": {
+       "Q40": [
+        -110.40384253763624,
+        124.48666787383353
+       ]
+      },
+      "tol": 0.01
+     }
+    },
+    {
+     "id": "s58",
+     "label": "mouse 58",
+     "drag": {
+      "point": "Q40",
+      "x": -113.82684023937723,
+      "y": 120.84156352883625
+     },
+     "expect": {
+      "points": {
+       "Q40": [
+        -113.82684023937723,
+        120.84156352883625
+       ]
+      },
+      "tol": 0.01
+     }
+    },
+    {
+     "id": "s59",
+     "label": "mouse 59",
+     "drag": {
+      "point": "Q40",
+      "x": -117.1307557012377,
+      "y": 117.1033894310453
+     },
+     "expect": {
+      "points": {
+       "Q40": [
+        -117.1307557012377,
+        117.1033894310453
+       ]
+      },
+      "tol": 0.01
+     }
+    },
+    {
+     "id": "s60",
+     "label": "mouse 60",
+     "drag": {
+      "point": "Q40",
+      "x": -120.31309342672284,
+      "y": 113.27600192768458
+     },
+     "expect": {
+      "points": {
+       "Q40": [
+        -120.31309342672284,
+        113.27600192768458
+       ]
+      },
+      "tol": 0.01
+     }
+    },
+    {
+     "id": "s61",
+     "label": "mouse 61",
+     "drag": {
+      "point": "Q40",
+      "x": -123.37148188116925,
+      "y": 109.36332309854608
+     },
+     "expect": {
+      "points": {
+       "Q40": [
+        -123.37148188116925,
+        109.36332309854608
+       ]
+      },
+      "tol": 0.01
+     }
+    },
+    {
+     "id": "s62",
+     "label": "mouse 62",
+     "drag": {
+      "point": "Q40",
+      "x": -126.3036751828801,
+      "y": 105.3693367964947
+     },
+     "expect": {
+      "points": {
+       "Q40": [
+        -126.3036751828801,
+        105.3693367964947
+       ]
+      },
+      "tol": 0.01
+     }
+    },
+    {
+     "id": "s63",
+     "label": "mouse 63",
+     "drag": {
+      "point": "Q40",
+      "x": -129.10755466848585,
+      "y": 101.29808464586567
+     },
+     "expect": {
+      "points": {
+       "Q40": [
+        -129.10755466848585,
+        101.29808464586567
+       ]
+      },
+      "tol": 0.01
+     }
+    },
+    {
+     "id": "s64",
+     "label": "mouse 64",
+     "drag": {
+      "point": "Q40",
+      "x": -131.78113033153224,
+      "y": 97.1536620027295
+     },
+     "expect": {
+      "points": {
+       "Q40": [
+        -131.78113033153224,
+        97.1536620027295
+       ]
+      },
+      "tol": 0.01
+     }
+    },
+    {
+     "id": "s65",
+     "label": "mouse 65",
+     "drag": {
+      "point": "Q40",
+      "x": -134.32254213342114,
+      "y": 92.94021388102412
+     },
+     "expect": {
+      "points": {
+       "Q40": [
+        -134.32254213342114,
+        92.94021388102412
+       ]
+      },
+      "tol": 0.01
+     }
+    },
+    {
+     "id": "s66",
+     "label": "mouse 66",
+     "drag": {
+      "point": "Q40",
+      "x": -136.73006118595788,
+      "y": 88.66193084856758
+     },
+     "expect": {
+      "points": {
+       "Q40": [
+        -136.73006118595788,
+        88.66193084856758
+       ]
+      },
+      "tol": 0.01
+     }
+    },
+    {
+     "id": "s67",
+     "label": "mouse 67",
+     "drag": {
+      "point": "Q40",
+      "x": -139.00209080488148,
+      "y": 84.3230448969833
+     },
+     "expect": {
+      "points": {
+       "Q40": [
+        -139.00209080488148,
+        84.3230448969833
+       ]
+      },
+      "tol": 0.01
+     }
+    },
+    {
+     "id": "s68",
+     "label": "mouse 68",
+     "drag": {
+      "point": "Q40",
+      "x": -141.13716743388306,
+      "y": 79.92782528957551
+     },
+     "expect": {
+      "points": {
+       "Q40": [
+        -141.13716743388306,
+        79.92782528957551
+       ]
+      },
+      "tol": 0.01
+     }
+    },
+    {
+     "id": "s69",
+     "label": "mouse 69",
+     "drag": {
+      "point": "Q40",
+      "x": -143.1339614387414,
+      "y": 75.48057439120247
+     },
+     "expect": {
+      "points": {
+       "Q40": [
+        -143.1339614387414,
+        75.48057439120247
+       ]
+      },
+      "tol": 0.01
+     }
+    },
+    {
+     "id": "s70",
+     "label": "mouse 70",
+     "drag": {
+      "point": "Q40",
+      "x": -144.99127777133273,
+      "y": 70.98562348419405
+     },
+     "expect": {
+      "points": {
+       "Q40": [
+        -144.99127777133273,
+        70.98562348419405
+       ]
+      },
+      "tol": 0.01
+     }
+    },
+    {
+     "id": "s71",
+     "label": "mouse 71",
+     "drag": {
+      "point": "Q40",
+      "x": -146.7080565033951,
+      "y": 66.4473285743616
+     },
+     "expect": {
+      "points": {
+       "Q40": [
+        -146.7080565033951,
+        66.4473285743616
+       ]
+      },
+      "tol": 0.01
+     }
+    },
+    {
+     "id": "s72",
+     "label": "mouse 72",
+     "drag": {
+      "point": "Q40",
+      "x": -148.2833732300559,
+      "y": 61.87006619113924
+     },
+     "expect": {
+      "points": {
+       "Q40": [
+        -148.2833732300559,
+        61.87006619113924
+       ]
+      },
+      "tol": 0.01
+     }
+    },
+    {
+     "id": "s73",
+     "label": "mouse 73",
+     "drag": {
+      "point": "Q40",
+      "x": -149.7164393432534,
+      "y": 57.258229185889554
+     },
+     "expect": {
+      "points": {
+       "Q40": [
+        -149.7164393432534,
+        57.258229185889554
+       ]
+      },
+      "tol": 0.01
+     }
+    },
+    {
+     "id": "s74",
+     "label": "mouse 74",
+     "drag": {
+      "point": "Q40",
+      "x": -151.00660217530978,
+      "y": 52.61622253239034
+     },
+     "expect": {
+      "points": {
+       "Q40": [
+        -151.00660217530978,
+        52.61622253239034
+       ]
+      },
+      "tol": 0.01
+     }
+    },
+    {
+     "id": "s75",
+     "label": "mouse 75",
+     "drag": {
+      "point": "Q40",
+      "x": -152.15334501303545,
+      "y": 47.94845913350415
+     },
+     "expect": {
+      "points": {
+       "Q40": [
+        -152.15334501303545,
+        47.94845913350415
+       ]
+      },
+      "tol": 0.01
+     }
+    },
+    {
+     "id": "s76",
+     "label": "mouse 76",
+     "drag": {
+      "point": "Q40",
+      "x": -153.1562869828676,
+      "y": 43.259355638010625
+     },
+     "expect": {
+      "points": {
+       "Q40": [
+        -153.1562869828676,
+        43.259355638010625
+       ]
+      },
+      "tol": 0.01
+     }
+    },
+    {
+     "id": "s77",
+     "label": "mouse 77",
+     "drag": {
+      "point": "Q40",
+      "x": -154.01518280766925,
+      "y": 38.55332827155561
+     },
+     "expect": {
+      "points": {
+       "Q40": [
+        -154.01518280766925,
+        38.55332827155561
+       ]
+      },
+      "tol": 0.01
+     }
+    },
+    {
+     "id": "s78",
+     "label": "mouse 78",
+     "drag": {
+      "point": "Q40",
+      "x": -154.7299224359334,
+      "y": 33.834788685645904
+     },
+     "expect": {
+      "points": {
+       "Q40": [
+        -154.7299224359334,
+        33.834788685645904
+       ]
+      },
+      "tol": 0.01
+     }
+    },
+    {
+     "id": "s79",
+     "label": "mouse 79",
+     "drag": {
+      "point": "Q40",
+      "x": -155.30053054425994,
+      "y": 29.108139828581965
+     },
+     "expect": {
+      "points": {
+       "Q40": [
+        -155.30053054425994,
+        29.108139828581965
+       ]
+      },
+      "tol": 0.01
+     }
+    },
+    {
+     "id": "s80",
+     "label": "mouse 80",
+     "drag": {
+      "point": "Q40",
+      "x": -155.72716591408872,
+      "y": 24.377771842189702
+     },
+     "expect": {
+      "points": {
+       "Q40": [
+        -155.72716591408872,
+        24.377771842189702
+       ]
+      },
+      "tol": 0.01
+     }
+    },
+    {
+     "id": "s81",
+     "label": "mouse 81",
+     "drag": {
+      "point": "Q40",
+      "x": -156.01012068379106,
+      "y": 19.64805798816867
+     },
+     "expect": {
+      "points": {
+       "Q40": [
+        -156.01012068379106,
+        19.64805798816867
+       ]
+      },
+      "tol": 0.01
+     }
+    },
+    {
+     "id": "s82",
+     "label": "mouse 82",
+     "drag": {
+      "point": "Q40",
+      "x": -156.1498194773375,
+      "y": 14.92335060783497
+     },
+     "expect": {
+      "points": {
+       "Q40": [
+        -156.1498194773375,
+        14.92335060783497
+       ]
+      },
+      "tol": 0.01
+     }
+    },
+    {
+     "id": "s83",
+     "label": "mouse 83",
+     "drag": {
+      "point": "Q40",
+      "x": -156.1468184108728,
+      "y": 10.207977118988241
+     },
+     "expect": {
+      "points": {
+       "Q40": [
+        -156.1468184108728,
+        10.207977118988241
+       ]
+      },
+      "tol": 0.01
+     }
+    },
+    {
+     "id": "s84",
+     "label": "mouse 84",
+     "drag": {
+      "point": "Q40",
+      "x": -156.00180397864307,
+      "y": 5.506236053582279
+     },
+     "expect": {
+      "points": {
+       "Q40": [
+        -156.00180397864307,
+        5.506236053582279
+       ]
+      },
+      "tol": 0.01
+     }
+    },
+    {
+     "id": "s85",
+     "label": "mouse 85",
+     "drag": {
+      "point": "Q40",
+      "x": -155.71559181982914,
+      "y": 0.8223931398279972
+     },
+     "expect": {
+      "points": {
+       "Q40": [
+        -155.71559181982914,
+        0.8223931398279972
+       ]
+      },
+      "tol": 0.01
+     }
+    },
+    {
+     "id": "s86",
+     "label": "mouse 86",
+     "drag": {
+      "point": "Q40",
+      "x": -155.28912536795025,
+      "y": -3.839322567703
+     },
+     "expect": {
+      "points": {
+       "Q40": [
+        -155.28912536795025,
+        -3.839322567703
+       ]
+      },
+      "tol": 0.01
+     }
+    },
+    {
+     "id": "s87",
+     "label": "mouse 87",
+     "drag": {
+      "point": "Q40",
+      "x": -154.72347438460832,
+      "y": -8.474722506461479
+     },
+     "expect": {
+      "points": {
+       "Q40": [
+        -154.72347438460832,
+        -8.474722506461479
+       ]
+      },
+      "tol": 0.01
+     }
+    },
+    {
+     "id": "s88",
+     "label": "mouse 88",
+     "drag": {
+      "point": "Q40",
+      "x": -154.01983337944725,
+      "y": -13.07966236934485
+     },
+     "expect": {
+      "points": {
+       "Q40": [
+        -154.01983337944725,
+        -13.07966236934485
+       ]
+      },
+      "tol": 0.01
+     }
+    },
+    {
+     "id": "s89",
+     "label": "mouse 89",
+     "drag": {
+      "point": "Q40",
+      "x": -153.17951991830552,
+      "y": -17.650045809779492
+     },
+     "expect": {
+      "points": {
+       "Q40": [
+        -153.17951991830552,
+        -17.650045809779492
+       ]
+      },
+      "tol": 0.01
+     }
+    },
+    {
+     "id": "s90",
+     "label": "mouse 90",
+     "drag": {
+      "point": "Q40",
+      "x": -152.20397282163933,
+      "y": -22.18182808514955
+     },
+     "expect": {
+      "points": {
+       "Q40": [
+        -152.20397282163933,
+        -22.18182808514955
+       ]
+      },
+      "tol": 0.01
+     }
+    },
+    {
+     "id": "s91",
+     "label": "mouse 91",
+     "drag": {
+      "point": "Q40",
+      "x": -151.09475025539163,
+      "y": -26.671019635332804
+     },
+     "expect": {
+      "points": {
+       "Q40": [
+        -151.09475025539163,
+        -26.671019635332804
+       ]
+      },
+      "tol": 0.01
+     }
+    },
+    {
+     "id": "s92",
+     "label": "mouse 92",
+     "drag": {
+      "point": "Q40",
+      "x": -149.85352771657864,
+      "y": -31.113689593176673
+     },
+     "expect": {
+      "points": {
+       "Q40": [
+        -149.85352771657864,
+        -31.113689593176673
+       ]
+      },
+      "tol": 0.01
+     }
+    },
+    {
+     "id": "s93",
+     "label": "mouse 93",
+     "drag": {
+      "point": "Q40",
+      "x": -148.48209591595673,
+      "y": -35.50596922382924
+     },
+     "expect": {
+      "points": {
+       "Q40": [
+        -148.48209591595673,
+        -35.50596922382924
+       ]
+      },
+      "tol": 0.01
+     }
+    },
+    {
+     "id": "s94",
+     "label": "mouse 94",
+     "drag": {
+      "point": "Q40",
+      "x": -146.98235856022436,
+      "y": -39.84405528991626
+     },
+     "expect": {
+      "points": {
+       "Q40": [
+        -146.98235856022436,
+        -39.84405528991626
+       ]
+      },
+      "tol": 0.01
+     }
+    },
+    {
+     "id": "s95",
+     "label": "mouse 95",
+     "drag": {
+      "point": "Q40",
+      "x": -145.35633003630008,
+      "y": -44.12421333964269
+     },
+     "expect": {
+      "points": {
+       "Q40": [
+        -145.35633003630008,
+        -44.12421333964269
+       ]
+      },
+      "tol": 0.01
+     }
+    },
+    {
+     "id": "s96",
+     "label": "mouse 96",
+     "drag": {
+      "point": "Q40",
+      "x": -143.60613300030317,
+      "y": -48.342780914978526
+     },
+     "expect": {
+      "points": {
+       "Q40": [
+        -143.60613300030317,
+        -48.342780914978526
+       ]
+      },
+      "tol": 0.01
+     }
+    },
+    {
+     "id": "s97",
+     "label": "mouse 97",
+     "drag": {
+      "point": "Q40",
+      "x": -141.73399587394462,
+      "y": -52.49617067718135
+     },
+     "expect": {
+      "points": {
+       "Q40": [
+        -141.73399587394462,
+        -52.49617067718135
+       ]
+      },
+      "tol": 0.01
+     }
+    },
+    {
+     "id": "s98",
+     "label": "mouse 98",
+     "drag": {
+      "point": "Q40",
+      "x": -139.74225025111588,
+      "y": -56.58087344699437
+     },
+     "expect": {
+      "points": {
+       "Q40": [
+        -139.74225025111588,
+        -56.58087344699437
+       ]
+      },
+      "tol": 0.01
+     }
+    },
+    {
+     "id": "s99",
+     "label": "mouse 99",
+     "drag": {
+      "point": "Q40",
+      "x": -137.6333282175383,
+      "y": -60.59346115695401
+     },
+     "expect": {
+      "points": {
+       "Q40": [
+        -137.6333282175383,
+        -60.59346115695401
+       ]
+      },
+      "tol": 0.01
+     }
+    },
+    {
+     "id": "s100",
+     "label": "mouse 100",
+     "drag": {
+      "point": "Q40",
+      "x": -135.409759586409,
+      "y": -64.53058971333607
+     },
+     "expect": {
+      "points": {
+       "Q40": [
+        -135.409759586409,
+        -64.53058971333607
+       ]
+      },
+      "tol": 0.01
+     }
+    }
+   ]
+  }
+ ]
+}

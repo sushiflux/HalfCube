@@ -1,0 +1,442 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:partcraft:engine-protocol:0",
+  "title": "Partcraft engine message protocol v0",
+  "description": "JSON headers of engine messages. Binary payload layout: see protocol.ts (MeshLayout). Entry points: #/$defs/command, #/$defs/engineMessage, #/$defs/recipe.",
+  "$defs": {
+    "requestId": { "type": "integer", "minimum": 1, "maximum": 2147483647 },
+    "version": { "type": "integer", "minimum": 0 },
+    "replyTo": { "oneOf": [{ "$ref": "#/$defs/requestId" }, { "type": "null" }] },
+    "recipeVersionOut": { "type": "integer", "minimum": -1 },
+    "vec3": { "type": "array", "items": { "type": "number" }, "minItems": 3, "maxItems": 3 },
+
+    "recipeValue": { "oneOf": [{ "type": "number" }, { "type": "string", "minLength": 1 }] },
+    "recipe": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["format", "formatVersion", "parameters", "steps"],
+      "properties": {
+        "format": { "const": "partcraft.recipe" },
+        "formatVersion": { "const": 0 },
+        "parameters": { "type": "object", "additionalProperties": { "type": "number" } },
+        "steps": { "type": "array", "items": { "$ref": "#/$defs/recipeStep" } }
+      }
+    },
+    "recipeStep": {
+      "oneOf": [
+        { "$ref": "#/$defs/boxStep" },
+        { "$ref": "#/$defs/holeStep" },
+        { "$ref": "#/$defs/filletStep" },
+        { "$ref": "#/$defs/springStep" },
+        { "$ref": "#/$defs/debugSpinStep" }
+      ]
+    },
+    "stepId": { "type": "string", "minLength": 1 },
+    "boxStep": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "type", "body", "origin", "size"],
+      "properties": {
+        "id": { "$ref": "#/$defs/stepId" },
+        "type": { "const": "box" },
+        "body": { "type": "string", "minLength": 1 },
+        "origin": { "type": "array", "items": { "$ref": "#/$defs/recipeValue" }, "minItems": 3, "maxItems": 3 },
+        "size": { "type": "array", "items": { "$ref": "#/$defs/recipeValue" }, "minItems": 3, "maxItems": 3 }
+      }
+    },
+    "holeStep": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "type", "body", "center", "diameter"],
+      "properties": {
+        "id": { "$ref": "#/$defs/stepId" },
+        "type": { "const": "hole" },
+        "body": { "type": "string", "minLength": 1 },
+        "center": { "type": "array", "items": { "$ref": "#/$defs/recipeValue" }, "minItems": 2, "maxItems": 2 },
+        "diameter": { "$ref": "#/$defs/recipeValue" }
+      }
+    },
+    "filletStep": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "type", "body", "edges", "radius"],
+      "properties": {
+        "id": { "$ref": "#/$defs/stepId" },
+        "type": { "const": "fillet" },
+        "body": { "type": "string", "minLength": 1 },
+        "edges": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["selector", "hole"],
+          "properties": { "selector": { "const": "holeTopEdge" }, "hole": { "$ref": "#/$defs/stepId" } }
+        },
+        "radius": { "$ref": "#/$defs/recipeValue" }
+      }
+    },
+    "springStep": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "type", "body", "radius", "pitch", "turns", "wireDiameter"],
+      "properties": {
+        "id": { "$ref": "#/$defs/stepId" },
+        "type": { "const": "spring" },
+        "body": { "type": "string", "minLength": 1 },
+        "radius": { "$ref": "#/$defs/recipeValue" },
+        "pitch": { "$ref": "#/$defs/recipeValue" },
+        "turns": { "$ref": "#/$defs/recipeValue" },
+        "wireDiameter": { "$ref": "#/$defs/recipeValue" }
+      }
+    },
+    "debugSpinStep": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "type", "ms"],
+      "properties": {
+        "id": { "$ref": "#/$defs/stepId" },
+        "type": { "const": "debug.spin" },
+        "ms": { "$ref": "#/$defs/recipeValue" }
+      }
+    },
+
+    "command": {
+      "oneOf": [
+        { "$ref": "#/$defs/hello" },
+        { "$ref": "#/$defs/loadRecipe" },
+        { "$ref": "#/$defs/setParameter" },
+        { "$ref": "#/$defs/cancel" },
+        { "$ref": "#/$defs/ping" },
+        { "$ref": "#/$defs/shutdown" },
+        { "$ref": "#/$defs/debugCrash" },
+        { "$ref": "#/$defs/debugPayload" }
+      ]
+    },
+    "hello": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "id", "protocol", "client"],
+      "properties": {
+        "type": { "const": "hello" },
+        "id": { "$ref": "#/$defs/requestId" },
+        "protocol": { "type": "integer" },
+        "client": { "type": "string" }
+      }
+    },
+    "loadRecipe": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "id", "recipeVersion", "recipe"],
+      "properties": {
+        "type": { "const": "loadRecipe" },
+        "id": { "$ref": "#/$defs/requestId" },
+        "recipeVersion": { "$ref": "#/$defs/version" },
+        "recipe": { "$ref": "#/$defs/recipe" }
+      }
+    },
+    "setParameter": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "id", "recipeVersion", "name", "value"],
+      "properties": {
+        "type": { "const": "setParameter" },
+        "id": { "$ref": "#/$defs/requestId" },
+        "recipeVersion": { "$ref": "#/$defs/version" },
+        "name": { "type": "string", "minLength": 1 },
+        "value": { "type": "number" }
+      }
+    },
+    "cancel": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "id", "target"],
+      "properties": {
+        "type": { "const": "cancel" },
+        "id": { "$ref": "#/$defs/requestId" },
+        "target": { "$ref": "#/$defs/requestId" }
+      }
+    },
+    "ping": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "id"],
+      "properties": { "type": { "const": "ping" }, "id": { "$ref": "#/$defs/requestId" } }
+    },
+    "shutdown": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "id"],
+      "properties": { "type": { "const": "shutdown" }, "id": { "$ref": "#/$defs/requestId" } }
+    },
+    "debugCrash": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "id", "mode"],
+      "properties": {
+        "type": { "const": "debugCrash" },
+        "id": { "$ref": "#/$defs/requestId" },
+        "mode": { "enum": ["abort", "nullcall", "intdiv"] }
+      }
+    },
+    "debugPayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "id", "bytes"],
+      "properties": {
+        "type": { "const": "debugPayload" },
+        "id": { "$ref": "#/$defs/requestId" },
+        "bytes": { "type": "integer", "minimum": 0, "maximum": 1073741824 }
+      }
+    },
+
+    "engineMessage": {
+      "oneOf": [
+        { "$ref": "#/$defs/helloResult" },
+        { "$ref": "#/$defs/progress" },
+        { "$ref": "#/$defs/result" },
+        { "$ref": "#/$defs/pong" },
+        { "$ref": "#/$defs/cancelResult" },
+        { "$ref": "#/$defs/bye" },
+        { "$ref": "#/$defs/debugPayloadResult" },
+        { "$ref": "#/$defs/error" }
+      ]
+    },
+    "helloResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "replyTo", "recipeVersion", "protocol", "engine", "capabilities", "limits"],
+      "properties": {
+        "type": { "const": "helloResult" },
+        "replyTo": { "$ref": "#/$defs/requestId" },
+        "recipeVersion": { "$ref": "#/$defs/recipeVersionOut" },
+        "protocol": { "const": 0 },
+        "engine": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["name", "version", "kernel", "platform", "build"],
+          "properties": {
+            "name": { "const": "partcraft-engine" },
+            "version": { "type": "string" },
+            "kernel": { "type": "string" },
+            "platform": { "type": "string" },
+            "build": { "type": "string" }
+          }
+        },
+        "capabilities": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["debugCommands", "pingWhileBusy", "cancelWhileBusy"],
+          "properties": {
+            "debugCommands": { "type": "boolean" },
+            "pingWhileBusy": { "type": "boolean" },
+            "cancelWhileBusy": { "type": "boolean" }
+          }
+        },
+        "limits": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["maxHeaderBytes", "maxPayloadBytes", "payloadAlignment"],
+          "properties": {
+            "maxHeaderBytes": { "type": "integer" },
+            "maxPayloadBytes": { "type": "integer" },
+            "payloadAlignment": { "type": "integer" }
+          }
+        }
+      }
+    },
+    "stepCheck": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["valid", "volume", "faces", "solids"],
+      "properties": {
+        "valid": { "type": "boolean" },
+        "volume": { "type": "number" },
+        "faces": { "type": "integer", "minimum": 0 },
+        "solids": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "stepStatus": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["stepId", "type", "status", "message", "cached", "ms"],
+      "properties": {
+        "stepId": { "$ref": "#/$defs/stepId" },
+        "type": { "enum": ["box", "hole", "fillet", "spring", "debug.spin"] },
+        "status": { "enum": ["ok", "warning", "error", "skipped"] },
+        "message": { "type": "string" },
+        "cached": { "type": "boolean" },
+        "ms": { "type": "number", "minimum": 0 },
+        "check": { "$ref": "#/$defs/stepCheck" }
+      },
+      "if": { "properties": { "status": { "enum": ["warning", "error", "skipped"] } } },
+      "then": { "properties": { "message": { "type": "string", "minLength": 1 } } }
+    },
+    "progress": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "replyTo", "recipeVersion", "stage", "stepIndex", "stepCount", "stepId"],
+      "properties": {
+        "type": { "const": "progress" },
+        "replyTo": { "$ref": "#/$defs/requestId" },
+        "recipeVersion": { "$ref": "#/$defs/version" },
+        "stage": { "enum": ["step", "mesh"] },
+        "stepIndex": { "type": "integer", "minimum": -1 },
+        "stepCount": { "type": "integer", "minimum": 0 },
+        "stepId": { "oneOf": [{ "$ref": "#/$defs/stepId" }, { "type": "null" }] },
+        "step": { "$ref": "#/$defs/stepStatus" }
+      }
+    },
+    "bufferRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["offset", "byteLength"],
+      "properties": {
+        "offset": { "type": "integer", "minimum": 0, "multipleOf": 16 },
+        "byteLength": { "type": "integer", "minimum": 0, "multipleOf": 4 }
+      }
+    },
+    "faceInfo": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["faceId", "surface", "originStep", "triangleStart", "triangleCount"],
+      "properties": {
+        "faceId": { "type": "integer", "minimum": 0 },
+        "surface": {
+          "enum": ["plane", "cylinder", "cone", "sphere", "torus", "bezier", "bspline", "revolution", "extrusion", "offset", "other"]
+        },
+        "originStep": { "$ref": "#/$defs/stepId" },
+        "triangleStart": { "type": "integer", "minimum": 0 },
+        "triangleCount": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "body": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["bodyId", "lastStepId", "volume", "area", "bbox", "faceCount", "edgeCount", "faces", "mesh"],
+      "properties": {
+        "bodyId": { "type": "string", "minLength": 1 },
+        "lastStepId": { "$ref": "#/$defs/stepId" },
+        "volume": { "type": "number" },
+        "area": { "type": "number" },
+        "bbox": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["min", "max"],
+          "properties": { "min": { "$ref": "#/$defs/vec3" }, "max": { "$ref": "#/$defs/vec3" } }
+        },
+        "faceCount": { "type": "integer", "minimum": 0 },
+        "edgeCount": { "type": "integer", "minimum": 0 },
+        "faces": { "type": "array", "items": { "$ref": "#/$defs/faceInfo" } },
+        "mesh": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["vertexCount", "triangleCount", "edgeSegmentCount", "positions", "normals", "indices", "faceIds", "edgePositions", "edgeIds"],
+          "properties": {
+            "vertexCount": { "type": "integer", "minimum": 0 },
+            "triangleCount": { "type": "integer", "minimum": 0 },
+            "edgeSegmentCount": { "type": "integer", "minimum": 0 },
+            "positions": { "$ref": "#/$defs/bufferRef" },
+            "normals": { "$ref": "#/$defs/bufferRef" },
+            "indices": { "$ref": "#/$defs/bufferRef" },
+            "faceIds": { "$ref": "#/$defs/bufferRef" },
+            "edgePositions": { "$ref": "#/$defs/bufferRef" },
+            "edgeIds": { "$ref": "#/$defs/bufferRef" }
+          }
+        }
+      }
+    },
+    "result": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "replyTo", "recipeVersion", "outcome", "steps", "bodies", "timings", "payloadBytes", "tessellation"],
+      "properties": {
+        "type": { "const": "result" },
+        "replyTo": { "$ref": "#/$defs/requestId" },
+        "recipeVersion": { "$ref": "#/$defs/version" },
+        "outcome": { "enum": ["ok", "warning", "error"] },
+        "steps": { "type": "array", "items": { "$ref": "#/$defs/stepStatus" } },
+        "bodies": { "type": "array", "items": { "$ref": "#/$defs/body" } },
+        "timings": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["rebuildMs", "meshMs", "encodeMs", "totalMs"],
+          "properties": {
+            "rebuildMs": { "type": "number", "minimum": 0 },
+            "meshMs": { "type": "number", "minimum": 0 },
+            "encodeMs": { "type": "number", "minimum": 0 },
+            "totalMs": { "type": "number", "minimum": 0 }
+          }
+        },
+        "payloadBytes": { "type": "integer", "minimum": 0 },
+        "tessellation": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["deflection", "angleDeg"],
+          "properties": { "deflection": { "type": "number" }, "angleDeg": { "type": "number" } }
+        }
+      }
+    },
+    "pong": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "replyTo", "recipeVersion", "busyWith", "queued"],
+      "properties": {
+        "type": { "const": "pong" },
+        "replyTo": { "$ref": "#/$defs/requestId" },
+        "recipeVersion": { "$ref": "#/$defs/recipeVersionOut" },
+        "busyWith": { "oneOf": [{ "$ref": "#/$defs/requestId" }, { "type": "null" }] },
+        "queued": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "cancelResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "replyTo", "recipeVersion", "target", "state"],
+      "properties": {
+        "type": { "const": "cancelResult" },
+        "replyTo": { "$ref": "#/$defs/requestId" },
+        "recipeVersion": { "$ref": "#/$defs/recipeVersionOut" },
+        "target": { "$ref": "#/$defs/requestId" },
+        "state": { "enum": ["queued", "running", "notRunning"] }
+      }
+    },
+    "bye": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "replyTo", "recipeVersion"],
+      "properties": {
+        "type": { "const": "bye" },
+        "replyTo": { "$ref": "#/$defs/requestId" },
+        "recipeVersion": { "$ref": "#/$defs/recipeVersionOut" }
+      }
+    },
+    "debugPayloadResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "replyTo", "recipeVersion", "bytes", "fnv1a", "fillMs"],
+      "properties": {
+        "type": { "const": "debugPayloadResult" },
+        "replyTo": { "$ref": "#/$defs/requestId" },
+        "recipeVersion": { "$ref": "#/$defs/recipeVersionOut" },
+        "bytes": { "type": "integer", "minimum": 0 },
+        "fnv1a": { "type": "integer", "minimum": 0, "maximum": 4294967295 },
+        "fillMs": { "type": "number", "minimum": 0 }
+      }
+    },
+    "error": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "replyTo", "recipeVersion", "code", "message"],
+      "properties": {
+        "type": { "const": "error" },
+        "replyTo": { "$ref": "#/$defs/replyTo" },
+        "recipeVersion": { "$ref": "#/$defs/recipeVersionOut" },
+        "code": {
+          "enum": [
+            "protocol_mismatch", "not_initialized", "bad_message", "unknown_command", "bad_recipe", "no_recipe",
+            "unknown_parameter", "stale_version", "cancelled", "superseded", "debug_disabled", "internal"
+          ]
+        },
+        "message": { "type": "string", "minLength": 1 }
+      }
+    }
+  }
+}

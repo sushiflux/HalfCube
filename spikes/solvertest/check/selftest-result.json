@@ -1,0 +1,965 @@
+{
+ "track": "selftest",
+ "solver": "none (hand-made / closed-form values, used to test the checker)",
+ "build": {
+  "compiler": "none",
+  "flags": "",
+  "eigen": "none",
+  "boost": "none",
+  "other": ""
+ },
+ "runtime": "v26.13.1",
+ "run_date": "2026-11-24",
+ "timing_method": "none",
+ "cases": [
+  {
+   "id": "K01a-horizontal-line",
+   "mapping": "hand-made",
+   "supported": "yes",
+   "status": "Success",
+   "algorithm": "DogLeg",
+   "iterations": null,
+   "time_ms_median": null,
+   "dof": 3,
+   "conflicting": [],
+   "redundant": [],
+   "partially_redundant": [],
+   "geometry": {
+    "P1": {
+     "x": 0,
+     "y": 0
+    },
+    "P2": {
+     "x": 10,
+     "y": 0
+    }
+   },
+   "driven_values": {},
+   "steps": [],
+   "notes": ""
+  },
+  {
+   "id": "K01b-vertical-line",
+   "mapping": "hand-made",
+   "supported": "yes",
+   "status": "Success",
+   "algorithm": "DogLeg",
+   "iterations": null,
+   "time_ms_median": null,
+   "dof": 3,
+   "conflicting": [],
+   "redundant": [],
+   "partially_redundant": [],
+   "geometry": {
+    "P1": {
+     "x": 0,
+     "y": 0
+    },
+    "P2": {
+     "x": 3,
+     "y": 10
+    }
+   },
+   "driven_values": {},
+   "steps": [],
+   "notes": ""
+  },
+  {
+   "id": "K02a-coincident-points",
+   "mapping": "hand-made",
+   "supported": "yes",
+   "status": "Success",
+   "algorithm": "DogLeg",
+   "iterations": null,
+   "time_ms_median": null,
+   "dof": 2,
+   "conflicting": [],
+   "redundant": [],
+   "partially_redundant": [],
+   "geometry": {
+    "P1": {
+     "x": 2.5,
+     "y": 2
+    },
+    "P2": {
+     "x": 2.5,
+     "y": 2
+    }
+   },
+   "driven_values": {},
+   "steps": [],
+   "notes": ""
+  },
+  {
+   "id": "K05a-parallel-one-free",
+   "mapping": "hand-made",
+   "supported": "yes",
+   "status": "Success",
+   "algorithm": "DogLeg",
+   "iterations": null,
+   "time_ms_median": null,
+   "dof": 1,
+   "conflicting": [],
+   "redundant": [],
+   "partially_redundant": [],
+   "geometry": {
+    "P1": {
+     "x": 0,
+     "y": 0
+    },
+    "P2": {
+     "x": 10,
+     "y": 1
+    },
+    "P3": {
+     "x": 0,
+     "y": 5
+    },
+    "P4": {
+     "x": 8,
+     "y": 8
+    }
+   },
+   "driven_values": {},
+   "steps": [],
+   "notes": ""
+  },
+  {
+   "id": "D01-distance-point-point",
+   "mapping": "hand-made",
+   "supported": "yes",
+   "status": "Success",
+   "algorithm": "DogLeg",
+   "iterations": null,
+   "time_ms_median": null,
+   "dof": 1,
+   "conflicting": [],
+   "redundant": [],
+   "partially_redundant": [],
+   "geometry": {
+    "P1": {
+     "x": 0,
+     "y": 0
+    },
+    "P2": {
+     "x": 6,
+     "y": 8
+    }
+   },
+   "driven_values": {},
+   "steps": [],
+   "notes": ""
+  },
+  {
+   "id": "D03-distance-horizontal",
+   "mapping": "hand-made",
+   "supported": "yes",
+   "status": "Success",
+   "algorithm": "DogLeg",
+   "iterations": null,
+   "time_ms_median": null,
+   "dof": 2,
+   "conflicting": [],
+   "redundant": [],
+   "partially_redundant": [],
+   "geometry": {
+    "P1": {
+     "x": 0,
+     "y": 0
+    },
+    "P2": {
+     "x": 12,
+     "y": 5
+    }
+   },
+   "driven_values": {},
+   "steps": [],
+   "notes": ""
+  },
+  {
+   "id": "C01-contradicting-lengths",
+   "mapping": "hand-made",
+   "supported": "yes",
+   "status": "Failed",
+   "algorithm": "DogLeg",
+   "iterations": null,
+   "time_ms_median": null,
+   "dof": null,
+   "conflicting": [
+    "c1"
+   ],
+   "redundant": [],
+   "partially_redundant": [],
+   "geometry": {
+    "P1": {
+     "x": 0,
+     "y": 0
+    },
+    "P2": {
+     "x": 10,
+     "y": 0.5
+    }
+   },
+   "driven_values": {},
+   "steps": [],
+   "notes": ""
+  },
+  {
+   "id": "N01-nondriving-distance",
+   "mapping": "hand-made",
+   "supported": "yes",
+   "status": "Success",
+   "algorithm": "DogLeg",
+   "iterations": null,
+   "time_ms_median": null,
+   "dof": 0,
+   "conflicting": [],
+   "redundant": [],
+   "partially_redundant": [],
+   "geometry": {
+    "P1": {
+     "x": 0,
+     "y": 0
+    },
+    "P2": {
+     "x": 6,
+     "y": 8
+    }
+   },
+   "driven_values": {
+    "c3": 9
+   },
+   "steps": [],
+   "notes": ""
+  },
+  {
+   "id": "N05-nondriving-length",
+   "mapping": "hand-made",
+   "supported": "yes",
+   "status": "Success",
+   "algorithm": "DogLeg",
+   "iterations": null,
+   "time_ms_median": null,
+   "dof": 0,
+   "conflicting": [],
+   "redundant": [],
+   "partially_redundant": [],
+   "geometry": {
+    "P1": {
+     "x": 0,
+     "y": 0
+    },
+    "P2": {
+     "x": 3,
+     "y": 4
+    }
+   },
+   "driven_values": {
+    "c3": 5
+   },
+   "steps": [],
+   "notes": ""
+  },
+  {
+   "id": "K12b-curvature-arc-bspline",
+   "mapping": "hand-made",
+   "supported": "no",
+   "status": "unsupported",
+   "algorithm": "DogLeg",
+   "iterations": null,
+   "time_ms_median": null,
+   "dof": null,
+   "conflicting": [],
+   "redundant": [],
+   "partially_redundant": [],
+   "geometry": {},
+   "driven_values": {},
+   "steps": [],
+   "notes": "no curvature constraint"
+  },
+  {
+   "id": "K03c-tangent-circle-circle-external",
+   "mapping": "hand-made",
+   "supported": "yes",
+   "status": "Success",
+   "algorithm": "DogLeg",
+   "iterations": null,
+   "time_ms_median": null,
+   "dof": 1,
+   "conflicting": [],
+   "redundant": [],
+   "partially_redundant": [],
+   "geometry": {
+    "O1": {
+     "x": 0,
+     "y": 0
+    },
+    "O2": {
+     "x": 8,
+     "y": 0
+    },
+    "C1": {
+     "radius": 5
+    },
+    "C2": {
+     "radius": 3
+    }
+   },
+   "driven_values": {},
+   "steps": [],
+   "notes": ""
+  },
+  {
+   "id": "K03c-tangent-circle-circle-external",
+   "mapping": "hand-made",
+   "supported": "yes",
+   "status": "Success",
+   "algorithm": "LevenbergMarquardt",
+   "iterations": null,
+   "time_ms_median": null,
+   "dof": 1,
+   "conflicting": [],
+   "redundant": [],
+   "partially_redundant": [],
+   "geometry": {
+    "O1": {
+     "x": 0,
+     "y": 0
+    },
+    "O2": {
+     "x": 8,
+     "y": 0
+    },
+    "C1": {
+     "radius": 5
+    },
+    "C2": {
+     "radius": 3
+    }
+   },
+   "driven_values": {},
+   "steps": [],
+   "notes": ""
+  },
+  {
+   "id": "C03-contradicting-triangle",
+   "mapping": "hand-made",
+   "supported": "yes",
+   "status": "Failed",
+   "algorithm": "DogLeg",
+   "iterations": null,
+   "time_ms_median": null,
+   "dof": null,
+   "conflicting": [],
+   "redundant": [],
+   "partially_redundant": [],
+   "geometry": {
+    "P1": {
+     "x": 0,
+     "y": 0
+    },
+    "P2": {
+     "x": 3,
+     "y": 0
+    },
+    "P3": {
+     "x": 2.2,
+     "y": 0
+    }
+   },
+   "driven_values": {},
+   "steps": [],
+   "notes": ""
+  },
+  {
+   "id": "B07-rational-quarter-circle",
+   "mapping": "hand-made",
+   "supported": "yes",
+   "status": "Success",
+   "algorithm": "DogLeg",
+   "iterations": null,
+   "time_ms_median": null,
+   "dof": 1,
+   "conflicting": [],
+   "redundant": [],
+   "partially_redundant": [],
+   "geometry": {
+    "O": {
+     "x": 0,
+     "y": 0
+    },
+    "P1": {
+     "x": 5,
+     "y": 0
+    },
+    "P2": {
+     "x": 5,
+     "y": 5
+    },
+    "P3": {
+     "x": 0,
+     "y": 5
+    },
+    "Pt": {
+     "x": 3.83022221559489,
+     "y": 3.2139380484326963
+    }
+   },
+   "driven_values": {},
+   "steps": [],
+   "notes": ""
+  },
+  {
+   "id": "S01-triangle-side-sweep",
+   "mapping": "hand-made",
+   "supported": "yes",
+   "status": "Success",
+   "algorithm": "DogLeg",
+   "iterations": null,
+   "time_ms_median": null,
+   "dof": 0,
+   "conflicting": [],
+   "redundant": [],
+   "partially_redundant": [],
+   "geometry": {
+    "P1": {
+     "x": 0,
+     "y": 0
+    },
+    "P2": {
+     "x": 100,
+     "y": 0
+    },
+    "P3": {
+     "x": 50,
+     "y": -86.60254037844386
+    }
+   },
+   "driven_values": {},
+   "steps": [
+    {
+     "step": 0,
+     "status": "Success",
+     "dof": 0,
+     "geometry": {
+      "P1": {
+       "x": 0,
+       "y": 0
+      },
+      "P2": {
+       "x": 100,
+       "y": 0
+      },
+      "P3": {
+       "x": 99.5,
+       "y": 9.987492177719089
+      }
+     }
+    },
+    {
+     "step": 1,
+     "status": "Success",
+     "dof": 0,
+     "geometry": {
+      "P1": {
+       "x": 0,
+       "y": 0
+      },
+      "P2": {
+       "x": 100,
+       "y": 0
+      },
+      "P3": {
+       "x": 98,
+       "y": 19.8997487421324
+      }
+     }
+    },
+    {
+     "step": 2,
+     "status": "Success",
+     "dof": 0,
+     "geometry": {
+      "P1": {
+       "x": 0,
+       "y": 0
+      },
+      "P2": {
+       "x": 100,
+       "y": 0
+      },
+      "P3": {
+       "x": 95.5,
+       "y": 29.660579899927782
+      }
+     }
+    },
+    {
+     "step": 3,
+     "status": "Success",
+     "dof": 0,
+     "geometry": {
+      "P1": {
+       "x": 0,
+       "y": 0
+      },
+      "P2": {
+       "x": 100,
+       "y": 0
+      },
+      "P3": {
+       "x": 92,
+       "y": 39.191835884530846
+      }
+     }
+    },
+    {
+     "step": 4,
+     "status": "Success",
+     "dof": 0,
+     "geometry": {
+      "P1": {
+       "x": 0,
+       "y": 0
+      },
+      "P2": {
+       "x": 100,
+       "y": 0
+      },
+      "P3": {
+       "x": 87.5,
+       "y": 48.41229182759271
+      }
+     }
+    },
+    {
+     "step": 5,
+     "status": "Success",
+     "dof": 0,
+     "geometry": {
+      "P1": {
+       "x": 0,
+       "y": 0
+      },
+      "P2": {
+       "x": 100,
+       "y": 0
+      },
+      "P3": {
+       "x": 82,
+       "y": -57.23635208501674
+      }
+     }
+    },
+    {
+     "step": 6,
+     "status": "Success",
+     "dof": 0,
+     "geometry": {
+      "P1": {
+       "x": 0,
+       "y": 0
+      },
+      "P2": {
+       "x": 100,
+       "y": 0
+      },
+      "P3": {
+       "x": 75.5,
+       "y": -65.57247898318317
+      }
+     }
+    },
+    {
+     "step": 7,
+     "status": "Success",
+     "dof": 0,
+     "geometry": {
+      "P1": {
+       "x": 0,
+       "y": 0
+      },
+      "P2": {
+       "x": 100,
+       "y": 0
+      },
+      "P3": {
+       "x": 68,
+       "y": -73.32121111929344
+      }
+     }
+    },
+    {
+     "step": 8,
+     "status": "Success",
+     "dof": 0,
+     "geometry": {
+      "P1": {
+       "x": 0,
+       "y": 0
+      },
+      "P2": {
+       "x": 100,
+       "y": 0
+      },
+      "P3": {
+       "x": 59.5,
+       "y": -80.37256994771288
+      }
+     }
+    },
+    {
+     "step": 9,
+     "status": "Success",
+     "dof": 0,
+     "geometry": {
+      "P1": {
+       "x": 0,
+       "y": 0
+      },
+      "P2": {
+       "x": 100,
+       "y": 0
+      },
+      "P3": {
+       "x": 50,
+       "y": -86.60254037844386
+      }
+     }
+    }
+   ],
+   "notes": ""
+  },
+  {
+   "id": "S03-circle-tangent-radius-sweep",
+   "mapping": "hand-made",
+   "supported": "yes",
+   "status": "Success",
+   "algorithm": "DogLeg",
+   "iterations": null,
+   "time_ms_median": null,
+   "dof": 0,
+   "conflicting": [],
+   "redundant": [],
+   "partially_redundant": [],
+   "geometry": {
+    "A": {
+     "x": -100,
+     "y": 0
+    },
+    "B": {
+     "x": 100,
+     "y": 0
+    },
+    "M": {
+     "x": 0,
+     "y": 0
+    },
+    "C": {
+     "x": 0,
+     "y": 50
+    },
+    "K1": {
+     "radius": 50
+    }
+   },
+   "driven_values": {},
+   "steps": [
+    {
+     "step": 0,
+     "status": "Success",
+     "dof": 0,
+     "geometry": {
+      "A": {
+       "x": -100,
+       "y": 0
+      },
+      "B": {
+       "x": 100,
+       "y": 0
+      },
+      "M": {
+       "x": 0,
+       "y": 0
+      },
+      "C": {
+       "x": 0,
+       "y": 5
+      },
+      "K1": {
+       "radius": 5
+      }
+     }
+    },
+    {
+     "step": 1,
+     "status": "Success",
+     "dof": 0,
+     "geometry": {
+      "A": {
+       "x": -100,
+       "y": 0
+      },
+      "B": {
+       "x": 100,
+       "y": 0
+      },
+      "M": {
+       "x": 0,
+       "y": 0
+      },
+      "C": {
+       "x": 0,
+       "y": 10
+      },
+      "K1": {
+       "radius": 10
+      }
+     }
+    },
+    {
+     "step": 2,
+     "status": "Success",
+     "dof": 0,
+     "geometry": {
+      "A": {
+       "x": -100,
+       "y": 0
+      },
+      "B": {
+       "x": 100,
+       "y": 0
+      },
+      "M": {
+       "x": 0,
+       "y": 0
+      },
+      "C": {
+       "x": 0,
+       "y": 15
+      },
+      "K1": {
+       "radius": 15
+      }
+     }
+    },
+    {
+     "step": 3,
+     "status": "Success",
+     "dof": 0,
+     "geometry": {
+      "A": {
+       "x": -100,
+       "y": 0
+      },
+      "B": {
+       "x": 100,
+       "y": 0
+      },
+      "M": {
+       "x": 0,
+       "y": 0
+      },
+      "C": {
+       "x": 0,
+       "y": 20
+      },
+      "K1": {
+       "radius": 20
+      }
+     }
+    },
+    {
+     "step": 4,
+     "status": "Success",
+     "dof": 0,
+     "geometry": {
+      "A": {
+       "x": -100,
+       "y": 0
+      },
+      "B": {
+       "x": 100,
+       "y": 0
+      },
+      "M": {
+       "x": 0,
+       "y": 0
+      },
+      "C": {
+       "x": 0,
+       "y": 25
+      },
+      "K1": {
+       "radius": 25
+      }
+     }
+    },
+    {
+     "step": 5,
+     "status": "Success",
+     "dof": 0,
+     "geometry": {
+      "A": {
+       "x": -100,
+       "y": 0
+      },
+      "B": {
+       "x": 100,
+       "y": 0
+      },
+      "M": {
+       "x": 0,
+       "y": 0
+      },
+      "C": {
+       "x": 0,
+       "y": 30
+      },
+      "K1": {
+       "radius": 30
+      }
+     }
+    },
+    {
+     "step": 6,
+     "status": "Success",
+     "dof": 0,
+     "geometry": {
+      "A": {
+       "x": -100,
+       "y": 0
+      },
+      "B": {
+       "x": 100,
+       "y": 0
+      },
+      "M": {
+       "x": 0,
+       "y": 0
+      },
+      "C": {
+       "x": 0,
+       "y": 35
+      },
+      "K1": {
+       "radius": 35
+      }
+     }
+    },
+    {
+     "step": 7,
+     "status": "Success",
+     "dof": 0,
+     "geometry": {
+      "A": {
+       "x": -100,
+       "y": 0
+      },
+      "B": {
+       "x": 100,
+       "y": 0
+      },
+      "M": {
+       "x": 0,
+       "y": 0
+      },
+      "C": {
+       "x": 0,
+       "y": 40
+      },
+      "K1": {
+       "radius": 40
+      }
+     }
+    },
+    {
+     "step": 8,
+     "status": "Success",
+     "dof": 0,
+     "geometry": {
+      "A": {
+       "x": -100,
+       "y": 0
+      },
+      "B": {
+       "x": 100,
+       "y": 0
+      },
+      "M": {
+       "x": 0,
+       "y": 0
+      },
+      "C": {
+       "x": 0,
+       "y": 45
+      },
+      "K1": {
+       "radius": 45
+      }
+     }
+    },
+    {
+     "step": 9,
+     "status": "Success",
+     "dof": 0,
+     "geometry": {
+      "A": {
+       "x": -100,
+       "y": 0
+      },
+      "B": {
+       "x": 100,
+       "y": 0
+      },
+      "M": {
+       "x": 0,
+       "y": 0
+      },
+      "C": {
+       "x": 0,
+       "y": 50
+      },
+      "K1": {
+       "radius": 50
+      }
+     }
+    }
+   ],
+   "notes": ""
+  },
+  {
+   "id": "K04a-equal-length",
+   "mapping": "hand-made",
+   "supported": "yes",
+   "algorithm": "DogLeg",
+   "iterations": null,
+   "time_ms_median": null,
+   "dof": 3,
+   "conflicting": [],
+   "redundant": [],
+   "partially_redundant": [],
+   "geometry": {
+    "P1": {
+     "x": 0,
+     "y": 0
+    },
+    "P2": {
+     "x": 10,
+     "y": 2
+    },
+    "P3": {
+     "x": 0,
+     "y": 5
+    },
+    "P4": {
+     "x": 6,
+     "y": 8
+    }
+   },
+   "driven_values": {},
+   "steps": [],
+   "notes": ""
+  }
+ ]
+}

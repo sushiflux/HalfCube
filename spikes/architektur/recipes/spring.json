@@ -1,0 +1,16 @@
+{
+  "format": "partcraft.recipe",
+  "formatVersion": 0,
+  "parameters": { "radius": 15, "pitch": 10, "turns": 5, "wireDiameter": 4 },
+  "steps": [
+    {
+      "id": "spring",
+      "type": "spring",
+      "body": "spring1",
+      "radius": "radius",
+      "pitch": "pitch",
+      "turns": "turns",
+      "wireDiameter": "wireDiameter"
+    }
+  ]
+}

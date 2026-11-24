@@ -1,0 +1,24 @@
+{
+  "format": "partcraft.recipe",
+  "formatVersion": 0,
+  "parameters": {
+    "length": 80,
+    "width": 50,
+    "height": 20,
+    "holeX": 40,
+    "holeY": 25,
+    "holeDiameter": 20,
+    "filletRadius": 3
+  },
+  "steps": [
+    { "id": "block", "type": "box", "body": "body1", "origin": [0, 0, 0], "size": ["length", "width", "height"] },
+    { "id": "hole", "type": "hole", "body": "body1", "center": ["holeX", "holeY"], "diameter": "holeDiameter" },
+    {
+      "id": "fillet",
+      "type": "fillet",
+      "body": "body1",
+      "edges": { "selector": "holeTopEdge", "hole": "hole" },
+      "radius": "filletRadius"
+    }
+  ]
+}

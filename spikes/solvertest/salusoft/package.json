@@ -1,0 +1,11 @@
+{
+  "name": "partcraft-solvertest-salusoft",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Solver test runner for @salusoft89/planegcs (throwaway spike, not part of the product)",
+  "type": "module",
+  "license": "GPL-3.0-or-later",
+  "dependencies": {
+    "@salusoft89/planegcs": "1.3.0"
+  }
+}

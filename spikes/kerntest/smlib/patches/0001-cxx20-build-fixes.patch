@@ -1,0 +1,166 @@
+diff --git a/source/SMLib/inc/SmFaceGrid.h b/source/SMLib/inc/SmFaceGrid.h
+index da665b7..3f2c942 100644
+--- a/source/SMLib/inc/SmFaceGrid.h
++++ b/source/SMLib/inc/SmFaceGrid.h
+@@ -40,7 +40,7 @@ class SM_EXPORT SmFaceEval
+                                                         m_bInFace = crOther.m_bInFace;
+                                                         return *this ;
+                                                       }
+-  SmBoolean    operator==(const SmFaceEval &crOther ) { if(&crOther == this) return TRUE ;
++  SmBoolean    operator==(const SmFaceEval &crOther ) const { if(&crOther == this) return TRUE ;
+                                                         SmBoolean bRtn = m_sSurfaceEval == crOther.m_sSurfaceEval ;
+                                                         bRtn &= m_bInFace == crOther.m_bInFace ;
+                                                         return(bRtn) ;
+diff --git a/source/SMLib/inc/SmHashTable.h b/source/SMLib/inc/SmHashTable.h
+index 3b30f93..12a0303 100644
+--- a/source/SMLib/inc/SmHashTable.h
++++ b/source/SMLib/inc/SmHashTable.h
+@@ -269,7 +269,7 @@ template<class TYPE> class SM_EXPORT SmPointItem
+                                                                              return *this ;
+                                                                            }
+    // equality operator              
+-   SmBoolean operator==(const SmPointItem<TYPE> &crOther) { SmBoolean bRtn = TRUE ;
++   SmBoolean operator==(const SmPointItem<TYPE> &crOther) const { SmBoolean bRtn = TRUE ;
+                                                             if(this == &crOther) { return TRUE ; }
+                                                             bRtn &= m_sTgtItem == crOther.m_sTgtItem ;
+                                                             bRtn &= SM_ARE_SAME(m_sTgtZoneTol3d, crOther.m_sTgtZoneTol3d) ;
+diff --git a/source/SMLib/inc/SmHealProbArray.h b/source/SMLib/inc/SmHealProbArray.h
+index 91089cd..c5a03c6 100644
+--- a/source/SMLib/inc/SmHealProbArray.h
++++ b/source/SMLib/inc/SmHealProbArray.h
+@@ -302,7 +302,7 @@ template<class TYPE> class SmProbArray
+   virtual SmProbArray * MakeCopy() const { return( new SmProbArray(*this) ) ; }
+ 
+   // destructor
+-  ~SmProbArray<TYPE>() { m_sProbArray.ReSet() ; m_plObjProbFlag = NULL ; m_lOrigProbCount = 0 ; m_eGetHealerOp = SM_HO_NONE ; } 
++  ~SmProbArray() { m_sProbArray.ReSet() ; m_plObjProbFlag = NULL ; m_lOrigProbCount = 0 ; m_eGetHealerOp = SM_HO_NONE ; } 
+ 
+   // ReSet
+   virtual void ReSet() { m_sProbArray.ReSet() ; }  // note: resetting the ProbArray does not reset the OrigProbCount
+diff --git a/source/SMLib/inc/SmLocalSolve1d.h b/source/SMLib/inc/SmLocalSolve1d.h
+index ada74c0..b936b29 100644
+--- a/source/SMLib/inc/SmLocalSolve1d.h
++++ b/source/SMLib/inc/SmLocalSolve1d.h
+@@ -113,7 +113,7 @@ public:
+   double m_dPrevStep  = SM_UNDEF_DOUBLE ;  // the step used to get to this m_dT previous step.
+ 
+   // To satisfy what is needed to be in SmTArray:
+-  inline int operator==( const SmIterationValue & crIV2 )
++  inline int operator==( const SmIterationValue & crIV2 ) const
+   {
+     SM_REF1(crIV2) ; 
+     return FALSE;
+diff --git a/source/SMLib/inc/SmSurface.h b/source/SMLib/inc/SmSurface.h
+index e118480..f421087 100644
+--- a/source/SMLib/inc/SmSurface.h
++++ b/source/SMLib/inc/SmSurface.h
+@@ -2082,7 +2082,7 @@ public:
+                              return *this;
+                            }
+ 
+-  SmBoolean    operator==(const SmSurfaceEval &crOther )
++  SmBoolean    operator==(const SmSurfaceEval &crOther ) const
+                          { SmBoolean bRtn = TRUE ;
+                            bRtn &= m_bNonZeroTangents == crOther.m_bNonZeroTangents ;
+                            bRtn &= m_sUV              == crOther.m_sUV ;
+diff --git a/source/SMLib/inc/SmTree.h b/source/SMLib/inc/SmTree.h
+index f3fcb9b..fe29a4e 100644
+--- a/source/SMLib/inc/SmTree.h
++++ b/source/SMLib/inc/SmTree.h
+@@ -565,7 +565,7 @@ class SM_EXPORT SmTreeVertex // : public SmObject - GWC: don't inherit from SmOb
+   }
+ 
+   // operator ==
+-  SmBoolean operator==( const SmTreeVertex &crOther )
++  SmBoolean operator==( const SmTreeVertex &crOther ) const
+   {
+     if(&crOther == this) return TRUE;
+     if(m_vUVPoint != crOther.m_vUVPoint)      return FALSE;
+diff --git a/source/SMLib/src/SmEllipse.cpp b/source/SMLib/src/SmEllipse.cpp
+index 1be8a22..98ae47b 100644
+--- a/source/SMLib/src/SmEllipse.cpp
++++ b/source/SMLib/src/SmEllipse.cpp
+@@ -106,7 +106,7 @@ SmBoolean SmPolarConversion::operator==
+                   || ( m_cpCurve            == crOther.m_cpCurve)
+                   || ( m_cpCurve == NULL && crOther.m_cpCurve == NULL)
+                   || (    m_cpCurve != NULL && crOther.m_cpCurve != NULL
+-                      && *m_cpCurve == *crOther.m_cpCurve))) ;
++                      && static_cast<const SmCurve&>(*m_cpCurve) == static_cast<const SmCurve&>(*crOther.m_cpCurve)))) ;
+       
+       // check real array values
+       if(bRtn)
+diff --git a/source/SMLib/src/SmGraphicsExtern.cpp b/source/SMLib/src/SmGraphicsExtern.cpp
+index 6b2f4af..f6c7566 100644
+--- a/source/SMLib/src/SmGraphicsExtern.cpp
++++ b/source/SMLib/src/SmGraphicsExtern.cpp
+@@ -704,7 +704,7 @@ SmPolygonSLPOutput::SmPolygonSLPOutput
+ 
+   TCHAR sBuff[SM_TBLOCK_SIZE];
+   smos_sprintf(sBuff,_T("solid data__%06ld\n"),m_lSolidCounter);
+-  sFout << sBuff;
++  sFout << smos_FromTChar(sBuff);
+ 
+ } // end SmPolygonSLPOutput::SmPolygonSLPOutput constructor
+ 
+@@ -718,7 +718,7 @@ SmStatus SmPolygonSLPOutput::CompletedPolygonOutput()
+     std::ofstream & sFout = *m_pFout;
+     TCHAR sBuff[SM_TBLOCK_SIZE];
+     smos_sprintf(sBuff,_T("endsolid data__%06ld\n"),m_lSolidCounter);
+-    sFout << sBuff;
++    sFout << smos_FromTChar(sBuff);
+ 
+     return SM_SUCCESS;
+ 
+@@ -750,11 +750,11 @@ SmStatus SmPolygonSLPOutput::OutputPolygon
+             if (m_pLastSurface != NULL) 
+               { // Close out last solid
+                 smos_sprintf(sBuff,_T("endsolid data__%06ld\n"),m_lSolidCounter);
+-                sFout << sBuff;
++                sFout << smos_FromTChar(sBuff);
+               }
+             m_lSolidCounter ++;
+             smos_sprintf(sBuff,_T("solid data__%06ld\n"),m_lSolidCounter);
+-            sFout << sBuff;
++            sFout << smos_FromTChar(sBuff);
+             lCount ++;
+             SmVector3d sColor(0.8,0.8,0.8);
+             if (lCount % 6 == 0) sColor.Set(1.0,0.3,0.3);
+diff --git a/source/SMLib/src/SmSurfOfExtrusion.cpp b/source/SMLib/src/SmSurfOfExtrusion.cpp
+index 99d852e..6dc3e70 100644
+--- a/source/SMLib/src/SmSurfOfExtrusion.cpp
++++ b/source/SMLib/src/SmSurfOfExtrusion.cpp
+@@ -297,7 +297,7 @@ SmBoolean SmSurfOfExtrusion::operator==
+       bRtn =  (   (   ( m_pGenCurve == rOther.m_pGenCurve)
+                    || ( m_pGenCurve == NULL && rOther.m_pGenCurve == NULL)
+                    || (   m_pGenCurve != NULL && rOther.m_pGenCurve != NULL
+-                       && *m_pGenCurve == *rOther.m_pGenCurve))
++                       && static_cast<const SmCurve&>(*m_pGenCurve) == static_cast<const SmCurve&>(*rOther.m_pGenCurve)))
+                && m_vOrigin       == rOther.m_vOrigin
+                && m_vExtrusionVec == rOther.m_vExtrusionVec
+                && m_vAnalUVDomain == rOther.m_vAnalUVDomain
+diff --git a/source/SMLib/src/SmSurfOfRevolution.cpp b/source/SMLib/src/SmSurfOfRevolution.cpp
+index f3c4a65..1b7cf1c 100644
+--- a/source/SMLib/src/SmSurfOfRevolution.cpp
++++ b/source/SMLib/src/SmSurfOfRevolution.cpp
+@@ -70,7 +70,7 @@ SmBoolean SmSurfOfRevolution::operator==
+       bRtn =  (   (   ( m_pGenCurve == rOther.m_pGenCurve)
+                    || ( m_pGenCurve == NULL && rOther.m_pGenCurve == NULL)
+                    || (   m_pGenCurve != NULL && rOther.m_pGenCurve != NULL
+-                       && *m_pGenCurve == *rOther.m_pGenCurve))
++                       && static_cast<const SmCurve&>(*m_pGenCurve) == static_cast<const SmCurve&>(*rOther.m_pGenCurve)))
+                && m_bPlanarGenerator == rOther.m_bPlanarGenerator
+                && m_vPosition        == rOther.m_vPosition
+                && m_vAnalUVDomain    == rOther.m_vAnalUVDomain
+diff --git a/source/SMLib/src/SmVolume.cpp b/source/SMLib/src/SmVolume.cpp
+index 56919b6..185c947 100644
+--- a/source/SMLib/src/SmVolume.cpp
++++ b/source/SMLib/src/SmVolume.cpp
+@@ -359,7 +359,7 @@ SmBoolean SmVolume::operator==
+                     && (   ( m_pOrientMap == crOther.m_pOrientMap)
+                         || ( m_pOrientMap == NULL && crOther.m_pOrientMap == NULL)
+                         || (   m_pOrientMap != NULL && crOther.m_pOrientMap != NULL
+-                            && *m_pOrientMap == *crOther.m_pOrientMap))        
++                            && static_cast<const SmVolume&>(*m_pOrientMap) == static_cast<const SmVolume&>(*crOther.m_pOrientMap)))        
+                    ) ;
+ 
+   // all done

@@ -33,3 +33,7 @@ logs/
 *.user
 Thumbs.db
 .DS_Store
+
+# Kernel test: third-party sources and build trees
+_deps/
+_build/

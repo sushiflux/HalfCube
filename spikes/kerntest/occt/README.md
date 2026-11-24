@@ -68,6 +68,33 @@ powershell -ExecutionPolicy Bypass -File scripts\run-wasm.ps1 <wasm folder>\step
 ```
 
 `docker-wasm.ps1` uses `emscripten/emsdk:7.0.1` and builds OCCT as static libraries plus two links of the test
-(`step/` with STEP, `nostep/` without). `run-wasm.ps1` runs one of them under Node.js through
+(`step/` with STEP, `nostep/` without; `step/` also contains `kerntest_occt_steponly`, a minimal STEP read/write
+program for the size of OCCT used only for STEP). `run-wasm.ps1` runs one of them under Node.js through
 `wasm/run-node.mjs`, which records the `.wasm` and glue sizes (raw, gzip -9, brotli 11), the instantiation time and
-the peak linear memory.
+the peak linear memory (the test starts with 16 MiB, so growth beyond that is visible).
+
+Options of `docker-wasm.ps1`:
+
+- `-KeepOcct` copies the static OCCT installation to `<wasm folder>\occt-install`; `-PrebuiltOcct <that folder>`
+  reuses it and only relinks the test (about a minute instead of about five).
+- Exceptions: without a switch OCCT and the test use Emscripten's JavaScript-based exceptions (OCCT's own CMake
+  adds `-fexceptions` on every non-MSVC target). `-WasmExceptions` uses native WebAssembly exceptions
+  (`-fwasm-exceptions`). `-Extra '<flags>'` adds compile and link flags for OCCT and the test, for example
+  `-Extra '-UOCC_CONVERT_SIGNALS'` or `-Extra '-sWASM_LEGACY_EXCEPTIONS=0'`.
+
+With OCCT's default `OCC_CONVERT_SIGNALS` (every `OCC_CATCH_SIGNALS` becomes a `setjmp`) the `-fwasm-exceptions`
+link fails in `wasm-opt` ("parse exception: popping from empty stack"); WebAssembly has no POSIX signals, so the
+measured WebAssembly build switches the conversion off:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\docker-wasm.ps1 -OutDir <wasm folder> -KeepOcct -WasmExceptions -Extra '-UOCC_CONVERT_SIGNALS'
+powershell -ExecutionPolicy Bypass -File scripts\run-wasm-all.ps1 -BuildDir <wasm folder> -OutDir <results folder>
+node wasm\run-node.mjs <wasm folder>\step <report.json> --name kerntest_occt_steponly -- <in.step> <out.step>
+```
+
+`run-wasm-all.ps1` runs every measurement of one build: the full run, P1a and P3a each in its own process, 20 runs
+of P1a and P3a, the error probes and the STEP-only program.
+
+`kerntest_occt probe notdone|nullread|intdiv|nullcall` shows how one kind of failure reaches the caller (a failed
+fillet, a read through a null handle, an integer division by zero, a call through a null function pointer); run
+each probe in its own process.

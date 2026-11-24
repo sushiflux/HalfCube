@@ -4,6 +4,9 @@ project(kerntest_occt LANGUAGES CXX)
 # Kernel test for OCCT. Point OpenCASCADE_DIR at the "cmake" folder of an OCCT installation.
 option(KT_WITH_STEP "Build with STEP support (TKDESTEP)" ON)
 option(KT_WASM_EH "WebAssembly: native wasm exceptions (-fwasm-exceptions) instead of JavaScript-based ones" OFF)
+set(KT_WASM_EXTRA_FLAGS "" CACHE STRING "WebAssembly: extra compile and link flags, e.g. -sWASM_LEGACY_EXCEPTIONS=0")
+# A small start size makes the peak of the (only growing) linear memory meaningful.
+set(KT_WASM_INITIAL_MEMORY "16MB" CACHE STRING "WebAssembly: initial linear memory")
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -38,6 +41,10 @@ elseif(EMSCRIPTEN)
     else()
         set(KT_TARGET_FLAGS -fexceptions)
     endif()
+    if(KT_WASM_EXTRA_FLAGS)
+        separate_arguments(_kt_wasm_extra UNIX_COMMAND "${KT_WASM_EXTRA_FLAGS}")
+        list(APPEND KT_TARGET_FLAGS ${_kt_wasm_extra})
+    endif()
     target_compile_definitions(kerntest_occt PRIVATE OCC_CONVERT_SIGNALS)
 else()
     set(KT_TARGET_FLAGS -Wall -Wextra)
@@ -59,7 +66,8 @@ if(EMSCRIPTEN)
     target_link_options(kerntest_occt PRIVATE
         ${KT_TARGET_FLAGS}
         -sALLOW_MEMORY_GROWTH=1
-        -sINITIAL_MEMORY=64MB
+        -sINITIAL_MEMORY=${KT_WASM_INITIAL_MEMORY}
+        -sMAXIMUM_MEMORY=4GB
         -sSTACK_SIZE=4MB
         -sNODERAWFS=1
         -sEXIT_RUNTIME=0
@@ -78,6 +86,8 @@ if(KT_WITH_STEP)
     if(EMSCRIPTEN)
         set_target_properties(kerntest_occt_steponly PROPERTIES SUFFIX ".js")
         target_link_options(kerntest_occt_steponly PRIVATE ${KT_TARGET_FLAGS}
-            -sALLOW_MEMORY_GROWTH=1 -sINITIAL_MEMORY=64MB -sSTACK_SIZE=4MB -sNODERAWFS=1)
+            -sALLOW_MEMORY_GROWTH=1 -sINITIAL_MEMORY=${KT_WASM_INITIAL_MEMORY} -sMAXIMUM_MEMORY=4GB -sSTACK_SIZE=4MB
+            -sNODERAWFS=1 -sEXIT_RUNTIME=0 -sMODULARIZE=1 -sEXPORT_NAME=createSteponly -sINVOKE_RUN=0
+            -sEXPORTED_RUNTIME_METHODS=callMain,HEAPU8)
     endif()
 endif()

@@ -1,9 +1,10 @@
 # Builds OCCT and the kernel test for WebAssembly in a throwaway emscripten/emsdk container.
 # Sources are copied into a named volume; only the .js/.wasm files and logs are copied out to -OutDir.
 # -KeepOcct also copies the static OCCT installation to <OutDir>\occt-install; -PrebuiltOcct <dir> reuses such a
-# copy and only relinks the test program.
+# copy and only relinks the test program. -WasmExceptions builds with native wasm exceptions instead of the
+# JavaScript-based Emscripten ones; -Extra passes further compile+link settings (e.g. '-sWASM_LEGACY_EXCEPTIONS=0').
 param([Parameter(Mandatory = $true)][string]$OutDir, [string]$Image = 'emscripten/emsdk:7.0.1', [int]$Jobs = 12,
-      [int]$MinFreeGB = 15, [switch]$KeepOcct, [string]$PrebuiltOcct, [switch]$WasmExceptions)
+      [int]$MinFreeGB = 15, [switch]$KeepOcct, [string]$PrebuiltOcct, [switch]$WasmExceptions, [string]$Extra = '')
 $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot 'docker-common.ps1')
 
@@ -13,7 +14,7 @@ Assert-FreeSpace $MinFreeGB
 Remove-KtContainer $name
 docker volume create $name | Out-Null
 try {
-    docker run -d --name $name -v "${name}:/work" -e "JOBS=$Jobs" -e "WASM_EH=$(if ($WasmExceptions) { 1 } else { 0 })" $Image sleep infinity | Out-Null
+    docker run -d --name $name -v "${name}:/work" -e "JOBS=$Jobs" -e "WASM_EH=$(if ($WasmExceptions) { 1 } else { 0 })" -e "WASM_EXTRA=$Extra" $Image sleep infinity | Out-Null
     if ($LASTEXITCODE -ne 0) { throw 'docker run failed' }
     if ($PrebuiltOcct) {
         Copy-IntoContainer $name $PrebuiltOcct '/work/occt-install'

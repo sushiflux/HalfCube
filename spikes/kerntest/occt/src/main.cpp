@@ -2,11 +2,12 @@
 //
 //   kerntest_occt run  [--runs N] [--cases P1a,P3a] [--out DIR] [--json FILE] [--skip-extras]
 //   kerntest_occt p5b  --in FILE.step --out FILE.step [--json FILE]
+//   kerntest_occt probe notdone|nullread|intdiv|nullcall [--json FILE]
 //
 // "run" builds the test parts of PARTS.md, times them (one warm-up run, then the median of N runs), measures
 // and validates the results and, unless --skip-extras is given, runs P5a (STEP round trip), E1 (history) and
 // E2 (meshing). "p5b" reads a foreign STEP file, cuts a D5 hole along Z through its bounding-box centre and
-// writes the result back to STEP.
+// writes the result back to STEP. "probe" shows how one kind of failure reaches the caller (see cmdProbe).
 
 #include "json.hpp"
 #include "kt_util.hpp"
@@ -14,10 +15,13 @@
 
 #include <BRepAlgoAPI_Cut.hxx>
 #include <BRepBndLib.hxx>
+#include <BRepFilletAPI_MakeFillet.hxx>
+#include <BRepPrimAPI_MakeBox.hxx>
 #include <BRepPrimAPI_MakeCylinder.hxx>
 #include <BRepGProp.hxx>
 #include <Bnd_Box.hxx>
 #include <GProp_GProps.hxx>
+#include <Geom_Line.hxx>
 #include <OSD.hxx>
 #include <Standard_ErrorHandler.hxx>
 #include <Standard_Version.hxx>
@@ -291,6 +295,59 @@ int cmdP5b(int argc, char** argv) {
 }
 #endif
 
+// Error-reporting probes: how one failure of each kind reaches the caller on this platform. Each probe is meant to
+// run in its own process, because the hardware-fault probes may end the process (or, in WebAssembly, the module).
+//   notdone  - a fillet that cannot be built; Shape() then throws StdFail_NotDone (BRepLib_Command::Check)
+//   nullread - reads through a null handle
+//   intdiv   - integer division by zero
+//   nullcall - calls through a null function pointer
+volatile int gProbeZero = 0;
+int (*volatile gProbeFn)(int) = nullptr;
+
+int cmdProbe(int argc, char** argv) {
+    const std::string which = argc > 2 ? argv[2] : "";
+    Json j = Json::object();
+    j["kernel"] = "OCCT";
+    j["environment"] = environment();
+    j["probe"] = which;
+    try {
+        OCC_CATCH_SIGNALS
+        if (which == "notdone") {
+            const TopoDS_Shape box = BRepPrimAPI_MakeBox(10, 10, 10).Shape();
+            BRepFilletAPI_MakeFillet mk(box);
+            TopExp_Explorer ex(box, TopAbs_EDGE);
+            mk.Add(50.0, TopoDS::Edge(ex.Current()));
+            mk.Build();
+            j["is_done"] = mk.IsDone();
+            j["nb_faulty_contours"] = mk.NbFaultyContours();
+            const TopoDS_Shape s = mk.Shape();  // throws when not done
+            j["result"] = "Shape() returned without exception";
+        } else if (which == "nullread") {
+            occ::handle<Geom_Line> line;
+            const gp_Lin l = line->Lin();
+            j["result"] = "read returned";
+            j["value_read"] = l.Location().X();
+        } else if (which == "intdiv") {
+            const int q = 7 / gProbeZero;
+            j["result"] = "division returned";
+            j["value_read"] = q;
+        } else if (which == "nullcall") {
+            const int r = gProbeFn(1);
+            j["result"] = "call returned";
+            j["value_read"] = r;
+        } else {
+            std::cerr << "usage: kerntest_occt probe notdone|nullread|intdiv|nullcall [--json FILE]\n";
+            return 2;
+        }
+        j["exception"] = false;
+    } catch (...) {
+        j["exception"] = true;
+        j["error"] = describeCurrentException();
+    }
+    emit(j, argValue(argc, argv, "--json"));
+    return 0;
+}
+
 } // namespace
 
 int main(int argc, char** argv) {
@@ -302,6 +359,7 @@ int main(int argc, char** argv) {
     OSD::SetSignal(false);
     const std::string cmd = argv[1];
     if (cmd == "run") return cmdRun(argc, argv);
+    if (cmd == "probe") return cmdProbe(argc, argv);
 #ifdef KT_WITH_STEP
     if (cmd == "p5b") return cmdP5b(argc, argv);
 #endif

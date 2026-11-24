@@ -1,18 +1,22 @@
 // Loads the WebAssembly build of the kernel test in Node.js, measures size and start-up, runs it and records the
 // peak linear memory.
-//   node run-node.mjs <dir with kerntest_occt.js/.wasm> <report.json> -- <kerntest arguments>
+//   node run-node.mjs <dir with kerntest_occt.js/.wasm> <report.json> [--name <base name>] -- <kerntest arguments>
+// --name selects another program of the same build, e.g. kerntest_occt_steponly.
 import { createRequire } from 'node:module';
 import { readFileSync, writeFileSync, statSync } from 'node:fs';
 import { gzipSync, brotliCompressSync, constants as zc } from 'node:zlib';
 import path from 'node:path';
 
-const [dir, reportPath, sep, ...ktArgs] = process.argv.slice(2);
+const argv = process.argv.slice(2);
+let name = 'kerntest_occt';
+if (argv[2] === '--name') { name = argv[3]; argv.splice(2, 2); }
+const [dir, reportPath, sep, ...ktArgs] = argv;
 if (!dir || !reportPath || sep !== '--') {
-  console.error('usage: node run-node.mjs <build dir> <report.json> -- <kerntest arguments>');
+  console.error('usage: node run-node.mjs <build dir> <report.json> [--name <base name>] -- <kerntest arguments>');
   process.exit(2);
 }
-const jsPath = path.resolve(dir, 'kerntest_occt.js');
-const wasmPath = path.resolve(dir, 'kerntest_occt.wasm');
+const jsPath = path.resolve(dir, name + '.js');
+const wasmPath = path.resolve(dir, name + '.wasm');
 
 function sizes(file) {
   const buf = readFileSync(file);
@@ -23,7 +27,7 @@ function sizes(file) {
   };
 }
 
-const report = { node: process.version, v8: process.versions.v8, wasm: sizes(wasmPath), glue_js: sizes(jsPath) };
+const report = { program: name, args: [...ktArgs], node: process.version, v8: process.versions.v8, wasm: sizes(wasmPath), glue_js: sizes(jsPath) };
 
 const require = createRequire(import.meta.url);
 const t0 = performance.now();
@@ -38,7 +42,8 @@ report.initial_memory_bytes = mod.HEAPU8.length;
 const t1 = performance.now();
 let rc;
 try {
-  rc = mod.callMain(ktArgs);
+  // callMain puts the program name in front of the array it gets, so it gets a copy.
+  rc = mod.callMain([...ktArgs]);
 } catch (e) {
   report.error = String(e && e.stack || e);
 }

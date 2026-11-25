@@ -1,0 +1,258 @@
+/*
+ * Loading screen "Bühne" (full screen at program start) and loading panel (inside the app).
+ * Colours come from the theme tokens (--c-*) and the logo colours (--brand-*). --u is the layout unit of the stage:
+ * 1 px at a window height of 900 px, scaled with the window height between 0.6 and 1.25 so the composition keeps
+ * its proportions. Text sizes stay in px, they have to stay readable.
+ */
+.pc-stage {
+  --u: min(max(0.6px, 0.1111vh), 1.25px);
+  --pc-details-max: clamp(80px, calc(100vh - 586 * var(--u) - 200px), 240px);
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  overflow-x: hidden;
+  /* Only when the window is too short for an error card: scroll instead of cutting it off. */
+  overflow-y: auto;
+  scrollbar-width: none;
+  color: var(--c-text);
+  font-family: var(--font-sans);
+}
+.pc-stage::-webkit-scrollbar {
+  display: none;
+}
+.pc-stage-inner {
+  position: relative;
+  width: 100%;
+  height: max(100%, calc(586 * var(--u) + 300px));
+}
+
+.pc-stage-bg {
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(calc(560 * var(--u)) calc(420 * var(--u)) at 50% 30%, color-mix(in srgb, var(--brand-cyan) 13%, transparent), transparent 70%),
+    radial-gradient(calc(900 * var(--u)) calc(520 * var(--u)) at 88% 112%, color-mix(in srgb, var(--brand-blue) 22%, transparent), transparent 70%),
+    radial-gradient(calc(700 * var(--u)) calc(460 * var(--u)) at 6% -10%, color-mix(in srgb, var(--brand-blue) 10%, transparent), transparent 70%),
+    linear-gradient(180deg, var(--c-bg) 0%, color-mix(in srgb, var(--c-bg) 70%, black) 100%);
+}
+:root[data-mode="light"] .pc-stage-bg {
+  background:
+    radial-gradient(calc(560 * var(--u)) calc(420 * var(--u)) at 50% 30%, color-mix(in srgb, var(--brand-cyan) 16%, transparent), transparent 70%),
+    radial-gradient(calc(900 * var(--u)) calc(520 * var(--u)) at 88% 112%, color-mix(in srgb, var(--brand-blue) 10%, transparent), transparent 70%),
+    linear-gradient(180deg, color-mix(in srgb, var(--c-bg) 55%, var(--c-surface)) 0%, var(--c-surface-2) 100%);
+}
+
+.pc-halo {
+  position: absolute;
+  left: 50%;
+  top: calc(263 * var(--u));
+  width: calc(520 * var(--u));
+  height: calc(520 * var(--u));
+  margin: calc(-260 * var(--u)) 0 0 calc(-260 * var(--u));
+  border-radius: 50%;
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--brand-cyan) 22%, transparent), color-mix(in srgb, var(--brand-cyan) 6%, transparent) 55%, transparent 100%);
+}
+:root[data-mode="light"] .pc-halo {
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--brand-cyan) 26%, transparent), color-mix(in srgb, var(--brand-cyan) 7%, transparent) 55%, transparent 100%);
+}
+
+/* The logo is a square image with a transparent margin; the visible logo is 0.865 times as wide as high. */
+.pc-logo {
+  position: absolute;
+  left: 50%;
+  top: calc(150 * var(--u));
+  width: calc(226 * var(--u));
+  height: calc(226 * var(--u));
+  margin-left: calc(-113 * var(--u));
+  transform-origin: 0 0;
+  z-index: 2;
+}
+.pc-logo svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.pc-logo-intro {
+  transform-origin: 50% 50%;
+  animation: pc-intro 1.1s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+.pc-sweep {
+  animation: pc-sweep 2.6s cubic-bezier(0.45, 0, 0.2, 1) 0.35s 1 both;
+}
+@keyframes pc-intro {
+  from {
+    opacity: 0;
+    transform: scale(0.965);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes pc-sweep {
+  from {
+    transform: translateX(-1400px) skewX(-18deg);
+  }
+  to {
+    transform: translateX(1500px) skewX(-18deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pc-sweep {
+    display: none;
+  }
+}
+
+.pc-word {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(418 * var(--u));
+  text-align: center;
+}
+
+.pc-tag {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(510 * var(--u));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--c-muted);
+}
+.pc-tag::before,
+.pc-tag::after {
+  content: "";
+  width: 36px;
+  height: 1px;
+  background: var(--c-line-strong);
+  opacity: 0.6;
+}
+
+.pc-slot {
+  position: absolute;
+  left: 50%;
+  top: calc(586 * var(--u));
+  width: min(760px, calc(100% - 32px));
+  transform: translateX(-50%);
+}
+/* The progress part keeps its room when an error replaces it, so nothing moves. */
+.pc-slot-load {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.pc-slot-load[data-hidden="true"] {
+  visibility: hidden;
+}
+.pc-slot-error {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+}
+
+.pc-track {
+  position: relative;
+  width: 340px;
+  max-width: 100%;
+  height: 2px;
+  background: var(--c-line);
+}
+.pc-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 0;
+  background: linear-gradient(90deg, var(--brand-blue), var(--brand-cyan));
+  transition: width 0.25s ease-out;
+}
+:root[data-mode="light"] .pc-fill {
+  background: linear-gradient(90deg, var(--brand-navy), var(--brand-blue));
+}
+.pc-fill::after {
+  content: "";
+  position: absolute;
+  right: -3px;
+  top: -3px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--brand-cyan);
+  box-shadow: 0 0 12px 3px color-mix(in srgb, var(--brand-cyan) 55%, transparent);
+  opacity: var(--head, 1);
+}
+:root[data-mode="light"] .pc-fill::after {
+  background: var(--brand-blue);
+  box-shadow: 0 0 10px 2px color-mix(in srgb, var(--brand-blue) 35%, transparent);
+}
+
+.pc-stepline {
+  margin-top: 20px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 15px;
+  font-weight: 500;
+}
+.pc-stepsub {
+  margin-top: 6px;
+  min-height: 18px;
+  max-width: 100%;
+  text-align: center;
+  overflow-wrap: anywhere;
+  font-size: 12.5px;
+  color: var(--c-muted);
+}
+.pc-fadein {
+  animation: pc-fade-in 0.28s ease both;
+}
+
+.pc-vers {
+  position: absolute;
+  right: 28px;
+  bottom: 22px;
+  font-size: 12px;
+  letter-spacing: 0.01em;
+  color: var(--c-muted);
+}
+
+/* ---------- loading panel inside the app ---------- */
+.pc-veil {
+  position: absolute;
+  inset: 0;
+  z-index: 40;
+  background: color-mix(in srgb, var(--c-bg) 78%, transparent);
+  backdrop-filter: blur(3px);
+}
+.pc-panel {
+  position: absolute;
+  left: 50%;
+  top: min(118px, 14%);
+  width: min(600px, calc(100% - 32px));
+  transform: translateX(-50%);
+  overflow: hidden;
+  border: 1px solid var(--c-line);
+  border-radius: 6px;
+  background: var(--c-surface);
+  box-shadow: 0 12px 32px rgb(10 20 30 / 0.1), 0 1px 2px rgb(10 20 30 / 0.06);
+}
+:root[data-mode="dark"] .pc-panel {
+  box-shadow: 0 14px 36px rgb(0 0 0 / 0.35);
+}
+.pc-panel-top {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 3px;
+  width: 0;
+  background: var(--c-primary);
+  transition: width 0.25s ease-out;
+}

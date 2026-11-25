@@ -14,6 +14,11 @@ CMakeCache.txt
 *.tsbuildinfo
 coverage/
 
+# Playwright output (the suite writes into _build/e2e; these are the defaults of a bare `npx playwright test`)
+test-results/
+playwright-report/
+blob-report/
+
 # Local environment and secrets
 .env
 .env.local

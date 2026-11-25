@@ -1,13 +1,12 @@
 ---
-title: "Partcraft Developer Manual"
-subtitle: "Manual for developers"
-version: "v2026.11.4.58.26093 (</>)"
-date: "2026-11-25"
+title: "Partcraft"
+subtitle: "Developer Manual"
+tagline: "Structure, build and conventions for developers"
 status: "Draft"
 copyright: "© 2026 SushiFlux"
 lang: "en"
 ---
 
-# Partcraft Developer Manual
+# 1 About this manual
 
 Partcraft is in early development. So far there is only the basic scaffold (UI, desktop window, start script); this manual is an empty skeleton and will be filled as the architecture lands in the code.

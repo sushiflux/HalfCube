@@ -1,0 +1,8 @@
+<Project>
+  <!-- Build output and intermediate files go to the ignored _build folder, so the source tree stays clean and git never sees them -->
+  <PropertyGroup>
+    <RepoRoot>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\'))</RepoRoot>
+    <BaseIntermediateOutputPath>$(RepoRoot)_build\installer\obj\$(MSBuildProjectName)\</BaseIntermediateOutputPath>
+    <BaseOutputPath>$(RepoRoot)_build\installer\bin\$(MSBuildProjectName)\</BaseOutputPath>
+  </PropertyGroup>
+</Project>

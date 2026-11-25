@@ -1,0 +1,33 @@
+namespace Partcraft.Setup.Localization;
+
+/// <summary>Texts used by every window of the setup.</summary>
+public static class CommonTexts
+{
+    /// <summary>"Mit ♥ gemacht" / "Made with ♥": the parts before and after the (green) heart.</summary>
+    public static (string Before, string After) MadeWithParts =>
+        UiLang.Current == UiLang.English ? ("Made with ", string.Empty) : ("Mit ", " gemacht");
+
+    public static readonly Msg Ok = new("OK", "OK");
+    public static readonly Msg Cancel = new("Abbrechen", "Cancel");
+    public static readonly Msg Close = new("Schließen", "Close");
+    public static readonly Msg Yes = new("Ja", "Yes");
+    public static readonly Msg No = new("Nein", "No");
+    public static readonly Msg Back = new("Zurück", "Back");
+    public static readonly Msg Next = new("Weiter", "Next");
+    public static readonly Msg Retry = new("Erneut versuchen", "Try again");
+
+    // Copying an error message (rule: every error message is copyable). The status texts share one fixed slot next to the button.
+    public static readonly Msg Copy = new("Kopieren", "Copy");
+    public static readonly Msg Copied = new("Kopiert", "Copied");
+    public static readonly Msg CopyFailed = new("Kopieren nicht möglich", "Copy not possible");
+
+    public static readonly Msg DialogInfo = new("Hinweis", "Note");
+    public static readonly Msg DialogQuestion = new("Frage", "Question");
+    public static readonly Msg DialogWarning = new("Achtung", "Attention");
+    public static readonly Msg DialogError = new("Fehler", "Error");
+
+    // Names of the title strip's buttons for screen readers (the words Windows uses for its own caption buttons)
+    public static readonly Msg CaptionMinimize = new("Minimieren", "Minimize");
+    public static readonly Msg ThemeToLight = new("Zum hellen Design wechseln", "Switch to the light theme");
+    public static readonly Msg ThemeToDark = new("Zum dunklen Design wechseln", "Switch to the dark theme");
+}

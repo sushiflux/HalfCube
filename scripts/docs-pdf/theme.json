@@ -1,0 +1,46 @@
+{
+  "$comment": "Look of the Partcraft documents (theme Präzision, the default theme of the product). Colours come from the logo and the decided colour theme; the wordmark rules are fixed per background and independent of the theme. The brand name is read from branding/branding.json, the logo from branding/source/logo-square.png (shown as it is, never redrawn).",
+  "name": "Präzision",
+  "brandingFile": "../../branding/branding.json",
+  "logoFile": "../../branding/source/logo-square.png",
+  "fonts": {
+    "sans": { "family": "Geist", "file": "fonts/Geist-Variable.woff2" },
+    "mono": { "family": "Geist Mono", "file": "fonts/GeistMono-Variable.woff2" }
+  },
+  "colors": {
+    "navy": "#16476e",
+    "blue": "#1f75ae",
+    "cyan": "#4cd1e0",
+    "teal": "#0e7c8a",
+    "ink": "#0f1d2a",
+    "ink2": "#2b3a48",
+    "muted": "#526170",
+    "line": "#dde3e9",
+    "soft": "#f5f7f9",
+    "accentSoft": "#e3eff8",
+    "coverBg": "#0a1f33",
+    "coverBg2": "#123b5c",
+    "codeBg": "#0f1d2a",
+    "codeText": "#e6edf3",
+    "note": "#1f75ae",
+    "noteSoft": "#e3eff8",
+    "tip": "#0b7a5c",
+    "tipSoft": "#e5f4ef",
+    "warn": "#c42b2b",
+    "warnSoft": "#fbecec",
+    "open": "#a85a00",
+    "openSoft": "#fdf2e0",
+    "decision": "#6a3fd0",
+    "decisionSoft": "#f0ebfb"
+  },
+  "wordmark": {
+    "split": ["Part", "craft"],
+    "light": { "part": "#16476e", "craft": "#1f75ae" },
+    "dark": { "part": "#ffffff", "craft": "#4cd1e0" },
+    "weightLarge": 600,
+    "weightSmall": 640,
+    "trackingLarge": "-0.028em",
+    "trackingSmall": "0.004em"
+  },
+  "credit": { "de": "Mit ♥ gemacht", "en": "Made with ♥" }
+}

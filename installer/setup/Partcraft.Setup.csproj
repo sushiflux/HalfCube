@@ -1,0 +1,52 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    The designed Windows setup of Partcraft (WinForms, owner-drawn, light/dark, German/English). It carries Velopack's Setup.exe
+    (the installer that vpk pack creates) inside itself as an appended ZIP and runs it silently underneath, so the user sees one
+    designed window while Velopack does the installing (per user, no administrator rights, update-ready). Published as a
+    self-contained, compressed single file; scripts/build-installer.ps1 appends the payload to the end of the exe.
+    The only .NET in the product (the app, the engine and the updates stay without it).
+  -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net11.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <AssemblyName>Partcraft-Setup</AssemblyName>
+    <RootNamespace>Partcraft.Setup</RootNamespace>
+    <Description>Partcraft Setup</Description>
+    <AssemblyTitle>Partcraft Setup</AssemblyTitle>
+    <Company>SushiFlux</Company>
+    <Product>Partcraft</Product>
+    <Copyright>© 2026 SushiFlux</Copyright>
+    <ApplicationIcon>..\..\branding\icons\icon.ico</ApplicationIcon>
+    <ApplicationHighDpiMode>SystemAware</ApplicationHighDpiMode>
+    <ApplicationVisualStyles>true</ApplicationVisualStyles>
+    <ApplicationUseCompatibleTextRendering>false</ApplicationUseCompatibleTextRendering>
+    <ApplicationDefaultFont>Segoe UI, 9.5pt</ApplicationDefaultFont>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <SelfContained>true</SelfContained>
+    <PublishSingleFile>true</PublishSingleFile>
+    <!-- The setup runs once: compressing the runtime shrinks the download, the extra start-up time does not matter here -->
+    <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
+    <DebugType>embedded</DebugType>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+    <PublishTrimmed>false</PublishTrimmed>
+    <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <!-- No forms designer is used: positions and values are set in code -->
+    <NoWarn>$(NoWarn);WFO1000</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- The logo and the app icon straight from the branding folder (scaled only, never altered) -->
+    <EmbeddedResource Include="..\..\branding\icons\icon-512.png" LogicalName="logo.png" Link="Resources\logo.png" />
+    <EmbeddedResource Include="..\..\branding\icons\icon.ico" LogicalName="partcraft.ico" Link="Resources\partcraft.ico" />
+    <!-- Geist and Geist Mono (SIL Open Font License 1.1, Resources\fonts\OFL.txt), registered for this process only -->
+    <EmbeddedResource Include="Resources\fonts\*.ttf" LogicalName="font-%(Filename).ttf" />
+    <EmbeddedResource Include="Resources\fonts\OFL.txt" LogicalName="OFL.txt" />
+  </ItemGroup>
+</Project>

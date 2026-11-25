@@ -1,12 +1,190 @@
 @import "tailwindcss";
+@import "./theme/themes.generated.css";
 
-/* Placeholder base styles; the themes come with the design system. */
+/* Dark variant follows the theme mode attribute, not the operating system. */
+@custom-variant dark (&:where([data-mode="dark"], [data-mode="dark"] *));
+
+/* Neutral scrim behind dialogs (not a theme colour). */
 :root {
-  color-scheme: light;
+  --veil: rgb(15 29 42 / 0.42);
+}
+:root[data-mode="dark"] {
+  --veil: rgb(0 0 0 / 0.58);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    --veil: rgb(0 0 0 / 0.58);
+  }
 }
 
-html,
-body,
-#root {
-  height: 100%;
+/* Fonts: Geist and Geist Mono, SIL Open Font License (assets/fonts/OFL-LICENSE.txt). */
+@font-face {
+  font-family: "Geist";
+  src: url("./assets/fonts/Geist-Variable.woff2") format("woff2");
+  font-weight: 100 900;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Geist Mono";
+  src: url("./assets/fonts/GeistMono-Variable.woff2") format("woff2");
+  font-weight: 100 900;
+  font-display: swap;
+}
+
+/*
+ * Tailwind is wired to the theme tokens (theme/themes.generated.css). The default colour palette and the default
+ * radii are removed on purpose, so a component can only use a token. Utilities: bg-surface, text-fg, text-muted,
+ * border-line, bg-primary, text-on-primary, bg-toggle-on, rounded-ctl, rounded-card ...
+ */
+@theme inline {
+  --color-*: initial;
+  --color-transparent: transparent;
+  --color-current: currentColor;
+
+  --color-bg: var(--c-bg);
+  --color-surface: var(--c-surface);
+  --color-surface-2: var(--c-surface-2);
+  --color-line: var(--c-line);
+  --color-line-strong: var(--c-line-strong);
+  --color-fg: var(--c-text);
+  --color-muted: var(--c-muted);
+  --color-primary: var(--c-primary);
+  --color-on-primary: var(--c-on-primary);
+  --color-primary-soft: var(--c-primary-soft);
+  --color-create: var(--c-create);
+  --color-on-create: var(--c-on-create);
+  --color-destructive: var(--c-destructive);
+  --color-on-destructive: var(--c-on-destructive);
+  --color-toggle-on: var(--c-toggle-on);
+  --color-toggle-off: var(--c-toggle-off);
+  --color-accent-1: var(--c-accent-1);
+  --color-accent-2: var(--c-accent-2);
+  --color-viewport: var(--c-viewport);
+  --color-viewport-2: var(--c-viewport-2);
+  --color-face-top: var(--c-face-top);
+  --color-face-left: var(--c-face-left);
+  --color-face-right: var(--c-face-right);
+  --color-sketch-under: var(--c-sketch-under);
+  --color-sketch-full: var(--c-sketch-full);
+  --color-sketch-over: var(--c-sketch-over);
+  --color-construction: var(--c-construction);
+  --color-centre: var(--c-centre);
+  --color-dim-line: var(--c-dim-line);
+  --color-dim-text: var(--c-dim-text);
+  --color-constraint: var(--c-constraint);
+  --color-projected: var(--c-projected);
+  --color-profile-fill: var(--c-profile-fill);
+  --color-body-edge: var(--c-body-edge);
+  --color-silhouette: var(--c-silhouette);
+  --color-hidden-edge: var(--c-hidden-edge);
+  --color-grid-major: var(--c-grid-major);
+  --color-grid-minor: var(--c-grid-minor);
+  --color-axis-x: var(--c-axis-x);
+  --color-axis-y: var(--c-axis-y);
+  --color-axis-z: var(--c-axis-z);
+  --color-plane: var(--c-plane);
+  --color-selection: var(--c-selection);
+  --color-hover: var(--c-hover);
+  --color-error: var(--c-error);
+  /* The amber of the hover highlight doubles as the warning colour (no extra token needed). */
+  --color-warning: var(--c-hover);
+  --color-veil: var(--veil);
+
+  /* Logo colours, the same in every theme. */
+  --color-brand-navy: var(--brand-navy);
+  --color-brand-blue: var(--brand-blue);
+  --color-brand-cyan: var(--brand-cyan);
+  /* Wordmark: fixed per mode, independent of the theme. */
+  --color-wm-part: var(--wm-part);
+  --color-wm-craft: var(--wm-craft);
+
+  --font-sans: "Geist", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+
+  /* One radius scale, small and crisp: 4 px controls, 6 px cards. */
+  --radius-*: initial;
+  --radius-none: 0;
+  --radius-sm: 3px;
+  --radius-ctl: 4px;
+  --radius-card: 6px;
+  --radius-full: 9999px;
+
+  --shadow-*: initial;
+  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.06);
+  --shadow-dialog: 0 14px 36px rgb(0 0 0 / 0.22), 0 1px 2px rgb(0 0 0 / 0.1);
+}
+
+/* Base rules live in the base layer, so Tailwind utilities (text-on-primary ...) can override them. */
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    margin: 0;
+    background: var(--c-bg);
+    color: var(--c-text);
+    font-family: var(--font-sans);
+    font-size: 14px;
+    line-height: 1.45;
+    -webkit-font-smoothing: antialiased;
+    /* Scrollbars overlay the content everywhere and never take layout space. */
+    scrollbar-width: none;
+  }
+  body::-webkit-scrollbar {
+    display: none;
+  }
+
+  button {
+    font: inherit;
+    color: inherit;
+  }
+
+  /* Visible keyboard focus everywhere. */
+  :focus-visible {
+    outline: 2px solid var(--c-primary);
+    outline-offset: 2px;
+  }
+}
+
+@layer components {
+  .mono {
+    font-family: var(--font-mono);
+    font-feature-settings: "tnum" 1, "zero" 1;
+  }
+
+  /* Text the user may want to copy stays selectable even where a parent turns selection off. */
+  .selectable {
+    user-select: text;
+  }
+}
+
+/* Reduced motion: no animation, no transition, no smooth scrolling. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@keyframes pc-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes pc-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(2px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }

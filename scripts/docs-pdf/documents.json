@@ -1,0 +1,8 @@
+{
+  "documents": [
+    { "source": "docs/handbuch/de/HANDBUCH.md", "pdf": "Partcraft-Handbuch.pdf" },
+    { "source": "docs/handbuch/en/HANDBOOK.md", "pdf": "Partcraft-Handbook.pdf" },
+    { "source": "docs/entwickler/de/ENTWICKLERHANDBUCH.md", "pdf": "Partcraft-Entwicklerhandbuch.pdf" },
+    { "source": "docs/entwickler/en/DEVELOPER-MANUAL.md", "pdf": "Partcraft-Developer-Manual.pdf" }
+  ]
+}

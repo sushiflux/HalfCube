@@ -5,6 +5,7 @@ import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import { defineConfig, type Plugin } from "vite";
 import { readBuildInfo, readDevPorts, repoRoot } from "./config/build-info.ts";
+import { engineAssets } from "./config/engine-assets.ts";
 import { isolationHeaders, responseHeaders } from "./config/security.ts";
 import brandingFile from "./branding/branding.json" with { type: "json" };
 
@@ -22,7 +23,9 @@ export default defineConfig({
   root: resolve(repoRoot, "app"),
   base: "./",
   publicDir: false,
-  plugins: [react(), tailwindcss(), brandingHtml()],
+  plugins: [react(), tailwindcss(), brandingHtml(), engineAssets(repoRoot)],
+  // The engine worker (app/src/engine/worker) is an ES module worker: it imports the engine module dynamically.
+  worker: { format: "es" },
   define: { __BUILD_INFO__: JSON.stringify(readBuildInfo()) },
   build: {
     outDir: resolve(repoRoot, "_build/web"),

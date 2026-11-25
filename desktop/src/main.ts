@@ -10,6 +10,8 @@
 //   PARTCRAFT_WINDOW     "inactive": show the window without taking the focus; "minimized": show it minimized,
 //                        without taking the focus. Unset: a normal window that is shown and focused.
 //   PARTCRAFT_USER_DATA  folder for the settings and caches of this run (default: Electron's per-user folder)
+//   PARTCRAFT_ENGINE_EXE path of another engine program (unpackaged only; default: see engine-path.ts)
+//   PARTCRAFT_SETUP_CHOICES_FILE  another first-start file than the one in the roaming Partcraft folder (unpackaged only)
 import { app, BrowserWindow, protocol, session } from "electron";
 import { existsSync } from "node:fs";
 import { readFile, stat } from "node:fs/promises";
@@ -17,7 +19,10 @@ import { extname, join, normalize, relative, resolve, sep } from "node:path";
 import { responseHeaders } from "../../config/security.ts";
 import { branding } from "../../app/src/branding.ts";
 import { currentVersion } from "../../app/src/version.ts";
+import { installEngineIpc } from "./engine-ipc.ts";
+import { resolveEngineExecutable, sessionDataDir, setupChoicesPath } from "./engine-path.ts";
 import { showMinimizedNoActivate } from "./native-window.ts";
+import { readSetupChoices } from "./setup-choices-file.ts";
 
 const log = (line: string) => process.stderr.write(`[main] ${line}\n`);
 
@@ -54,6 +59,9 @@ const devUrl = readDevUrl(process.env.PARTCRAFT_DEV_URL);
 // The lock belongs to the user data folder, so set the folder first.
 app.setName(branding.name);
 if (process.env.PARTCRAFT_USER_DATA) app.setPath("userData", resolve(process.env.PARTCRAFT_USER_DATA));
+// Chromium caches go to the local Partcraft folder (see sessionDataDir), not to the roaming profile.
+const sessionDir = sessionDataDir({ packaged: app.isPackaged, platform: process.platform, env: process.env, productName: branding.name });
+if (sessionDir) app.setPath("sessionData", sessionDir);
 
 protocol.registerSchemesAsPrivileged([
   { scheme: "app", privileges: { standard: true, secure: true, supportFetchAPI: true } },
@@ -209,8 +217,25 @@ if (!app.requestSingleInstanceLock({ background: windowMode !== "normal" })) {
     log(`electron ${process.versions.electron}, chrome ${process.versions.chrome}, node ${process.versions.node}`);
     log(`window mode: ${windowMode}; source: ${devUrl ?? appOrigin}`);
 
-    // ENGINE HOST (next stage): start the native engine process here and hand its message port to the window.
-    // Nothing is started yet; this stage only opens the window with the shared UI.
+    // The native engine: the page asks for it through the preload bridge, the host starts it and hands over a port.
+    const engines = installEngineIpc({
+      locate: () =>
+        resolveEngineExecutable({
+          packaged: app.isPackaged,
+          resourcesPath: process.resourcesPath,
+          repoRoot: resolve(buildDir, "../.."),
+          platform: process.platform,
+          env: process.env,
+          exists: existsSync,
+        }),
+      isTrustedFrame: (frame) => frame !== null && frame.parent === null && isOwnUrl(frame.url),
+      setupChoices: readSetupChoices(
+        setupChoicesPath({ appData: app.getPath("appData"), productName: branding.name, packaged: app.isPackaged, env: process.env }),
+        log,
+      ),
+      log: (line) => log(line),
+    });
+    app.on("before-quit", () => engines.killAll());
 
     mainWindow = createWindow();
   });

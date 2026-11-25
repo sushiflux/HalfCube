@@ -1,0 +1,283 @@
+# Continuous integration: checks, engine builds and the browser build on every push to main, every pull request and
+# every v* tag. Nothing is published from here yet.
+#
+# Jobs
+#   windows      typecheck, lint, unit tests, protocol check, native engine (MSVC), C++ unit tests, engine drive test
+#   web          browser UI build (npm run build:web)
+#   engine-wasm  WebAssembly engine in the pinned emscripten/emsdk container, driven through its message interface
+#   linux        compile check of the native engine, no tests, no package (Linux comes later)
+#   ci-ok        single result of all jobs above (what a later release job and branch protection depend on)
+#
+# OCCT is the expensive part. Each engine job caches its prebuilt OCCT; the key is the pinned OCCT commit, a hash of the
+# OCCT configure options read from the build scripts (scripts/ci/occt-key.mjs) and the compiler version.
+#
+# PHASE 4 PLACEHOLDER (releases, installers, Store packages): there is deliberately no release job yet. Later it will
+# be a job with `needs: ci-ok`, `if: startsWith(github.ref, 'refs/tags/v')` and its own narrow `permissions`
+# (contents: write), reading the channel from the tag. Keep the top-level permissions at contents: read.
+name: CI
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+
+permissions:
+  contents: read
+
+# One run per ref; a newer push cancels the older run, except for tags (a tag build is never cancelled).
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ !startsWith(github.ref, 'refs/tags/') }}
+
+env:
+  # Same image as engine/scripts/build-wasm.ps1 (tag and digest). EMSDK_KEY goes into the OCCT cache key; change it
+  # together with the image.
+  EMSDK_IMAGE: emscripten/emsdk:7.0.1@sha256:73aece2e0ab748487945ad117b79fc4d277e9f656e54fc800a9b1a0a6562715b
+  EMSDK_KEY: emsdk-7.0.1-73aece2e
+  # The Electron runtime (about 100 MB) is not needed for typecheck, lint, tests or the web build.
+  ELECTRON_SKIP_BINARY_DOWNLOAD: "1"
+  # Newest LTS; package.json requires >=24.
+  NODE_VERSION: "26"
+
+# Actions are pinned to full commit SHAs (the comment names the release); update SHA and comment together.
+#   actions/checkout        3d3c42e5aac5ba805825da76410c181273ba90b1  v7.0.1
+#   actions/setup-node      949feb2413d6458794dcd2491c4babbbce0c15c1  v7.1.0
+#   actions/cache           55cc8345863c7cc4c66a329aec7e433d2d1c52a9  v6.1.0 (also cache/restore and cache/save)
+#   actions/upload-artifact cf430e030ddbb5b0abf93d22962f4752f3646cd9  v7.0.2
+
+jobs:
+  windows:
+    name: Windows (checks, native engine)
+    runs-on: windows-2025
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Install npm packages
+        shell: bash
+        run: npm ci
+
+      - name: Typecheck
+        shell: bash
+        run: npm run typecheck
+
+      - name: Lint
+        shell: bash
+        run: npm run lint
+
+      - name: Unit tests
+        shell: bash
+        run: npm test
+
+      - name: Protocol bindings are up to date
+        shell: bash
+        run: node protocol/generate.mjs --check
+
+      # Boost and OCCT contain paths beyond 260 characters.
+      - name: Allow long paths in git
+        shell: bash
+        run: git config --system core.longpaths true
+
+      - name: OCCT cache key
+        id: key
+        shell: pwsh
+        run: |
+          node scripts/ci/occt-key.mjs windows
+          $vswhere = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio\Installer\vswhere.exe'
+          $vs = & $vswhere -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          $msvc = (Get-Content -Raw (Join-Path $vs 'VC\Auxiliary\Build\Microsoft.VCToolsVersion.default.txt')).Trim()
+          "msvc=$msvc" | Out-File -Append -Encoding utf8 $env:GITHUB_OUTPUT
+          "MSVC toolset: $msvc"
+
+      - name: Restore OCCT
+        id: occt
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: engine/_build/occt-windows-install
+          key: occt-${{ steps.key.outputs.key }}-msvc${{ steps.key.outputs.msvc }}
+
+      - name: Fetch third-party sources (OCCT sources only without a cache hit)
+        shell: pwsh
+        run: |
+          if ('${{ steps.occt.outputs.cache-hit }}' -eq 'true') {
+            powershell -NoProfile -ExecutionPolicy Bypass -File engine/scripts/fetch-deps.ps1 -Skip occt
+          } else {
+            powershell -NoProfile -ExecutionPolicy Bypass -File engine/scripts/fetch-deps.ps1
+          }
+
+      # Without a cache hit this builds OCCT from source (the slow part), then the engine, then runs the C++ unit tests.
+      - name: Build engine and run C++ unit tests
+        shell: pwsh
+        run: |
+          if ('${{ steps.occt.outputs.cache-hit }}' -eq 'true') {
+            powershell -NoProfile -ExecutionPolicy Bypass -File engine/scripts/build-windows.ps1 -OcctDir engine/_build/occt-windows-install
+          } else {
+            powershell -NoProfile -ExecutionPolicy Bypass -File engine/scripts/build-windows.ps1
+          }
+
+      # Saved even when a later step fails; the stamp file is written last, so a half-built OCCT is never cached.
+      - name: Is a complete OCCT installation present
+        id: occt-ready
+        if: always() && steps.occt.outputs.cache-hit != 'true'
+        shell: pwsh
+        run: |
+          "ready=$((Test-Path engine/_build/occt-windows-install/.partcraft-occt).ToString().ToLower())" | Out-File -Append -Encoding utf8 $env:GITHUB_OUTPUT
+
+      - name: Save OCCT
+        if: always() && steps.occt.outputs.cache-hit != 'true' && steps.occt-ready.outputs.ready == 'true'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: engine/_build/occt-windows-install
+          key: occt-${{ steps.key.outputs.key }}-msvc${{ steps.key.outputs.msvc }}
+
+      - name: Drive the engine through its message interface
+        shell: bash
+        run: node engine/tests/drive-engine.mjs --native engine/_build/windows-release/bin/partcraft-engine.exe --out engine/_build/results/native.json
+
+  web:
+    name: Browser UI build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - run: npm ci
+
+      - run: npm run build:web
+
+  engine-wasm:
+    name: WebAssembly engine
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # fetch-deps.sh and the drive test need Node; no npm packages are needed here.
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: OCCT cache key
+        id: key
+        run: node scripts/ci/occt-key.mjs wasm
+
+      - name: Restore OCCT
+        id: occt
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: engine/_build/occt-wasm-install
+          key: occt-${{ steps.key.outputs.key }}-${{ env.EMSDK_KEY }}
+
+      - name: Fetch third-party sources (OCCT sources only without a cache hit)
+        run: |
+          if [ '${{ steps.occt.outputs.cache-hit }}' = 'true' ]; then
+            sh engine/scripts/fetch-deps.sh --skip occt
+          else
+            sh engine/scripts/fetch-deps.sh
+          fi
+
+      - name: Build the WebAssembly engine
+        run: bash scripts/ci/build-wasm-linux.sh
+
+      - name: Save OCCT
+        if: always() && steps.occt.outputs.cache-hit != 'true' && hashFiles('engine/_build/occt-wasm-install/.partcraft-occt') != ''
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: engine/_build/occt-wasm-install
+          key: occt-${{ steps.key.outputs.key }}-${{ env.EMSDK_KEY }}
+
+      - name: Drive the engine through its message interface
+        run: node engine/tests/drive-engine.mjs --wasm engine/_build/wasm --out engine/_build/results/wasm.json
+
+      - name: Upload build logs
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: wasm-build-logs
+          path: engine/_build/wasm/*.log
+          retention-days: 7
+          if-no-files-found: ignore
+
+  linux:
+    name: Linux (compile check)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # fetch-deps.sh needs Node to read the manifest.
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: OCCT cache key
+        id: key
+        run: |
+          node scripts/ci/occt-key.mjs linux
+          echo "cxx=$(c++ -dumpfullversion | tr -d '\n')" >> "$GITHUB_OUTPUT"
+
+      - name: Restore OCCT
+        id: occt
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: engine/_build/occt-linux-install
+          key: occt-${{ steps.key.outputs.key }}-gcc${{ steps.key.outputs.cxx }}
+
+      - name: Fetch third-party sources (OCCT sources only without a cache hit)
+        run: |
+          if [ '${{ steps.occt.outputs.cache-hit }}' = 'true' ]; then
+            sh engine/scripts/fetch-deps.sh --skip occt
+          else
+            sh engine/scripts/fetch-deps.sh
+          fi
+
+      # Compiles only: no --test, no package. A cache hit passes the installation explicitly.
+      - name: Compile the engine
+        run: |
+          if [ '${{ steps.occt.outputs.cache-hit }}' = 'true' ]; then
+            bash engine/scripts/build-linux.sh --occt-dir engine/_build/occt-linux-install
+          else
+            bash engine/scripts/build-linux.sh
+          fi
+
+      - name: Save OCCT
+        if: always() && steps.occt.outputs.cache-hit != 'true' && hashFiles('engine/_build/occt-linux-install/.partcraft-occt') != ''
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: engine/_build/occt-linux-install
+          key: occt-${{ steps.key.outputs.key }}-gcc${{ steps.key.outputs.cxx }}
+
+  ci-ok:
+    name: All CI jobs
+    needs: [windows, web, engine-wasm, linux]
+    if: always()
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Check the results of all jobs
+        env:
+          RESULTS: ${{ join(needs.*.result, ' ') }}
+        run: |
+          echo "job results: $RESULTS"
+          for r in $RESULTS; do
+            [ "$r" = success ] || { echo "at least one job did not succeed" >&2; exit 1; }
+          done

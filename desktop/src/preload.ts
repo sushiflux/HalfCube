@@ -1,7 +1,16 @@
-// Preload script (sandboxed, context-isolated). Exposes the smallest possible bridge: static facts that tell the UI it
-// runs in the desktop program. No IPC channel is reachable from the page yet; the engine connection comes later.
-import { contextBridge } from "electron";
+// Preload script (sandboxed, context-isolated). Exposes the smallest possible bridge: static facts, one call to
+// (re)start the engine, and the installer's first-start choices. Engine messages never pass through this script; they
+// travel on a MessagePort that is handed straight to the page, so no generic IPC channel is reachable from the page.
+import { contextBridge, ipcRenderer } from "electron";
+import {
+  IPC_ENGINE_PORT,
+  IPC_SETUP_CHOICES,
+  IPC_START_ENGINE,
+  type EnginePortEnvelope,
+  type StartEngineResult,
+} from "../../app/src/engine/bridge.ts";
 import type { DesktopBridge } from "../../app/src/platform.ts";
+import type { SetupChoices } from "../../app/src/setup-choices.ts";
 
 const bridge: DesktopBridge = {
   kind: "electron",
@@ -11,6 +20,15 @@ const bridge: DesktopBridge = {
     chrome: process.versions.chrome ?? "",
     node: process.versions.node ?? "",
   },
+  startEngine: () => ipcRenderer.invoke(IPC_START_ENGINE) as Promise<StartEngineResult>,
+  // Already validated by the main process (null when absent or malformed).
+  setupChoices: ipcRenderer.sendSync(IPC_SETUP_CHOICES) as SetupChoices | null,
 };
 
 contextBridge.exposeInMainWorld("desktopBridge", bridge);
+
+ipcRenderer.on(IPC_ENGINE_PORT, (event, generation: number) => {
+  const envelope: EnginePortEnvelope = { partcraft: "engine-port", generation };
+  // Same-window hand-over from the isolated world to the page; the port is transferred, not copied.
+  window.postMessage(envelope, window.location.origin, event.ports);
+});

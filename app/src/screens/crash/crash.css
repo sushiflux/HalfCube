@@ -1,0 +1,378 @@
+/*
+ * Crash page. Deliberately independent of the app's theme tokens, Tailwind and fonts: it has to stay legible even when
+ * the theming is what broke. All colours are literal here. The calm page follows the app's light/dark attribute when it
+ * is set, otherwise the system; the diagnostic console of the dev build is always dark.
+ */
+.pcc {
+  --pcc-bg: #f5f7f9;
+  --pcc-surface: #ffffff;
+  --pcc-surface2: #edf1f5;
+  --pcc-line: #c6ced6;
+  --pcc-text: #0f1d2a;
+  --pcc-muted: #4a5a69;
+  --pcc-primary: #1f6a9e;
+  --pcc-on-primary: #ffffff;
+  --pcc-danger: #b02020;
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  overflow: hidden;
+  box-sizing: border-box;
+  background: var(--pcc-bg);
+  color: var(--pcc-text);
+  font: 14px/1.5 system-ui, "Segoe UI", Roboto, sans-serif;
+}
+.pcc *,
+.pcc *::before,
+.pcc *::after {
+  box-sizing: border-box;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-mode="light"]) .pcc.pcc-calm {
+    --pcc-bg: #0e1317;
+    --pcc-surface: #151b20;
+    --pcc-surface2: #1d252c;
+    --pcc-line: #3a4650;
+    --pcc-text: #e7edf2;
+    --pcc-muted: #a9b8c4;
+    --pcc-primary: #4cd1e0;
+    --pcc-on-primary: #05252c;
+    --pcc-danger: #f4817a;
+  }
+}
+:root[data-mode="dark"] .pcc.pcc-calm {
+  --pcc-bg: #0e1317;
+  --pcc-surface: #151b20;
+  --pcc-surface2: #1d252c;
+  --pcc-line: #3a4650;
+  --pcc-text: #e7edf2;
+  --pcc-muted: #a9b8c4;
+  --pcc-primary: #4cd1e0;
+  --pcc-on-primary: #05252c;
+  --pcc-danger: #f4817a;
+}
+/* The diagnostic console: fixed dark. */
+.pcc.pcc-dev {
+  --pcc-bg: #0d1117;
+  --pcc-surface: #161b22;
+  --pcc-surface2: #1c2330;
+  --pcc-line: #38414d;
+  --pcc-text: #e6edf3;
+  --pcc-muted: #9aa6b2;
+  --pcc-primary: #58a6ff;
+  --pcc-on-primary: #04111f;
+  --pcc-danger: #ff7b72;
+  font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+  font-size: 13px;
+}
+
+.pcc-wrap {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 40px 24px 48px;
+}
+.pcc-dev .pcc-wrap {
+  max-width: none;
+  padding: 20px 24px 28px;
+}
+.pcc-kicker {
+  margin: 0 0 6px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--pcc-danger);
+}
+.pcc h1 {
+  margin: 0;
+  font-size: 26px;
+  line-height: 1.25;
+  font-weight: 600;
+}
+.pcc-dev h1 {
+  font-size: 18px;
+  word-break: break-word;
+}
+.pcc-lead {
+  margin: 10px 0 0;
+  color: var(--pcc-muted);
+  max-width: 62ch;
+}
+.pcc-where {
+  margin: 8px 0 0;
+  color: var(--pcc-muted);
+}
+.pcc-where b {
+  color: var(--pcc-text);
+  font-weight: 600;
+}
+.pcc-message {
+  margin: 18px 0 0;
+  padding: 12px 14px 12px 17px;
+  position: relative;
+  overflow: hidden;
+  background: var(--pcc-surface);
+  border: 1px solid var(--pcc-line);
+  border-radius: 6px;
+  word-break: break-word;
+  white-space: pre-wrap;
+  user-select: text;
+}
+.pcc-message::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: var(--pcc-danger);
+}
+.pcc-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 16px;
+}
+.pcc-btn {
+  height: 36px;
+  padding: 0 14px;
+  border: 1px solid var(--pcc-line);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--pcc-text);
+  font: inherit;
+  font-weight: 500;
+  cursor: pointer;
+}
+.pcc-btn:hover {
+  background: var(--pcc-surface2);
+}
+.pcc-btn-primary {
+  background: var(--pcc-primary);
+  border-color: var(--pcc-primary);
+  color: var(--pcc-on-primary);
+  font-weight: 600;
+}
+.pcc-btn-primary:hover {
+  background: var(--pcc-primary);
+  filter: brightness(1.08);
+}
+.pcc-btn:focus-visible,
+.pcc-tab:focus-visible,
+.pcc-frame:focus-visible,
+.pcc-toggle:focus-visible {
+  outline: 2px solid var(--pcc-primary);
+  outline-offset: 2px;
+}
+/* "Copy" keeps its width for all three labels, so the confirmation moves nothing. */
+.pcc-copy {
+  display: inline-grid;
+}
+.pcc-copy > span {
+  grid-area: 1 / 1;
+}
+.pcc-copy > span[data-hidden="true"] {
+  visibility: hidden;
+}
+.pcc-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0;
+  margin-right: auto;
+  border: 0;
+  background: none;
+  color: var(--pcc-primary);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+.pcc-toggle svg {
+  transition: transform 0.15s;
+}
+.pcc-toggle[aria-expanded="true"] svg {
+  transform: rotate(90deg);
+}
+.pcc-details {
+  margin-top: 12px;
+  padding: 12px 14px;
+  background: var(--pcc-surface2);
+  border: 1px solid var(--pcc-line);
+  border-radius: 6px;
+  user-select: text;
+}
+.pcc-details h2 {
+  margin: 12px 0 4px;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--pcc-muted);
+}
+.pcc-details h2:first-child {
+  margin-top: 0;
+}
+.pcc pre {
+  margin: 0;
+  font: 12px/1.5 ui-monospace, "Cascadia Mono", Consolas, monospace;
+  white-space: pre-wrap;
+  word-break: break-all;
+  user-select: text;
+}
+
+/* Diagnostic console */
+.pcc-tabs {
+  display: flex;
+  gap: 0;
+  margin-top: 16px;
+  border-bottom: 1px solid var(--pcc-line);
+}
+.pcc-tab {
+  position: relative;
+  height: 36px;
+  padding: 0 14px;
+  border: 0;
+  background: none;
+  color: var(--pcc-muted);
+  font: inherit;
+  cursor: pointer;
+}
+.pcc-tab[aria-selected="true"] {
+  color: var(--pcc-text);
+  font-weight: 600;
+}
+.pcc-tab[aria-selected="true"]::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 2px;
+  background: var(--pcc-primary);
+}
+.pcc-panel {
+  margin-top: 12px;
+}
+.pcc-frames {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+}
+@media (max-width: 760px) {
+  .pcc-frames {
+    grid-template-columns: 1fr;
+  }
+}
+.pcc-framelist {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border: 1px solid var(--pcc-line);
+  border-radius: 6px;
+  overflow: hidden;
+  background: var(--pcc-surface);
+}
+.pcc-frame {
+  display: block;
+  width: 100%;
+  padding: 6px 12px;
+  border: 0;
+  border-bottom: 1px solid var(--pcc-line);
+  background: none;
+  color: var(--pcc-text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  position: relative;
+  word-break: break-all;
+}
+.pcc-framelist li:last-child .pcc-frame {
+  border-bottom: 0;
+}
+.pcc-frame:hover {
+  background: var(--pcc-surface2);
+}
+.pcc-frame[aria-current="true"] {
+  background: var(--pcc-surface2);
+}
+.pcc-frame[aria-current="true"]::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: var(--pcc-primary);
+}
+.pcc-frame small {
+  display: block;
+  color: var(--pcc-muted);
+}
+.pcc-frame-detail {
+  border: 1px solid var(--pcc-line);
+  border-radius: 6px;
+  background: var(--pcc-surface);
+  padding: 10px 12px;
+  position: sticky;
+  top: 0;
+}
+.pcc-kv {
+  display: grid;
+  grid-template-columns: 110px minmax(0, 1fr);
+  gap: 4px 12px;
+  margin: 0;
+  user-select: text;
+}
+.pcc-kv dt {
+  color: var(--pcc-muted);
+}
+.pcc-kv dd {
+  margin: 0;
+  word-break: break-all;
+}
+.pcc-list {
+  margin: 0;
+  padding: 10px 12px 10px 32px;
+  background: var(--pcc-surface);
+  border: 1px solid var(--pcc-line);
+  border-radius: 6px;
+  user-select: text;
+}
+.pcc-dev .pcc-kicker {
+  text-transform: none;
+  letter-spacing: 0.04em;
+}
+
+/* Scrolling: the native bar is hidden, a slim overlay thumb takes no layout space (see CrashScroll.tsx). */
+.pcc-viewport {
+  position: absolute;
+  inset: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: none;
+}
+.pcc-viewport::-webkit-scrollbar {
+  display: none;
+}
+.pcc-thumb {
+  position: absolute;
+  right: 2px;
+  width: 6px;
+  border-radius: 3px;
+  background: var(--pcc-muted);
+  touch-action: none;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s;
+}
+.pcc-thumb[data-visible="true"] {
+  opacity: 0.8;
+  pointer-events: auto;
+}
+@media (prefers-reduced-motion: reduce) {
+  .pcc-thumb {
+    transition: none;
+  }
+}

@@ -16,7 +16,7 @@ Windows comes first, then Linux. A browser version is planned from the start. ma
 
 ### Status
 
-Partcraft is in an early planning phase. There is no usable version yet, no download and no program code.
+Partcraft is in early development. The first scaffold (user interface shell, engine with geometry kernel and sketch solver, message protocol) is being built; there is no usable version and no download yet.
 
 ### License
 
@@ -39,7 +39,7 @@ Zuerst kommt Windows, dann Linux. Eine Browser-Version ist von Anfang an geplant
 
 ### Status
 
-Partcraft befindet sich in einer frühen Planungsphase. Es gibt noch keinen nutzbaren Stand, keinen Download und noch keinen Programmcode.
+Partcraft ist in früher Entwicklung. Das erste Grundgerüst (Oberflächenrahmen, Engine mit Geometriekern und Skizzen-Solver, Nachrichtenprotokoll) entsteht gerade; es gibt noch keinen nutzbaren Stand und keinen Download.
 
 ### Lizenz
 

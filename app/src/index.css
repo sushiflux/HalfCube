@@ -1,0 +1,12 @@
+@import "tailwindcss";
+
+/* Placeholder base styles; the themes come with the design system. */
+:root {
+  color-scheme: light;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}

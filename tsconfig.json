@@ -1,0 +1,17 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "lib": ["es2023", "dom", "dom.iterable"],
+    "jsx": "react-jsx",
+    "types": ["node", "vite/client"]
+  },
+  "include": [
+    "app/src/**/*",
+    "desktop/src/**/*",
+    "config/**/*",
+    "tests/**/*",
+    "vite.config.ts",
+    "vite.desktop.config.ts",
+    "vitest.config.ts"
+  ]
+}

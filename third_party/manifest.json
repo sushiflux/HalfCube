@@ -1,0 +1,196 @@
+{
+  "$comment": "Every third-party component that is built into or shipped with the Partcraft engine, with version, SPDX licence expression, source and licence files. engine/scripts/fetch-deps.ps1 and engine/scripts/fetch-deps.sh read the 'fetch' blocks (pinned commit or SHA-256) and download into engine/_deps/. licenseFiles are paths relative to the repository root after fetching (or after the WebAssembly build for the Emscripten runtime). 'shipped' = part of a distributed engine binary.",
+  "formatVersion": 1,
+  "components": [
+    {
+      "id": "occt",
+      "name": "Open CASCADE Technology (OCCT)",
+      "version": "8.0.2",
+      "license": "LGPL-2.1-only WITH OCCT-exception-1.0",
+      "source": "https://github.com/Open-Cascade-SAS/OCCT",
+      "homepage": "https://dev.opencascade.org/",
+      "shipped": true,
+      "usedIn": ["engine-native", "engine-wasm"],
+      "linkage": "Windows and Linux: shared libraries next to the engine; WebAssembly: linked statically into partcraft-engine.wasm.",
+      "licenseFiles": ["engine/_deps/occt-src/LICENSE_LGPL_21.txt", "engine/_deps/occt-src/OCCT_LGPL_EXCEPTION.txt"],
+      "fetch": {
+        "kind": "git",
+        "url": "https://github.com/Open-Cascade-SAS/OCCT.git",
+        "ref": "V8_0_2",
+        "commit": "83f9abe9477af36e4ca218e1468068aed052779f",
+        "dir": "occt-src"
+      }
+    },
+    {
+      "id": "planegcs",
+      "name": "planegcs (FreeCAD sketch solver)",
+      "version": "FreeCAD 1.1.4",
+      "license": "LGPL-2.0-or-later AND LGPL-2.1-or-later",
+      "licenseNote": "planegcs sources (src/Mod/Sketcher/App/planegcs/*) and src/Mod/Sketcher/SketcherGlobal.h carry LGPL-2.0-or-later headers; the helper headers src/FCGlobal.h and src/boost_graph_adjacency_list.hpp carry SPDX LGPL-2.1-or-later; the LICENSE file is the LGPL-2.1 text. Base/Console.h, FCConfig.h and QtCore.h are replaced by own small headers in engine/third_party_shims/planegcs/.",
+      "source": "https://github.com/FreeCAD/FreeCAD",
+      "homepage": "https://www.freecad.org/",
+      "shipped": true,
+      "usedIn": ["engine-native", "engine-wasm"],
+      "linkage": "Compiled from source and linked statically into the engine.",
+      "files": [
+        "src/Mod/Sketcher/App/planegcs/GCS.cpp",
+        "src/Mod/Sketcher/App/planegcs/Constraints.cpp",
+        "src/Mod/Sketcher/App/planegcs/Geo.cpp",
+        "src/Mod/Sketcher/App/planegcs/SubSystem.cpp",
+        "src/Mod/Sketcher/App/planegcs/qp_eq.cpp",
+        "src/Mod/Sketcher/App/planegcs/*.h",
+        "src/FCGlobal.h",
+        "src/boost_graph_adjacency_list.hpp",
+        "src/Mod/Sketcher/SketcherGlobal.h"
+      ],
+      "licenseFiles": ["engine/_deps/freecad/LICENSE"],
+      "fetch": {
+        "kind": "git",
+        "url": "https://github.com/FreeCAD/FreeCAD.git",
+        "ref": "1.1.4",
+        "commit": "4fd3bf320d9566a27e60069fc8387448aaa3a094",
+        "dir": "freecad",
+        "sparse": ["src/Mod/Sketcher/App/planegcs"]
+      }
+    },
+    {
+      "id": "eigen",
+      "name": "Eigen",
+      "version": "3.4.0",
+      "license": "MPL-2.0 AND Apache-2.0 AND BSD-3-Clause",
+      "licenseNote": "Built with EIGEN_MPL2_ONLY, so no LGPL part of Eigen can be compiled in. Within the headers planegcs includes, Eigen/src/Core/arch/Default/BFloat16.h is Apache-2.0 and Eigen/src/Core/util/MKL_support.h is BSD-3-Clause (only active with EIGEN_USE_MKL, which is not set); everything else used is MPL-2.0. Header-only, unchanged.",
+      "source": "https://gitlab.com/libeigen/eigen",
+      "homepage": "https://eigen.tuxfamily.org/",
+      "shipped": true,
+      "usedIn": ["engine-native", "engine-wasm"],
+      "linkage": "Header-only, compiled into the engine.",
+      "parts": [
+        { "path": "Eigen/src/Core/arch/Default/BFloat16.h", "license": "Apache-2.0" },
+        { "path": "Eigen/src/Core/util/MKL_support.h", "license": "BSD-3-Clause" }
+      ],
+      "licenseFiles": ["engine/_deps/eigen/COPYING.MPL2", "engine/_deps/eigen/COPYING.APACHE", "engine/_deps/eigen/COPYING.BSD", "engine/_deps/eigen/COPYING.README"],
+      "fetch": {
+        "kind": "git",
+        "url": "https://gitlab.com/libeigen/eigen.git",
+        "ref": "3.4.0",
+        "commit": "3147391d946bb4b6c68edd901f2add6ac1f31f8c",
+        "dir": "eigen"
+      }
+    },
+    {
+      "id": "boost",
+      "name": "Boost (headers: graph, math constants and their dependencies)",
+      "version": "1.92.0",
+      "license": "BSL-1.0",
+      "source": "https://www.boost.org/",
+      "shipped": true,
+      "usedIn": ["engine-native", "engine-wasm"],
+      "linkage": "Header-only, compiled into the engine (used by planegcs).",
+      "licenseFiles": ["engine/_deps/boost/LICENSE_1_0.txt"],
+      "fetch": {
+        "kind": "archive",
+        "url": "https://archives.boost.io/release/1.92.0/source/boost_1_92_0.tar.gz",
+        "sha256": "c4a3b310ddd2472416e091067166b0713be97c63f38c212c484ada022fd296ce",
+        "dir": "boost",
+        "stripComponents": 1,
+        "members": ["boost_1_92_0/boost", "boost_1_92_0/LICENSE_1_0.txt"]
+      }
+    },
+    {
+      "id": "nlohmann-json",
+      "name": "JSON for Modern C++ (nlohmann/json)",
+      "version": "3.12.0",
+      "license": "MIT",
+      "source": "https://github.com/nlohmann/json",
+      "shipped": true,
+      "usedIn": ["engine-native", "engine-wasm"],
+      "linkage": "Header-only, compiled into the engine.",
+      "licenseFiles": ["engine/_deps/nlohmann-json/LICENSE.MIT"],
+      "fetch": {
+        "kind": "files",
+        "dir": "nlohmann-json",
+        "commit": "55f93686c01528224f448c19128836e7df245f72",
+        "files": [
+          { "url": "https://raw.githubusercontent.com/nlohmann/json/55f93686c01528224f448c19128836e7df245f72/single_include/nlohmann/json.hpp", "path": "include/nlohmann/json.hpp", "sha256": "aaf127c04cb31c406e5b04a63f1ae89369fccde6d8fa7cdda1ed4f32dfc5de63" },
+          { "url": "https://raw.githubusercontent.com/nlohmann/json/55f93686c01528224f448c19128836e7df245f72/LICENSE.MIT", "path": "LICENSE.MIT", "sha256": "46a65cffd1ea955132d95a8dd921640714a8d6b537d2e4e482d31145ae95b603" }
+        ]
+      }
+    },
+    {
+      "id": "doctest",
+      "name": "doctest (C++ unit test framework)",
+      "version": "2.5.3",
+      "license": "MIT",
+      "source": "https://github.com/doctest/doctest",
+      "shipped": false,
+      "usedIn": ["engine-unit-tests"],
+      "linkage": "Header-only, only in the unit test program.",
+      "licenseFiles": ["engine/_deps/doctest/LICENSE.txt"],
+      "fetch": {
+        "kind": "files",
+        "dir": "doctest",
+        "commit": "2d0a9359a60c51affe2a9bebb1be1dca47868151",
+        "files": [
+          { "url": "https://raw.githubusercontent.com/doctest/doctest/2d0a9359a60c51affe2a9bebb1be1dca47868151/doctest/doctest.h", "path": "include/doctest/doctest.h", "sha256": "cfd518a3ef90f67e1f3ba514df23fb3627437de1a2feeba78cf5062a40021421" },
+          { "url": "https://raw.githubusercontent.com/doctest/doctest/2d0a9359a60c51affe2a9bebb1be1dca47868151/LICENSE.txt", "path": "LICENSE.txt", "sha256": "0fe0b331fa1513dcce8604ff1fa925f32d1cea17d8aeb1c2471fad40d291adc5" }
+        ]
+      }
+    },
+    {
+      "id": "emscripten-runtime",
+      "name": "Emscripten runtime (JavaScript loader and system library glue)",
+      "version": "7.0.1",
+      "license": "MIT OR NCSA",
+      "source": "https://github.com/emscripten-core/emscripten",
+      "shipped": true,
+      "usedIn": ["engine-wasm"],
+      "linkage": "partcraft-engine.mjs and parts of partcraft-engine.wasm are generated by Emscripten.",
+      "licenseFiles": ["engine/_build/wasm/licenses/emscripten/LICENSE"],
+      "fetch": {
+        "kind": "docker-image",
+        "image": "emscripten/emsdk:7.0.1",
+        "digest": "sha256:73aece2e0ab748487945ad117b79fc4d277e9f656e54fc800a9b1a0a6562715b",
+        "note": "Not fetched by fetch-deps; the WebAssembly build runs in this image and copies the licence files out."
+      }
+    },
+    {
+      "id": "llvm-runtimes",
+      "name": "LLVM libc++, libc++abi, libunwind and compiler-rt (as bundled with Emscripten)",
+      "version": "Emscripten 7.0.1",
+      "license": "Apache-2.0 WITH LLVM-exception",
+      "source": "https://github.com/llvm/llvm-project",
+      "shipped": true,
+      "usedIn": ["engine-wasm"],
+      "linkage": "Linked statically into partcraft-engine.wasm.",
+      "licenseFiles": [
+        "engine/_build/wasm/licenses/libcxx/LICENSE.TXT",
+        "engine/_build/wasm/licenses/libcxxabi/LICENSE.TXT",
+        "engine/_build/wasm/licenses/libunwind/LICENSE.TXT",
+        "engine/_build/wasm/licenses/compiler-rt/LICENSE.TXT"
+      ]
+    },
+    {
+      "id": "musl",
+      "name": "musl libc (as bundled with Emscripten)",
+      "version": "Emscripten 7.0.1",
+      "license": "MIT",
+      "source": "https://musl.libc.org/",
+      "shipped": true,
+      "usedIn": ["engine-wasm"],
+      "linkage": "Linked statically into partcraft-engine.wasm.",
+      "licenseFiles": ["engine/_build/wasm/licenses/musl/COPYRIGHT"]
+    },
+    {
+      "id": "dlmalloc",
+      "name": "dlmalloc (Emscripten's default memory allocator)",
+      "version": "Emscripten 7.0.1",
+      "license": "CC0-1.0",
+      "licenseNote": "Released to the public domain by Doug Lea as explained at https://creativecommons.org/publicdomain/zero/1.0/ (header of system/lib/dlmalloc.c).",
+      "source": "https://github.com/emscripten-core/emscripten/blob/main/system/lib/dlmalloc.c",
+      "shipped": true,
+      "usedIn": ["engine-wasm"],
+      "linkage": "Linked statically into partcraft-engine.wasm.",
+      "licenseFiles": []
+    }
+  ]
+}

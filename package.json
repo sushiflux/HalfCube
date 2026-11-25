@@ -1,0 +1,42 @@
+{
+  "name": "partcraft",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Open-source parametric 3D CAD program",
+  "license": "GPL-3.0-or-later",
+  "author": "SushiFlux",
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "main": "_build/desktop/main.cjs",
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.app.json && tsc -p tsconfig.desktop.json && tsc -p tsconfig.node.json",
+    "lint": "oxlint --type-aware --deny-warnings app desktop config scripts tests vite.config.ts vite.desktop.config.ts vitest.config.ts",
+    "test": "vitest run",
+    "test:e2e": "node scripts/e2e-placeholder.mjs",
+    "dev:web": "vite --config vite.config.ts",
+    "build:web": "vite build --config vite.config.ts",
+    "preview:web": "vite preview --config vite.config.ts",
+    "build:desktop": "vite build --config vite.desktop.config.ts",
+    "start:desktop": "electron .",
+    "make:icons": "node scripts/make-icons.mjs"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.3.5",
+    "@types/node": "^26.6.7",
+    "@types/react": "^19.3.1",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.3.0",
+    "electron": "^45.5.0",
+    "oxlint": "^1.95.0",
+    "oxlint-tsgolint": "^7.0.2008",
+    "playwright-core": "^1.65.1",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "tailwindcss": "^4.3.5",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.8",
+    "vitest": "^5.1.1"
+  }
+}

@@ -1,0 +1,235 @@
+{
+  "$comment": "Single source of the Partcraft engine message protocol. protocol/generate.mjs turns it into TypeScript (app/src/engine/generated/protocol.ts), C++ (engine/src/generated/protocol.hpp) and JSON Schema (protocol/engine-protocol.schema.json). Edit only this file, then run: node protocol/generate.mjs",
+  "protocol": {
+    "name": "partcraft-engine",
+    "version": 1,
+    "doc": "A message is a UTF-8 JSON header plus an optional binary payload. Commands go from the client to the engine and carry a client-chosen request id; every engine message that answers a command carries that id as replyTo. Desktop: the engine is a child process, both directions use length-prefixed frames on stdin/stdout. Browser: the engine is a WebAssembly module in a Web Worker; header and payload are passed as (string, ArrayBuffer | null)."
+  },
+  "constants": [
+    { "name": "frameMagic", "type": "u32", "value": "0x31454350", "doc": "First four bytes of every stdio frame: 'P' 'C' 'E' '1' (frame format 1), read as a little-endian u32." },
+    { "name": "framePrefixBytes", "type": "u32", "value": 16, "doc": "Frame prefix: u32 magic, u32 header bytes, u32 payload bytes, u32 reserved (0); all little-endian. Header and payload follow." },
+    { "name": "maxHeaderBytes", "type": "u32", "value": 16777216, "doc": "Largest accepted JSON header (16 MiB)." },
+    { "name": "maxPayloadBytes", "type": "u32", "value": 1073741824, "doc": "Largest accepted binary payload (1 GiB)." },
+    { "name": "payloadAlignment", "type": "u32", "value": 16, "doc": "Every buffer inside a payload starts at a multiple of this many bytes from the payload start." },
+    { "name": "maxRequestId", "type": "i64", "value": 2147483647, "doc": "Request ids are integers from 1 to this value (they must fit an Int32Array slot, used by the WebAssembly cancel flag)." },
+    { "name": "pingIntervalMs", "type": "u32", "value": 1000, "doc": "Desktop supervisor: interval between pings to the native engine." },
+    { "name": "pingTimeoutMs", "type": "u32", "value": 5000, "doc": "Desktop supervisor: the native engine is stopped when a ping stays unanswered this long. The native engine answers pings while it computes." },
+    { "name": "nativeExecutable", "type": "string", "value": "partcraft-engine", "doc": "File name of the native engine without extension (.exe on Windows)." },
+    { "name": "wasmModuleFile", "type": "string", "value": "partcraft-engine.mjs", "doc": "ES module that loads the WebAssembly engine; partcraft-engine.wasm must be served next to it." },
+    { "name": "wasmBinaryFile", "type": "string", "value": "partcraft-engine.wasm", "doc": "WebAssembly binary of the engine." },
+    { "name": "wasmModuleFactory", "type": "string", "value": "createEngineModule", "doc": "Default export of the ES module: async factory (moduleOverrides) -> module. Overrides used: onEngineMessage(header: string, payload: ArrayBuffer | null), optional cancelFlags (Int32Array, slot 0 = id of the command to cancel), print, printErr." },
+    { "name": "wasmInitExport", "type": "string", "value": "_pc_init", "doc": "Module function _pc_init(hasCancelFlags: 0 | 1): number. Creates the engine once and returns the protocol version." },
+    { "name": "wasmHandleExport", "type": "string", "value": "_pc_handle", "doc": "Module function _pc_handle(headerPtr, headerBytes, payloadPtr, payloadBytes): void. Handles one message and runs everything it queued before returning; replies arrive synchronously through onEngineMessage. The caller allocates both buffers with _malloc and frees them with _free afterwards." }
+  ],
+  "errors": [
+    { "code": "protocol_mismatch", "doc": "hello asked for a protocol version the engine does not speak; user interface and engine come from different builds." },
+    { "code": "not_initialized", "doc": "A command arrived before a successful hello." },
+    { "code": "bad_message", "doc": "The header is not valid JSON, not an object, or a field is missing, has the wrong type or is out of range. The message names the field." },
+    { "code": "unknown_command", "doc": "The command type is not known to this engine." },
+    { "code": "test_commands_disabled", "doc": "A test command (diagnostics.crash, diagnostics.hang) was sent to an engine built without test commands." },
+    { "code": "cancelled", "doc": "The command was cancelled before or while it ran." },
+    { "code": "crash_not_triggered", "doc": "Test only: diagnostics.crash did not end the engine on this platform." },
+    { "code": "internal", "doc": "An unexpected failure inside the engine; detail holds the raw exception text." }
+  ],
+  "types": {
+    "EngineInfo": {
+      "doc": "What the engine is and how it was built.",
+      "fields": {
+        "name": { "type": "string", "const": "partcraft-engine" },
+        "version": { "type": "string", "doc": "Short product version of the build (first line of version.txt), e.g. v2026.11.4." },
+        "versionFull": { "type": "string", "doc": "Full build version (second line of version.txt)." },
+        "buildType": { "type": "string", "doc": "CMake build type, e.g. Release." },
+        "platform": { "type": "string", "enum": ["native", "wasm"], "doc": "native = separate desktop process, wasm = WebAssembly module in a worker." },
+        "os": { "type": "string", "doc": "Target, e.g. windows-x64, linux-x64, wasm32." },
+        "compiler": { "type": "string", "doc": "Compiler and version." },
+        "testCommands": { "type": "boolean", "doc": "true when the engine was built with test commands (diagnostics.crash, diagnostics.hang)." }
+      }
+    },
+    "PlanegcsInfo": {
+      "doc": "Source of the bundled planegcs sketch solver.",
+      "fields": {
+        "source": { "type": "string", "doc": "Project and release the solver sources come from, e.g. FreeCAD 1.1.4." },
+        "commit": { "type": "string", "doc": "Full git commit of those sources." }
+      }
+    },
+    "ComponentVersions": {
+      "doc": "Versions of the libraries compiled into the engine.",
+      "fields": {
+        "occt": { "type": "string", "doc": "Open CASCADE Technology version." },
+        "planegcs": { "ref": "PlanegcsInfo" },
+        "eigen": { "type": "string" },
+        "boost": { "type": "string" },
+        "nlohmannJson": { "type": "string" }
+      }
+    },
+    "Capabilities": {
+      "doc": "What the transport of this engine can do.",
+      "fields": {
+        "pingWhileBusy": { "type": "boolean", "doc": "ping and cancel are answered while a command runs (native: reader thread). The WebAssembly engine answers only between commands." },
+        "cancelWhileBusy": { "type": "boolean", "doc": "cancel reaches a running command (native always; WebAssembly only with a shared cancel flag)." }
+      }
+    },
+    "Limits": {
+      "doc": "Message limits of this engine.",
+      "fields": {
+        "maxHeaderBytes": { "type": "integer", "minimum": 0 },
+        "maxPayloadBytes": { "type": "integer", "minimum": 0 },
+        "payloadAlignment": { "type": "integer", "minimum": 1 },
+        "maxRequestId": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "KernelSelftestStep": {
+      "doc": "One modelling operation of the kernel self-test with its validity and plausibility check.",
+      "fields": {
+        "name": { "type": "string", "doc": "box, hole or fillet." },
+        "valid": { "type": "boolean", "doc": "BRepCheck_Analyzer reports the result as valid." },
+        "volume": { "type": "number", "doc": "Volume of the result in mm^3." },
+        "expectedVolume": { "type": "number", "doc": "Volume computed by hand (closed form) in mm^3." },
+        "faceCount": { "type": "integer", "minimum": 0 },
+        "expectedFaceCount": { "type": "integer", "minimum": 0 },
+        "solidCount": { "type": "integer", "minimum": 0 },
+        "timeMs": { "type": "number", "minimum": 0 },
+        "problem": { "type": "string", "optional": true, "doc": "Why the step failed; missing when it passed." }
+      }
+    }
+  },
+  "commands": {
+    "hello": {
+      "doc": "First command of every connection. Compares the protocol version; every other command is refused before it.",
+      "immediate": true,
+      "fields": {
+        "protocol": { "type": "integer", "doc": "Protocol version the client speaks." },
+        "client": { "type": "string", "doc": "Free text naming the client and its version, for diagnostics." }
+      },
+      "reply": "helloResult"
+    },
+    "ping": {
+      "doc": "Liveness check. The native engine answers while it computes; the WebAssembly engine only between commands.",
+      "immediate": true,
+      "fields": {},
+      "reply": "pong"
+    },
+    "cancel": {
+      "doc": "Cancels a queued or running command. The cancelled command answers with error code cancelled.",
+      "immediate": true,
+      "fields": {
+        "target": { "type": "integer", "minimum": 1, "maximum": 2147483647, "doc": "Id of the command to cancel." }
+      },
+      "reply": "cancelResult"
+    },
+    "shutdown": {
+      "doc": "Runs after the commands queued before it, answers bye; the native engine then exits with code 0.",
+      "fields": {},
+      "reply": "bye"
+    },
+    "diagnostics.kernelSelftest": {
+      "doc": "Builds a block 80 x 50 x 20 mm with a through hole of 20 mm and a 3 mm fillet on the top hole edge, and checks every operation with BRepCheck_Analyzer plus volume and face count against closed-form values.",
+      "fields": {},
+      "reply": "kernelSelftestResult"
+    },
+    "diagnostics.solverSelftest": {
+      "doc": "Solves a fixed, fully constrained sketch (rectangle 60 x 40 mm with a tangent arc of diameter 20 mm and a line angle) with planegcs DogLeg and verifies the result with independent geometry checks.",
+      "fields": {},
+      "reply": "solverSelftestResult"
+    },
+    "diagnostics.crash": {
+      "doc": "Test only: ends the engine on purpose (native: the process dies; WebAssembly: a trap). Used to test the desktop supervisor and the worker restart.",
+      "testOnly": true,
+      "fields": {
+        "mode": { "type": "string", "enum": ["abort", "nullcall", "intdiv"], "doc": "abort = std::abort, nullcall = call through a null function pointer, intdiv = integer division by zero." }
+      },
+      "reply": null
+    },
+    "diagnostics.hang": {
+      "doc": "Test only. busy: the command computes for ms milliseconds (or until cancelled when ms is missing) and answers hangResult; ping is still answered natively. frozen: the engine stops answering anything, including ping, until it is killed (desktop supervisor and browser watchdog tests).",
+      "testOnly": true,
+      "fields": {
+        "mode": { "type": "string", "enum": ["busy", "frozen"] },
+        "ms": { "type": "integer", "minimum": 0, "maximum": 3600000, "optional": true, "doc": "busy only: duration; missing = until cancelled." }
+      },
+      "reply": "hangResult"
+    }
+  },
+  "messages": {
+    "helloResult": {
+      "doc": "Answer to hello.",
+      "fields": {
+        "protocol": { "type": "integer" },
+        "engine": { "ref": "EngineInfo" },
+        "components": { "ref": "ComponentVersions" },
+        "capabilities": { "ref": "Capabilities" },
+        "limits": { "ref": "Limits" }
+      }
+    },
+    "pong": {
+      "doc": "Answer to ping.",
+      "fields": {
+        "busyWith": { "type": "integer", "nullable": true, "doc": "Id of the running command, null when idle." },
+        "queued": { "type": "integer", "minimum": 0, "doc": "Commands waiting in the queue." }
+      }
+    },
+    "cancelResult": {
+      "doc": "Answer to cancel. The cancelled command itself answers with error code cancelled.",
+      "fields": {
+        "target": { "type": "integer", "minimum": 1 },
+        "state": { "type": "string", "enum": ["queued", "running", "notFound"], "doc": "Where the target was: still queued, running, or neither (already answered or unknown)." }
+      }
+    },
+    "bye": {
+      "doc": "Answer to shutdown.",
+      "fields": {}
+    },
+    "kernelSelftestResult": {
+      "doc": "Answer to diagnostics.kernelSelftest. A failed check is a normal answer with passed = false.",
+      "fields": {
+        "passed": { "type": "boolean" },
+        "problem": { "type": "string", "optional": true, "doc": "First failure in plain words; missing when passed." },
+        "volume": { "type": "number", "doc": "Volume of the final body in mm^3 (0 when no body was built)." },
+        "expectedVolume": { "type": "number" },
+        "faceCount": { "type": "integer", "minimum": 0 },
+        "expectedFaceCount": { "type": "integer", "minimum": 0 },
+        "volumeTolerance": { "type": "number", "doc": "Allowed relative volume deviation." },
+        "steps": { "type": "array", "items": { "ref": "KernelSelftestStep" } },
+        "timeMs": { "type": "number", "minimum": 0, "doc": "Time of all operations and checks." }
+      }
+    },
+    "solverSelftestResult": {
+      "doc": "Answer to diagnostics.solverSelftest. A failed check is a normal answer with passed = false.",
+      "fields": {
+        "passed": { "type": "boolean" },
+        "problem": { "type": "string", "optional": true, "doc": "First failure in plain words; missing when passed." },
+        "status": { "type": "string", "enum": ["solved", "failed", "conflicting", "redundant"], "doc": "Solver outcome." },
+        "algorithm": { "type": "string", "const": "DogLeg" },
+        "dof": { "type": "integer", "doc": "Remaining degrees of freedom reported by planegcs." },
+        "expectedDof": { "type": "integer" },
+        "conflicting": { "type": "array", "items": { "type": "string" }, "doc": "Ids of conflicting constraints." },
+        "redundant": { "type": "array", "items": { "type": "string" }, "doc": "Ids of redundant constraints." },
+        "maxResidual": { "type": "number", "doc": "Largest constraint residual, computed independently of planegcs from the solved geometry (mm or rad)." },
+        "residualTolerance": { "type": "number" },
+        "maxDeviation": { "type": "number", "doc": "Largest distance of a solved point or radius from its closed-form value (mm)." },
+        "reference": { "type": "map", "values": { "type": "number" }, "doc": "Reference dimensions measured after solving (never given to the solver), by constraint id." },
+        "parameterCount": { "type": "integer", "minimum": 0, "doc": "Solver parameters (one contiguous block)." },
+        "constraintCount": { "type": "integer", "minimum": 0 },
+        "timeMs": { "type": "number", "minimum": 0 }
+      }
+    },
+    "hangResult": {
+      "doc": "Answer to diagnostics.hang in busy mode.",
+      "fields": {
+        "mode": { "type": "string", "enum": ["busy"] },
+        "ms": { "type": "number", "minimum": 0, "doc": "How long the command actually ran." }
+      }
+    },
+    "error": {
+      "doc": "Failure of a command, or of a message that could not be read (then replyTo is null).",
+      "tsName": "ErrorMessage",
+      "cppName": "ErrorMessage",
+      "fields": {
+        "code": { "type": "string", "enumFrom": "errors" },
+        "message": { "type": "string", "doc": "Complete, specific cause written by the engine." },
+        "detail": { "type": "string", "optional": true, "doc": "Raw technical text (exception type and text), when there is one." },
+        "command": { "type": "string", "optional": true, "doc": "Type of the failed command, when known." }
+      }
+    }
+  }
+}

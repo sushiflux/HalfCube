@@ -1,0 +1,31 @@
+// Security headers shared by the Electron app:// handler and the Vite preview server.
+
+/** Same-origin isolation: needed later for SharedArrayBuffer in the WebAssembly engine worker. */
+export const isolationHeaders = {
+  "Cross-Origin-Opener-Policy": "same-origin",
+  "Cross-Origin-Embedder-Policy": "require-corp",
+  "Cross-Origin-Resource-Policy": "same-origin",
+} as const;
+
+/** Strict policy for built bundles: own origin only, WebAssembly allowed, no inline scripts or styles. */
+export const contentSecurityPolicy = [
+  "default-src 'self'",
+  "script-src 'self' 'wasm-unsafe-eval'",
+  "style-src 'self'",
+  "img-src 'self' data: blob:",
+  "font-src 'self'",
+  "worker-src 'self'",
+  "connect-src 'self'",
+  "object-src 'none'",
+  "base-uri 'none'",
+  "frame-ancestors 'none'",
+  "form-action 'none'",
+].join("; ");
+
+export const responseHeaders = {
+  ...isolationHeaders,
+  "Content-Security-Policy": contentSecurityPolicy,
+  "X-Content-Type-Options": "nosniff",
+  "Referrer-Policy": "no-referrer",
+  "Permissions-Policy": "camera=(), microphone=(), geolocation=(), usb=(), serial=(), hid=(), bluetooth=()",
+} as const;

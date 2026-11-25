@@ -1,0 +1,15 @@
+// Build facts filled in by CMake (configure_file of src/core/build_info.hpp.in).
+#pragma once
+
+namespace pc::build {
+
+inline constexpr const char* kVersion = "@PC_VERSION@";
+inline constexpr const char* kVersionFull = "@PC_VERSION_FULL@";
+inline constexpr const char* kPlatform = "@PC_PLATFORM@";
+inline constexpr const char* kOs = "@PC_OS@";
+inline constexpr const char* kCompiler = "@PC_COMPILER@";
+inline constexpr bool kTestCommands = @PC_TEST_COMMANDS_CXX@;
+inline constexpr const char* kPlanegcsSource = "@PC_PLANEGCS_SOURCE@";
+inline constexpr const char* kPlanegcsCommit = "@PC_PLANEGCS_COMMIT@";
+
+} // namespace pc::build

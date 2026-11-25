@@ -1,0 +1,13 @@
+{
+  "name": "PartcraftVelopackTest",
+  "productName": "PartcraftVelopackTest",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Test application for the Velopack installer and update test (no product code)",
+  "author": "SushiFlux",
+  "license": "GPL-3.0-or-later",
+  "main": "main.cjs",
+  "dependencies": {
+    "velopack": "1.2.161"
+  }
+}

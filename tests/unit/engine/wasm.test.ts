@@ -5,6 +5,7 @@ import { EngineCrashedError } from "../../../app/src/engine/errors.ts";
 import { WorkerTransport } from "../../../app/src/engine/transports/worker-transport.ts";
 import { describeUnless, skipUnlessWasmRelease, skipUnlessWasmTesting, wasmReleaseDir, wasmTestingDir, wasmModuleUrl } from "./helpers/builds.ts";
 import { defineContract } from "./helpers/contract.ts";
+import { defineModelContract } from "./helpers/model-contract.ts";
 import { startEngine } from "./helpers/harness.ts";
 import { nodeWorkerPort } from "./helpers/node-worker-port.ts";
 
@@ -90,3 +91,5 @@ describeUnless(skipUnlessWasmRelease, "wasm release build", () => {
     expect(e.schemaErrors).toEqual([]);
   });
 });
+
+defineModelContract("wasm", wasm, skipUnlessWasmTesting);

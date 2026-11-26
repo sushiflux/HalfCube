@@ -57,8 +57,25 @@ describe("catalogue parity (the type system already rejects a missing key; this 
       "error.environmentDesktop",
       "error.environmentBrowser",
       "common.stepOf",
-      "app.versionLabel",
+      "main.tree.label",
+      "main.timeline.constraints.horizontal",
+      "main.timeline.constraints.parallel",
       "welcome.openProjectHint",
+      // "About Partcraft": tab name, channel names, the copyright line and the product name Electron read the same in both.
+      "about.tabInfo",
+      "about.channelNightly",
+      "about.channelBeta",
+      "about.copyright",
+      "about.techElectron",
+      // Sketch tools and texts that read the same in German and English.
+      "sketch.tools.horizontal",
+      "sketch.tools.parallel",
+      "sketch.tools.tip",
+      "sketch.palette.status",
+      "sketch.dim.radius",
+      "sketch.reject.engineMessage",
+      "sketch.dim.tip",
+      "sketch.shape.spline",
     ]);
     const unexpected = same.map(([key]) => key).filter((key) => !allowed.has(key));
     expect(unexpected).toEqual([]);

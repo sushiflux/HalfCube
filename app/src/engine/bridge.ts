@@ -9,6 +9,11 @@ export const IPC_ENGINE_PORT = "partcraft:engine-port";
 /** IPC channel (synchronous, preload only): the validated setup choices of the installer. */
 export const IPC_SETUP_CHOICES = "partcraft:setup-choices";
 
+/** IPC channel: the page asks the main process to open an https address in the system browser. */
+export const IPC_OPEN_EXTERNAL = "partcraft:open-external";
+/** IPC channel: the page asks the main process to open the Chromium licence file that ships with Electron. */
+export const IPC_OPEN_CHROMIUM_LICENCES = "partcraft:open-chromium-licences";
+
 export type StartEngineResult =
   | { ok: true; generation: number }
   /** message: complete cause. details: file path, error code and the like, for the copyable report. */

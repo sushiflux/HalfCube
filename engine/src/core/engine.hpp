@@ -4,6 +4,7 @@
 #pragma once
 
 #include "generated/protocol.hpp"
+#include "model/model.hpp"
 
 #include <atomic>
 #include <condition_variable>
@@ -63,11 +64,18 @@ private:
     void execute(const Pending& p);
     bool isCancelled(std::int64_t id) const;
 
-    void sendJson(const Json& j);
+    void sendJson(const Json& j, const std::vector<std::uint8_t>* payload = nullptr);
     template <class Message>
     void reply(std::int64_t replyTo, const Message& m) {
         sendJson(protocol::messageJson(m, replyTo));
     }
+    // Reply with a binary payload (buffers referenced by offset and length in the header).
+    template <class Message>
+    void replyWithPayload(std::int64_t replyTo, const Message& m, const std::vector<std::uint8_t>& payload) {
+        checkPayloadSize(payload.size(), Message::kType);
+        sendJson(protocol::messageJson(m, replyTo), &payload);
+    }
+    static void checkPayloadSize(std::size_t bytes, std::string_view message);
     void sendError(std::optional<std::int64_t> replyTo, const char* code, const std::string& message,
                    const std::string& detail = {}, const std::string& command = {});
 
@@ -81,6 +89,10 @@ private:
     std::atomic<std::int64_t> cancelTarget_{0};
     std::atomic<bool> stop_{false};
     std::atomic<bool> hello_{false};
+
+    // Computing state, only touched by the thread that runs commands.
+    model::Model model_;
+    std::int64_t lastRevision_ = 0;  // highest model.sync revision accepted
 };
 
 } // namespace pc

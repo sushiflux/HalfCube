@@ -1,10 +1,11 @@
 // Engine session against a scripted fake transport: the startup status stream, problems with copyable details and
 // restart handling.
 import { describe, expect, it, vi } from "vitest";
+import { PROTOCOL_ID, PROTOCOL_VERSION } from "../../../app/src/engine/generated/protocol.ts";
 import { EngineSession, type EngineSessionOptions } from "../../../app/src/engine/session.ts";
 import type { EngineStatus } from "../../../app/src/engine/status.ts";
 import type { ExitInfo } from "../../../app/src/engine/transport.ts";
-import { FakeTransport, healthyEngine, kernelResult } from "./helpers/fake-transport.ts";
+import { FakeTransport, healthyEngine, helloResult, kernelResult } from "./helpers/fake-transport.ts";
 
 function setup(options: Partial<EngineSessionOptions> = {}, onNewTransport?: (t: FakeTransport, index: number) => void) {
   const transports: FakeTransport[] = [];
@@ -118,6 +119,18 @@ describe("EngineSession startup", () => {
     const final = await session.start();
     expect(final.problem).toMatchObject({ code: "engine_refused", step: "engine" });
     expect(final.problem!.message).toBe("The engine refused the handshake (protocol_mismatch): The engine speaks protocol version 2.");
+  });
+
+  it("names an engine that answers with another protocol id as a refused handshake, with both values", async () => {
+    const { session } = setup({}, (t) => {
+      t.autoReply = (cmd, tr) => tr.say({ ...helloResult(cmd.id), protocolId: "0123456789abcdef" });
+    });
+    const final = await session.start();
+    expect(final.problem).toMatchObject({ code: "engine_refused", step: "engine" });
+    expect(final.problem!.message).toBe(
+      `The engine refused the handshake (protocol_mismatch): This program speaks protocol "${PROTOCOL_ID}" (version ${PROTOCOL_VERSION}), ` +
+        `the engine answered with protocol "0123456789abcdef" (version ${PROTOCOL_VERSION}). User interface and engine come from different builds; reinstall Partcraft.`,
+    );
   });
 
   it("fails on a wrong kernel self-test result and keeps the full result in the details", async () => {

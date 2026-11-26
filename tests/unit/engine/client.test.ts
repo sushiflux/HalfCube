@@ -9,7 +9,7 @@ import {
   EngineSupersededError,
   isCancelled,
 } from "../../../app/src/engine/errors.ts";
-import type { EngineMessage } from "../../../app/src/engine/generated/protocol.ts";
+import { PROTOCOL_ID, PROTOCOL_VERSION, type EngineMessage } from "../../../app/src/engine/generated/protocol.ts";
 import type { ExitInfo } from "../../../app/src/engine/transport.ts";
 import { FakeTransport, healthyEngine, helloResult } from "./helpers/fake-transport.ts";
 import { ManualClock } from "./helpers/manual-clock.ts";
@@ -36,11 +36,11 @@ function setup(kind: "native" | "wasm" = "native", extra: Partial<EngineClientOp
 }
 
 describe("EngineClient start", () => {
-  it("performs the hello handshake with protocol 1 and the client name", async () => {
+  it("performs the hello handshake with the current protocol and the client name", async () => {
     const { client, current } = setup();
     const hello = await client.start();
     expect(hello.engine.name).toBe("partcraft-engine");
-    expect(current().sent[0]).toMatchObject({ type: "hello", id: 1, raw: { protocol: 1, client: "unit-test" } });
+    expect(current().sent[0]).toMatchObject({ type: "hello", id: 1, raw: { protocol: PROTOCOL_VERSION, protocolId: PROTOCOL_ID, client: "unit-test" } });
     expect(client.state).toBe("running");
     expect(client.hello).toBe(hello);
     expect(client.transportKind).toBe("native");
@@ -59,6 +59,38 @@ describe("EngineClient start", () => {
     await expect(client.start()).rejects.toMatchObject({ name: "EngineCommandError", code: "protocol_mismatch" });
     expect(refusing.killed).toBe(true);
     expect(client.state).toBe("down");
+  });
+
+  it("refuses an engine that answers with another protocol id and names both ids", async () => {
+    let other!: FakeTransport;
+    const client = new EngineClient({
+      createTransport: () => {
+        other = new FakeTransport();
+        other.autoReply = (cmd, t) => t.say({ ...helloResult(cmd.id), protocolId: "0123456789abcdef" });
+        return other;
+      },
+    });
+    const refusal = client.start().catch((e: unknown) => e);
+    const error = (await refusal) as { name: string; code: string; message: string };
+    expect(error).toMatchObject({ name: "EngineCommandError", code: "protocol_mismatch" });
+    expect(error.message).toContain(`This program speaks protocol "${PROTOCOL_ID}" (version ${PROTOCOL_VERSION})`);
+    expect(error.message).toContain(`answered with protocol "0123456789abcdef" (version ${PROTOCOL_VERSION})`);
+    expect(other.killed).toBe(true);
+    expect(client.state).toBe("down");
+  });
+
+  it("refuses an engine whose answer carries no protocol id", async () => {
+    const client = new EngineClient({
+      createTransport: () => {
+        const t = new FakeTransport();
+        t.autoReply = (cmd, tr) => {
+          const { protocolId: _omitted, ...old } = helloResult(cmd.id);
+          tr.say(old);
+        };
+        return t;
+      },
+    });
+    await expect(client.start()).rejects.toThrow("nothing (no protocolId in the answer)");
   });
 
   it("rejects with the transport's cause when the engine cannot be started", async () => {
@@ -369,7 +401,7 @@ describe("EngineClient hello details", () => {
   it("keeps the hello result readable after the handshake", async () => {
     const { client } = setup("wasm");
     const hello = await client.start();
-    expect(hello).toMatchObject({ protocol: 1, engine: { platform: "wasm" } });
+    expect(hello).toMatchObject({ protocol: PROTOCOL_VERSION, engine: { platform: "wasm" } });
     expect(helloResult(1, "wasm")).toMatchObject({ type: "helloResult" });
   });
 });

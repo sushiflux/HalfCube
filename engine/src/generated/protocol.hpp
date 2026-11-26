@@ -6,6 +6,7 @@
 #include <nlohmann/json.hpp>
 
 #include <cmath>
+#include <cstddef>
 #include <cstdint>
 #include <initializer_list>
 #include <limits>
@@ -14,6 +15,8 @@
 #include <stdexcept>
 #include <string>
 #include <string_view>
+#include <utility>
+#include <variant>
 #include <vector>
 
 namespace pc::protocol {
@@ -21,7 +24,7 @@ namespace pc::protocol {
 using Json = nlohmann::ordered_json;
 
 // Protocol version; hello must name exactly this one.
-inline constexpr int kVersion = 1;
+inline constexpr int kVersion = 3;
 
 // First four bytes of every stdio frame: 'P' 'C' 'E' '1' (frame format 1), read as a little-endian u32.
 inline constexpr std::uint32_t kFrameMagic = 0x31454350u;
@@ -33,12 +36,18 @@ inline constexpr std::uint32_t kMaxHeaderBytes = 16777216u;
 inline constexpr std::uint32_t kMaxPayloadBytes = 1073741824u;
 // Every buffer inside a payload starts at a multiple of this many bytes from the payload start.
 inline constexpr std::uint32_t kPayloadAlignment = 16u;
+// Format version of the Partcraft document (history.json, the document of model.sync) this engine reads. It changes only when the stored format changes incompatibly; the protocol version changes with every change of the messages.
+inline constexpr std::uint32_t kDocumentFormat = 1u;
+// Largest model.sync revision (2^53 - 1, exact in JavaScript numbers).
+inline constexpr std::int64_t kMaxRevision = 9007199254740991;
 // Request ids are integers from 1 to this value (they must fit an Int32Array slot, used by the WebAssembly cancel flag).
 inline constexpr std::int64_t kMaxRequestId = 2147483647;
 // Desktop supervisor: interval between pings to the native engine.
 inline constexpr std::uint32_t kPingIntervalMs = 1000u;
 // Desktop supervisor: the native engine is stopped when a ping stays unanswered this long. The native engine answers pings while it computes.
 inline constexpr std::uint32_t kPingTimeoutMs = 5000u;
+// Identifies this message protocol. hello carries it in both directions and each side refuses a peer that names a different one: the version number alone is the same in unrelated builds, and a program must never talk to an engine whose messages mean something else. It stays the same for the whole protocol line; a breaking change raises the protocol version.
+inline constexpr std::string_view kProtocolId = "d60beafbc03237e2";
 // File name of the native engine without extension (.exe on Windows).
 inline constexpr std::string_view kNativeExecutable = "partcraft-engine";
 // ES module that loads the WebAssembly engine; partcraft-engine.wasm must be served next to it.
@@ -68,9 +77,41 @@ inline constexpr const char* kTestCommandsDisabled = "test_commands_disabled";
 inline constexpr const char* kCancelled = "cancelled";
 // Test only: diagnostics.crash did not end the engine on this platform.
 inline constexpr const char* kCrashNotTriggered = "crash_not_triggered";
+// model.sync named a revision that is not greater than the last one this engine accepted.
+inline constexpr const char* kStaleRevision = "stale_revision";
+// The document of model.sync or the sketch of sketch.solve does not match the document format or refers to something that does not exist. The message names the path, e.g. document.timeline[1].distance.value.
+inline constexpr const char* kBadDocument = "bad_document";
+// The document has a format version newer than this engine reads (helloResult.documentFormat).
+inline constexpr const char* kUnsupportedDocument = "unsupported_document";
 // An unexpected failure inside the engine; detail holds the raw exception text.
 inline constexpr const char* kInternal = "internal";
 } // namespace err
+
+// Codes of sketch and timeline step problems (Problem.code).
+namespace problem {
+// planegcs found no solution and named no constraint (for example a dimension that cannot be reached). No refs.
+inline constexpr const char* kSketchUnsolvable = "sketch_unsolvable";
+// Constraints contradict each other; refs names them (correct, but not necessarily complete).
+inline constexpr const char* kSketchConflicting = "sketch_conflicting";
+// Constraints repeat what others already fix; refs names them (correct, but not necessarily complete).
+inline constexpr const char* kSketchRedundant = "sketch_redundant";
+// The extrusion's region key matches no closed region of its sketch (the shape of the region changed). refs: the region key. Never guessed.
+inline constexpr const char* kProfileNotFound = "profile_not_found";
+// The sketch of the extrusion has no closed region at all. refs: the sketch id.
+inline constexpr const char* kProfileOpen = "profile_open";
+// Curves cross or touch without sharing a point; regions are only found among the other curves. refs: the curves involved.
+inline constexpr const char* kProfileIntersecting = "profile_intersecting";
+// The extrusion distance is 0 mm.
+inline constexpr const char* kExtrudeZeroDistance = "extrude_zero_distance";
+// The geometry kernel did not build the result; message holds the kernel's text.
+inline constexpr const char* kKernelFailed = "kernel_failed";
+// BRepCheck_Analyzer reports the result as invalid; message lists the findings per sub-shape.
+inline constexpr const char* kResultInvalid = "result_invalid";
+// The result is valid but its volume, face count or solid count differs from what the operation must produce. values: volume, expectedVolume, faces, expectedFaces, solids.
+inline constexpr const char* kResultImplausible = "result_implausible";
+// A step this one depends on failed; refs: that step.
+inline constexpr const char* kUpstreamFailed = "upstream_failed";
+} // namespace problem
 
 // Command types.
 namespace cmd {
@@ -80,6 +121,8 @@ inline constexpr const char* kCancel = "cancel";
 inline constexpr const char* kShutdown = "shutdown";
 inline constexpr const char* kDiagnosticsKernelSelftest = "diagnostics.kernelSelftest";
 inline constexpr const char* kDiagnosticsSolverSelftest = "diagnostics.solverSelftest";
+inline constexpr const char* kSketchSolve = "sketch.solve";
+inline constexpr const char* kModelSync = "model.sync";
 inline constexpr const char* kDiagnosticsCrash = "diagnostics.crash";
 inline constexpr const char* kDiagnosticsHang = "diagnostics.hang";
 } // namespace cmd
@@ -92,6 +135,8 @@ inline constexpr const char* kCancelResult = "cancelResult";
 inline constexpr const char* kBye = "bye";
 inline constexpr const char* kKernelSelftestResult = "kernelSelftestResult";
 inline constexpr const char* kSolverSelftestResult = "solverSelftestResult";
+inline constexpr const char* kSketchSolveResult = "sketchSolveResult";
+inline constexpr const char* kModelResult = "modelResult";
 inline constexpr const char* kHangResult = "hangResult";
 inline constexpr const char* kError = "error";
 } // namespace msg
@@ -110,11 +155,192 @@ inline constexpr CommandInfo kCommands[] = {
     {"shutdown", false, false, "bye"},
     {"diagnostics.kernelSelftest", false, false, "kernelSelftestResult"},
     {"diagnostics.solverSelftest", false, false, "solverSelftestResult"},
+    {"sketch.solve", false, false, "sketchSolveResult"},
+    {"model.sync", false, false, "modelResult"},
     {"diagnostics.crash", false, true, nullptr},
     {"diagnostics.hang", false, true, "hangResult"},
 };
 
-// ---------------------------------------------------------------- shared types
+// ---------------------------------------------------------------- stored document and shared types
+
+// A number with its unit, as the user means it. Lengths in mm, angles in degrees.
+struct Quantity {
+    double value = 0.0;
+    std::string unit;
+};
+
+// A position in sketch coordinates (u, v) in mm.
+struct Vec2 {
+    double x = 0.0;
+    double y = 0.0;
+};
+
+// One of the three origin planes. Sketch axes u, v and normal n = u x v (right-handed, Z up): xy: u +X, v +Y, n +Z (top view); xz: u +X, v +Z, n -Y (front view); yz: u +Y, v +Z, n +X (right view).
+struct OriginPlaneRef {
+    std::string kind = "originPlane";
+    std::string plane;
+};
+
+// The plane a sketch lies on. Only origin planes so far; faces of bodies come later as a further variant.
+using PlaneRef = std::variant<OriginPlaneRef>;
+
+// A point of a sketch at its solved position (mm). Lines and circles that use the same point id are joined there.
+struct SketchPoint {
+    std::string id;
+    double x = 0.0;
+    double y = 0.0;
+};
+
+// A straight line between two points of the sketch. Construction lines belong to no profile.
+struct SketchLine {
+    std::string id;
+    std::string p1;
+    std::string p2;
+    bool construction = false;
+};
+
+// A full circle around a point of the sketch, radius in mm at its solved size.
+struct SketchCircle {
+    std::string id;
+    std::string center;
+    double radius = 0.0;
+    bool construction = false;
+};
+
+// A constraint without a value. refs: coincident point, point (also @origin); pointOnCurve point, line or circle (the infinite line, the whole circle); horizontal / vertical line (along u / v); parallel / perpendicular line, line (also @axisU, @axisV); equal line, line or circle, circle; fix point, line or circle (holds it where it is). All constraints are equations solved together; none has a direction.
+struct GeometricConstraint {
+    std::string id;
+    std::string kind;
+    std::vector<std::string> refs;
+};
+
+// A constraint with a value. refs: distance one line (its length), or two of point, line and circle in any order (what was clicked is what is measured): point, point the distance; point, line the perpendicular distance from the infinite line; line, line the perpendicular distance of the first line's start point from the second line (the distance of two parallel lines); point, circle the shortest distance to its rim (distance to the centre minus the radius, unsigned); circle, line the shortest distance of its rim from the infinite line; circle, circle the gap between the rims (outside each other, or one inside the other; circles that cross have no positive gap) - the centre of a circle is a point of the sketch and is measured as a point; distanceX / distanceY point a, point b with b.u - a.u (b.v - a.v) = value, so the sign carries the direction; angle line l1, line l2 (also @axisU, @axisV): without reverse the counter-clockwise angle from the direction of l1 to the direction of l2 = value (any value); with reverse the angle between two rays, one along each line, 0 to 180 degrees (see reverse); diameter / radius circle. Lengths in mm, angles in deg. driving = false makes a reference dimension: the engine never gives it to the solver and measures it after solving. label: where the number is drawn, stored relative to the measured geometry so it moves with it (see the field); the engine does not read it.
+struct Dimension {
+    std::string id;
+    std::string kind;
+    std::vector<std::string> refs;
+    Quantity value;
+    bool driving = false;
+    // The automatic name of the dimension is d followed by this number (d3); the pattern d plus a number is reserved for these names, counted over the whole document from 0 in creation order (d0, d1, d2 ...) (see PartcraftDocument.nextParameter). Reference dimensions have one too. Never changed and never reused, not after a deletion, an undo or a reload. Absent in documents from before the names (readers number those dimensions in creation order). Never read by the engine.
+    std::optional<std::int64_t> number;
+    // Angle only. Which of the four angles between two lines is meant: the angle between two rays, one along each line, counted counter-clockwise from the ray of refs[0] to the ray of refs[1], value 0 to 180 degrees. Two flags, one per reference: true when that ray runs against the direction of its line (p1 to p2; the axes run along +u and +v). Absent: the old reading (angle between the two directions).
+    std::optional<std::vector<bool>> reverse;
+    // Position of the number relative to what the dimension measures (x, y mean different things per kind). distance (a line, or two of point, line and circle; the measured segment runs from the first point to the nearest point of the other, for a circle its rim): x = distance along the measured direction from the midpoint of a and b as a share of the length |b - a|, y = mm perpendicular to it (to the left of the segment from a to b). distanceX / distanceY: x = along u / v from the midpoint as a share of b - a in that direction, y = mm of the dimension line from the midpoint across it. angle: x = direction as a share of the swept angle counted from the first ray (0 on it, 1 on the second ray), y = mm from the vertex. diameter / radius: offset from the circle centre as a multiple of the radius in x (u) and y (v). A share of a length that is 0 is stored as 0.
+    Vec2 label;
+};
+
+// A constraint or a dimension, told apart by kind.
+using SketchConstraint = std::variant<GeometricConstraint, Dimension>;
+
+// One step the user took inside a sketch, for the timeline (a rectangle is one step, not four lines and four constraints). members lists every element id the step created (points, lines, circles, constraints, dimensions). The engine does not read steps.
+struct SketchStep {
+    std::string id;
+    std::string kind;
+    std::vector<std::string> members;
+    // Running number of the shape this step drew (line, rectangle, circle), counted per kind in the sketch from 1 in creation order: the third line is Line 3 for good. Never changed and never reused, also when shapes are deleted (see SketchData.shapeCounts). The user sees the name as the kind's word and this number (Rectangle 1, Kreis 2). Absent for constraint and dimension steps and in documents from before the numbers (readers number those steps in creation order). Never read by the engine.
+    std::optional<std::int64_t> number;
+};
+
+// A group of connected shapes of a sketch (shapes that share points or are tied together by constraints) with its number: the group is called Form <number> as long as it has more than one shape. A single shape keeps its kind's name (Circle 2). The number is stable: when groups merge the lowest number stays and the others are retired, when a group splits the part with the most elements keeps it and the other part gets a new number, and a retired number is never handed out again (SketchData.shapeCounts.form). Never read by the engine.
+struct SketchForm {
+    std::int64_t number = 0;
+    // The ids of the SketchSteps that drew the shapes of the group, in creation order.
+    std::vector<std::string> shapes;
+};
+
+// Geometry and constraints of one sketch, in list order (lists are appended to or shortened, never reordered).
+struct SketchData {
+    std::vector<SketchPoint> points;
+    std::vector<SketchLine> lines;
+    std::vector<SketchCircle> circles;
+    std::vector<SketchConstraint> constraints;
+    // The groups of connected shapes that have a Form number (groups of more than one shape), kept in step with the sketch whenever it changes. Absent in documents from before the form names (readers work them out). Never read by the engine.
+    std::optional<std::vector<SketchForm>> forms;
+    // How many shapes of each kind (line, rectangle, circle, arc, spline) were ever drawn in this sketch: the last SketchStep.number handed out per kind; under form the last Form number handed out. The next shape gets this plus one, so a number is never reused after a deletion. Absent in documents from before the numbers. Never read by the engine.
+    std::optional<std::map<std::string, std::int64_t>> shapeCounts;
+    // The user steps in creation order. Absent in documents written before the steps existed (they have no record; readers treat absence as an empty list). A dragged point or a changed dimension value adds no step. Never read by the engine.
+    std::optional<std::vector<SketchStep>> steps;
+};
+
+// A sketch as a step of the timeline.
+struct SketchFeature {
+    std::string id;
+    std::string type = "sketch";
+    std::string name;
+    // Component the step belongs to; only root so far.
+    std::string component;
+    bool visible = false;
+    PlaneRef plane;
+    SketchData sketch;
+};
+
+// One closed region of a sketch, named by its region key (sketchSolveResult.profiles[].key).
+struct ProfileRef {
+    // Id of an earlier sketch step.
+    std::string sketch;
+    std::string region;
+};
+
+// Extrusion of one region into a new body. oneSide: distance along the sketch normal n, a negative distance against it. symmetric: both directions, distance is the total thickness (half of it on each side of the sketch plane). The start face is always on the sketch side (oneSide) or on the -n side (symmetric).
+struct ExtrudeFeature {
+    std::string id;
+    std::string type = "extrude";
+    std::string name;
+    std::string component;
+    ProfileRef profile;
+    std::string extent;
+    // mm, not 0.
+    Quantity distance;
+    std::string operation = "newBody";
+    // Id of the new body (listed in its component's bodies).
+    std::string body;
+};
+
+// A step of the timeline, told apart by type.
+using Feature = std::variant<SketchFeature, ExtrudeFeature>;
+
+// A body of a component. Its geometry is computed, never stored.
+struct Body {
+    std::string id;
+    std::string name;
+    // Id of the timeline step that creates the body.
+    std::string createdBy;
+    bool visible = false;
+};
+
+// A component with its bodies. Only the top component root so far.
+struct Component {
+    std::string id;
+    std::string name;
+    std::vector<Body> bodies;
+};
+
+// A named parameter (formulas come later; the list stays empty so far).
+struct Parameter {
+    std::string id;
+    std::string name;
+    Quantity value;
+};
+
+// Settings stored with the document.
+struct DocumentSettings {
+    std::string lengthUnit = "mm";
+};
+
+// A Partcraft document: the timeline with its sketches and extrusions plus the components with their bodies.
+struct PartcraftDocument {
+    // Document format version (constant documentFormat).
+    std::int64_t format = 0;
+    std::string documentId;
+    DocumentSettings settings;
+    // Next free id number; never goes down, also not after undo.
+    std::int64_t nextId = 0;
+    // Next free number of the automatic names d0, d1, d2, ... that dimensions carry (Dimension.number), one counter for the whole document so a name is unique across all sketches and later steps; never goes down, also not after undo. Absent: 0 (documents from before the names; readers number their dimensions in creation order and raise it). Never read by the engine.
+    std::optional<std::int64_t> nextParameter;
+    std::vector<Parameter> parameters;
+    std::vector<Component> components;
+    std::vector<Feature> timeline;
+};
 
 // What the engine is and how it was built.
 struct EngineInfo {
@@ -187,6 +413,196 @@ struct KernelSelftestStep {
     std::optional<std::string> problem;
 };
 
+// A point or direction in model coordinates (mm), right-handed, Z up.
+struct Vec3 {
+    double x = 0.0;
+    double y = 0.0;
+    double z = 0.0;
+};
+
+// Placement of a sketch plane in the model: a sketch point (u, v) lies at origin + u * u + v * v. normal = u x v.
+struct PlaneFrame {
+    Vec3 origin;
+    Vec3 u;
+    Vec3 v;
+    Vec3 normal;
+};
+
+// A typed array inside the binary payload. offset is a multiple of payloadAlignment.
+struct BufferRef {
+    std::int64_t offset = 0;
+    std::int64_t byteLength = 0;
+};
+
+// Why a sketch or a timeline step did not work. The UI builds the translated text from code, refs and values and shows message under technical details.
+struct Problem {
+    std::string code;
+    // Complete English text written by the engine.
+    std::string message;
+    // Ids the problem is about (constraints, curves, steps, a region key).
+    std::optional<std::vector<std::string>> refs;
+    // Numbers for the translated text, e.g. volume and expectedVolume.
+    std::optional<std::map<std::string, double>> values;
+};
+
+// Position of a sketch point after solving (mm).
+struct SolvedPoint {
+    std::string id;
+    double x = 0.0;
+    double y = 0.0;
+};
+
+// Radius of a sketch circle after solving (mm).
+struct SolvedCircle {
+    std::string id;
+    double radius = 0.0;
+};
+
+// Triangles of a region for display and picking: Float32 (u, v) pairs in sketch coordinates, Uint32 indices, three per triangle, counter-clockwise seen from the normal.
+struct RegionFill {
+    BufferRef positions;
+    BufferRef indices;
+    std::int64_t triangleCount = 0;
+};
+
+// A closed region of a sketch: an outer loop and its holes, built from non-construction lines and circles. Sketch mode highlights every determined region (a translucent fill from fill, or a narrow band along loops); the extrude command picks one.
+struct Region {
+    // Curve ids of the outer loop, sorted, joined by commas; then per hole "|" and its sorted ids, holes sorted. Stays the same while only dimensions change; changes when the shape of the region changes.
+    std::string key;
+    // Curve ids of the outer loop in loop order, counter-clockwise seen from the normal.
+    std::vector<std::string> outer;
+    std::vector<std::vector<std::string>> holes;
+    // mm^2, computed from the sketch geometry (not by the kernel).
+    double area = 0.0;
+    // True when every curve of the outer loop and of the holes is fully determined (all its points and radii fixed by the constraints). Needs the element states, so it is false when the request had diagnose false.
+    bool determined = false;
+    RegionFill fill;
+    // One closed polyline per loop, outer loop first, then the holes in the order of holes: Float32 (u, v) pairs in sketch coordinates in the payload, the first point not repeated at the end. Outer loops run counter-clockwise, holes clockwise. Circles are cut with the same tolerance as the fill triangles and their points are corner points of those triangles.
+    std::vector<BufferRef> loops;
+};
+
+// A point of the sketch and the position the pointer wants it at (sketch coordinates, mm).
+struct DragTarget {
+    std::string id;
+    double x = 0.0;
+    double y = 0.0;
+};
+
+// Dragging: the listed points are pulled towards their targets by soft temporary constraints (planegcs tag -1, solved in a second subsystem with SQP, as FreeCAD does), so every real constraint of the sketch still holds and a point that cannot reach its target ends as near as the constraints allow. The sketch of the request holds the positions of the previous step; the engine cuts a long way into short steps and keeps nothing between requests.
+struct SketchDrag {
+    std::vector<DragTarget> points;
+};
+
+// How far a dragged point got.
+struct DragPointResult {
+    std::string id;
+    // Distance in mm between the solved position and the target; 0 when the point reached it.
+    double error = 0.0;
+    // The point left the position it had in the request. False for a fully determined point: it does not move, the sketch comes back as sent and status is still solved.
+    bool moved = false;
+};
+
+// One thing that is still free in a solved sketch, in words-ready form (what the palette lists). The engine finds the motions the constraints still allow (the null space of the constraint Jacobian at the solved geometry, the same free parameters planegcs reports as dependent) and groups them per connected shape: the rigid motions of the whole shape (kind position and rotation) are named as one fact instead of one per point, what is left of the freedom is told per element (length, direction, radius, a point that moves against the rest). The facts of a fully determined sketch are empty.
+struct FreedomFact {
+    // position: the whole shape can still be moved (moves tells in how many directions); rotation: it can still be turned; length: the length of the listed lines can still change (lines whose lengths change together are one fact); direction: the listed lines can still turn against the rest of the shape; radius: the radius of the listed circles can still change; point: the listed point can still move against the rest of the shape and no line or circle fact explains it.
+    std::string kind;
+    // What the connected shape is: one point, one line, one circle, four lines forming a rectangle (all corners 90 degrees), anything else.
+    std::string shape;
+    // position only: 2 = the shape can be moved in every direction, 1 = only along one direction.
+    std::optional<std::int64_t> moves;
+    // The ids the fact is about, for highlighting: the lines and circles of the shape (position, rotation; a lone point when the shape is one), the lines (length, direction), the circles (radius) or the point (point).
+    std::vector<std::string> elements;
+};
+
+// Outcome of the dragging part of a sketch.solve.
+struct SketchDragResult {
+    // One entry per dragged point, in the order of the request.
+    std::vector<DragPointResult> points;
+    // How many short steps the movement was cut into (1 for a short move).
+    std::int64_t steps = 0;
+    // False when a step found no solution; the geometry then is the last good step and the error of the points says how far short it stopped.
+    bool complete = false;
+};
+
+// Result check of a body-building step: BRepCheck_Analyzer plus volume and face count against the values computed from the sketch.
+struct StepCheck {
+    bool valid = false;
+    double volume = 0.0;
+    std::optional<double> expectedVolume;
+    std::int64_t faces = 0;
+    std::optional<std::int64_t> expectedFaces;
+    std::int64_t solids = 0;
+};
+
+// Outcome of one timeline step. warning: the step worked with a remark (e.g. crossing curves in a sketch). error: the step failed; later steps that need it are skipped or fail with upstream_failed.
+struct StepStatus {
+    std::string featureId;
+    std::string state;
+    std::optional<Problem> problem;
+    // The result came from the engine's cache of the previous rebuild.
+    bool cached = false;
+    double ms = 0.0;
+    std::optional<StepCheck> check;
+};
+
+// Axis-aligned bounding box in model coordinates (mm).
+struct BoundingBox {
+    Vec3 min;
+    Vec3 max;
+};
+
+// A face of a body with its persistent name (step id : role : origin, e.g. f12:side:l7, f12:start, f12:end) and its triangles.
+struct BodyFace {
+    std::string name;
+    std::string surface;
+    std::int64_t triangleStart = 0;
+    std::int64_t triangleCount = 0;
+};
+
+// A visible edge of a body with its persistent name (e.g. f12:start:l7, f12:lateral:p3); a polyline of pointCount points from pointStart in edgePoints. Seams are not listed.
+struct BodyEdge {
+    std::string name;
+    std::int64_t pointStart = 0;
+    std::int64_t pointCount = 0;
+};
+
+// Triangle mesh of a body in the payload. Vertices are not shared between faces (sharp edges). positions, normals, edgePoints: Float32 x, y, z; indices: Uint32, three per triangle, counter-clockwise seen from outside; triangleFace: Uint32 per triangle, index into faces.
+struct BodyMesh {
+    std::int64_t vertexCount = 0;
+    std::int64_t triangleCount = 0;
+    std::int64_t edgePointCount = 0;
+    BufferRef positions;
+    BufferRef normals;
+    BufferRef indices;
+    BufferRef triangleFace;
+    BufferRef edgePoints;
+};
+
+// Geometry of one body after the rebuild.
+struct BodyResult {
+    std::string bodyId;
+    // Last step that changed this body successfully.
+    std::string featureId;
+    // Changes only when the geometry changed; the UI can keep an unchanged mesh.
+    std::string meshKey;
+    // Built or changed by a step listed in model.sync previewFeatures.
+    bool preview = false;
+    double volume = 0.0;
+    double area = 0.0;
+    BoundingBox bbox;
+    std::vector<BodyFace> faces;
+    std::vector<BodyEdge> edges;
+    BodyMesh mesh;
+};
+
+// Where the time of a model.sync went (ms).
+struct ModelTimings {
+    double rebuildMs = 0.0;
+    double meshMs = 0.0;
+    double encodeMs = 0.0;
+    double totalMs = 0.0;
+};
+
 // ---------------------------------------------------------------- commands (fields without the envelope)
 
 // First command of every connection. Compares the protocol version; every other command is refused before it.
@@ -196,6 +612,8 @@ struct HelloCommand {
     static constexpr bool kTestOnly = false;
     // Protocol version the client speaks.
     std::int64_t protocol = 0;
+    // The protocol id the client speaks (constant protocolId). Optional only so that a client of an older protocol version still gets the version error; the engine refuses a hello without it, or with another one, as protocol_mismatch.
+    std::optional<std::string> protocolId;
     // Free text naming the client and its version, for diagnostics.
     std::string client;
 };
@@ -237,6 +655,35 @@ struct DiagnosticsSolverSelftestCommand {
     static constexpr bool kTestOnly = false;
 };
 
+// Solves one sketch without keeping anything: sketch in, solved sketch out. Reference dimensions are measured after solving, never given to the solver. A conflicting or redundant sketch is not solved; its geometry comes back unchanged with the constraints named.
+struct SketchSolveCommand {
+    static constexpr std::string_view kType = "sketch.solve";
+    static constexpr bool kImmediate = false;
+    static constexpr bool kTestOnly = false;
+    SketchData sketch;
+    PlaneRef plane;
+    // Determine the states of all elements and constraints (dof, conflicts, redundancies are always reported).
+    bool diagnose = true;
+    // Find the closed regions of a solved sketch and triangulate them (fill and loop buffers in the payload). The sketch editor asks for them on every solve (sketch mode highlights determined regions), the extrude command for its hover and selection.
+    bool profiles = false;
+    // Drag step: pull the listed points towards their targets while all constraints hold. The sketch is the one of the previous step; a conflicting or redundant sketch is not dragged (status conflicting or redundant, geometry as sent).
+    std::optional<SketchDrag> drag;
+};
+
+// Hands the engine the whole document and rebuilds the timeline in order. Unchanged steps come from the cache of the previous rebuild. preview and commit compute the same; purpose only says what the document is.
+struct ModelSyncCommand {
+    static constexpr std::string_view kType = "model.sync";
+    static constexpr bool kImmediate = false;
+    static constexpr bool kTestOnly = false;
+    // Greater than every revision this engine accepted before (the client keeps counting across engine restarts); otherwise stale_revision.
+    std::int64_t revision = 0;
+    PartcraftDocument document;
+    // commit: the accepted document. preview: a dialog is open, its values are not accepted yet.
+    std::string purpose;
+    // Steps that are being previewed; bodies they build or change are marked preview.
+    std::optional<std::vector<std::string>> previewFeatures;
+};
+
 // Test only: ends the engine on purpose (native: the process dies; WebAssembly: a trap). Used to test the desktop supervisor and the worker restart.
 struct DiagnosticsCrashCommand {
     static constexpr std::string_view kType = "diagnostics.crash";
@@ -262,10 +709,14 @@ struct DiagnosticsHangCommand {
 struct HelloResult {
     static constexpr std::string_view kType = "helloResult";
     std::int64_t protocol = 0;
+    // The protocol id the engine speaks (constant protocolId); the client refuses an engine with another one.
+    std::string protocolId;
     EngineInfo engine;
     ComponentVersions components;
     Capabilities capabilities;
     Limits limits;
+    // Newest document format this engine reads.
+    std::int64_t documentFormat = 0;
 };
 
 // Answer to ping.
@@ -337,6 +788,53 @@ struct SolverSelftestResult {
     double timeMs = 0.0;
 };
 
+// Answer to sketch.solve. A sketch that cannot be solved is a normal answer with status failed, conflicting or redundant and a problem. Region fill buffers are in the payload.
+struct SketchSolveResult {
+    static constexpr std::string_view kType = "sketchSolveResult";
+    std::string status;
+    // Remaining degrees of freedom of the whole sketch (planegcs).
+    std::int64_t dof = 0;
+    // Solved positions in sketch order; the input positions when not solved.
+    std::vector<SolvedPoint> points;
+    std::vector<SolvedCircle> circles;
+    // State of every point, line and circle: under = can still move, full = fully determined, over = a conflicting constraint refers to it. Empty when diagnose is false.
+    std::map<std::string, std::string> entities;
+    // State of every constraint and dimension. Empty when diagnose is false.
+    std::map<std::string, std::string> constraints;
+    // Conflicting constraint ids (correct, not necessarily complete).
+    std::vector<std::string> conflicting;
+    std::vector<std::string> redundant;
+    // Reported, but they do not stop solving.
+    std::vector<std::string> partiallyRedundant;
+    // Reference dimensions (driving = false) by id, measured after solving: mm, angles in deg, a diameter as a diameter.
+    std::map<std::string, double> reference;
+    // Closed regions of the solved sketch (empty when profiles is false or the sketch is not solved).
+    std::vector<Region> profiles;
+    // What is still free, per shape, in the order of the sketch. Present for a solved sketch when diagnose is true and the request has no drag (empty then when everything is determined, and also for sketches with arcs, which are not analysed). A sketch with freedom and no fact is not understood: the palette falls back to the degrees of freedom.
+    std::vector<FreedomFact> freedom;
+    // Present when the request had drag.
+    std::optional<SketchDragResult> drag;
+    // Why the sketch is not solved, or profile_intersecting for a solved sketch with crossing curves.
+    std::optional<Problem> problem;
+    PlaneFrame frame;
+    // Milliseconds of timeMs spent on finding the regions and cutting them into triangles and outlines; present when the request had profiles and the sketch was solved. A drag skips profiles for the rest of the drag when this gets too large.
+    std::optional<double> profilesMs;
+    double timeMs = 0.0;
+};
+
+// Answer to model.sync. Mesh buffers of all bodies are in the payload.
+struct ModelResult {
+    static constexpr std::string_view kType = "modelResult";
+    std::int64_t revision = 0;
+    std::string purpose;
+    // Worst state of all steps.
+    std::string outcome;
+    // One per timeline step, in order.
+    std::vector<StepStatus> steps;
+    std::vector<BodyResult> bodies;
+    ModelTimings timings;
+};
+
 // Answer to diagnostics.hang in busy mode.
 struct HangResult {
     static constexpr std::string_view kType = "hangResult";
@@ -363,12 +861,58 @@ inline Json toJsonValue(const std::string& v) { return Json(v); }
 inline Json toJsonValue(std::int64_t v) { return Json(v); }
 inline Json toJsonValue(double v) { return Json(v); }
 inline Json toJsonValue(bool v) { return Json(v); }
+inline Json toJsonValue(const Quantity& v);
+inline Json toJsonValue(const Vec2& v);
+inline Json toJsonValue(const OriginPlaneRef& v);
+inline Json toJsonValue(const SketchPoint& v);
+inline Json toJsonValue(const SketchLine& v);
+inline Json toJsonValue(const SketchCircle& v);
+inline Json toJsonValue(const GeometricConstraint& v);
+inline Json toJsonValue(const Dimension& v);
+inline Json toJsonValue(const SketchStep& v);
+inline Json toJsonValue(const SketchForm& v);
+inline Json toJsonValue(const SketchData& v);
+inline Json toJsonValue(const SketchFeature& v);
+inline Json toJsonValue(const ProfileRef& v);
+inline Json toJsonValue(const ExtrudeFeature& v);
+inline Json toJsonValue(const Body& v);
+inline Json toJsonValue(const Component& v);
+inline Json toJsonValue(const Parameter& v);
+inline Json toJsonValue(const DocumentSettings& v);
+inline Json toJsonValue(const PartcraftDocument& v);
 inline Json toJsonValue(const EngineInfo& v);
 inline Json toJsonValue(const PlanegcsInfo& v);
 inline Json toJsonValue(const ComponentVersions& v);
 inline Json toJsonValue(const Capabilities& v);
 inline Json toJsonValue(const Limits& v);
 inline Json toJsonValue(const KernelSelftestStep& v);
+inline Json toJsonValue(const Vec3& v);
+inline Json toJsonValue(const PlaneFrame& v);
+inline Json toJsonValue(const BufferRef& v);
+inline Json toJsonValue(const Problem& v);
+inline Json toJsonValue(const SolvedPoint& v);
+inline Json toJsonValue(const SolvedCircle& v);
+inline Json toJsonValue(const RegionFill& v);
+inline Json toJsonValue(const Region& v);
+inline Json toJsonValue(const DragTarget& v);
+inline Json toJsonValue(const SketchDrag& v);
+inline Json toJsonValue(const DragPointResult& v);
+inline Json toJsonValue(const FreedomFact& v);
+inline Json toJsonValue(const SketchDragResult& v);
+inline Json toJsonValue(const StepCheck& v);
+inline Json toJsonValue(const StepStatus& v);
+inline Json toJsonValue(const BoundingBox& v);
+inline Json toJsonValue(const BodyFace& v);
+inline Json toJsonValue(const BodyEdge& v);
+inline Json toJsonValue(const BodyMesh& v);
+inline Json toJsonValue(const BodyResult& v);
+inline Json toJsonValue(const ModelTimings& v);
+template <class T>
+Json toJsonValue(const std::vector<T>& v);
+template <class T>
+Json toJsonValue(const std::map<std::string, T>& v);
+template <class... T>
+Json toJsonValue(const std::variant<T...>& v);
 template <class T>
 Json toJsonValue(const std::vector<T>& v) {
     Json a = Json::array();
@@ -380,6 +924,240 @@ Json toJsonValue(const std::map<std::string, T>& v) {
     Json o = Json::object();
     for (const auto& [k, e] : v) o[k] = toJsonValue(e);
     return o;
+}
+template <class... T>
+Json toJsonValue(const std::variant<T...>& v) {
+    return std::visit([](const auto& x) { return toJsonValue(x); }, v);
+}
+
+inline void writeFields(Json& j, const Quantity& v) {
+    j["value"] = toJsonValue(v.value);
+    j["unit"] = toJsonValue(v.unit);
+}
+inline Json toJsonValue(const Quantity& v) {
+    Json j = Json::object();
+    writeFields(j, v);
+    return j;
+}
+
+inline void writeFields(Json& j, const Vec2& v) {
+    j["x"] = toJsonValue(v.x);
+    j["y"] = toJsonValue(v.y);
+}
+inline Json toJsonValue(const Vec2& v) {
+    Json j = Json::object();
+    writeFields(j, v);
+    return j;
+}
+
+inline void writeFields(Json& j, const OriginPlaneRef& v) {
+    j["kind"] = toJsonValue(v.kind);
+    j["plane"] = toJsonValue(v.plane);
+}
+inline Json toJsonValue(const OriginPlaneRef& v) {
+    Json j = Json::object();
+    writeFields(j, v);
+    return j;
+}
+
+inline void writeFields(Json& j, const SketchPoint& v) {
+    j["id"] = toJsonValue(v.id);
+    j["x"] = toJsonValue(v.x);
+    j["y"] = toJsonValue(v.y);
+}
+inline Json toJsonValue(const SketchPoint& v) {
+    Json j = Json::object();
+    writeFields(j, v);
+    return j;
+}
+
+inline void writeFields(Json& j, const SketchLine& v) {
+    j["id"] = toJsonValue(v.id);
+    j["p1"] = toJsonValue(v.p1);
+    j["p2"] = toJsonValue(v.p2);
+    j["construction"] = toJsonValue(v.construction);
+}
+inline Json toJsonValue(const SketchLine& v) {
+    Json j = Json::object();
+    writeFields(j, v);
+    return j;
+}
+
+inline void writeFields(Json& j, const SketchCircle& v) {
+    j["id"] = toJsonValue(v.id);
+    j["center"] = toJsonValue(v.center);
+    j["radius"] = toJsonValue(v.radius);
+    j["construction"] = toJsonValue(v.construction);
+}
+inline Json toJsonValue(const SketchCircle& v) {
+    Json j = Json::object();
+    writeFields(j, v);
+    return j;
+}
+
+inline void writeFields(Json& j, const GeometricConstraint& v) {
+    j["id"] = toJsonValue(v.id);
+    j["kind"] = toJsonValue(v.kind);
+    j["refs"] = toJsonValue(v.refs);
+}
+inline Json toJsonValue(const GeometricConstraint& v) {
+    Json j = Json::object();
+    writeFields(j, v);
+    return j;
+}
+
+inline void writeFields(Json& j, const Dimension& v) {
+    j["id"] = toJsonValue(v.id);
+    j["kind"] = toJsonValue(v.kind);
+    j["refs"] = toJsonValue(v.refs);
+    j["value"] = toJsonValue(v.value);
+    j["driving"] = toJsonValue(v.driving);
+    if (v.number) j["number"] = toJsonValue(*v.number);
+    if (v.reverse) j["reverse"] = toJsonValue(*v.reverse);
+    j["label"] = toJsonValue(v.label);
+}
+inline Json toJsonValue(const Dimension& v) {
+    Json j = Json::object();
+    writeFields(j, v);
+    return j;
+}
+
+inline void writeFields(Json& j, const SketchStep& v) {
+    j["id"] = toJsonValue(v.id);
+    j["kind"] = toJsonValue(v.kind);
+    j["members"] = toJsonValue(v.members);
+    if (v.number) j["number"] = toJsonValue(*v.number);
+}
+inline Json toJsonValue(const SketchStep& v) {
+    Json j = Json::object();
+    writeFields(j, v);
+    return j;
+}
+
+inline void writeFields(Json& j, const SketchForm& v) {
+    j["number"] = toJsonValue(v.number);
+    j["shapes"] = toJsonValue(v.shapes);
+}
+inline Json toJsonValue(const SketchForm& v) {
+    Json j = Json::object();
+    writeFields(j, v);
+    return j;
+}
+
+inline void writeFields(Json& j, const SketchData& v) {
+    j["points"] = toJsonValue(v.points);
+    j["lines"] = toJsonValue(v.lines);
+    j["circles"] = toJsonValue(v.circles);
+    j["constraints"] = toJsonValue(v.constraints);
+    if (v.forms) j["forms"] = toJsonValue(*v.forms);
+    if (v.shapeCounts) j["shapeCounts"] = toJsonValue(*v.shapeCounts);
+    if (v.steps) j["steps"] = toJsonValue(*v.steps);
+}
+inline Json toJsonValue(const SketchData& v) {
+    Json j = Json::object();
+    writeFields(j, v);
+    return j;
+}
+
+inline void writeFields(Json& j, const SketchFeature& v) {
+    j["id"] = toJsonValue(v.id);
+    j["type"] = toJsonValue(v.type);
+    j["name"] = toJsonValue(v.name);
+    j["component"] = toJsonValue(v.component);
+    j["visible"] = toJsonValue(v.visible);
+    j["plane"] = toJsonValue(v.plane);
+    j["sketch"] = toJsonValue(v.sketch);
+}
+inline Json toJsonValue(const SketchFeature& v) {
+    Json j = Json::object();
+    writeFields(j, v);
+    return j;
+}
+
+inline void writeFields(Json& j, const ProfileRef& v) {
+    j["sketch"] = toJsonValue(v.sketch);
+    j["region"] = toJsonValue(v.region);
+}
+inline Json toJsonValue(const ProfileRef& v) {
+    Json j = Json::object();
+    writeFields(j, v);
+    return j;
+}
+
+inline void writeFields(Json& j, const ExtrudeFeature& v) {
+    j["id"] = toJsonValue(v.id);
+    j["type"] = toJsonValue(v.type);
+    j["name"] = toJsonValue(v.name);
+    j["component"] = toJsonValue(v.component);
+    j["profile"] = toJsonValue(v.profile);
+    j["extent"] = toJsonValue(v.extent);
+    j["distance"] = toJsonValue(v.distance);
+    j["operation"] = toJsonValue(v.operation);
+    j["body"] = toJsonValue(v.body);
+}
+inline Json toJsonValue(const ExtrudeFeature& v) {
+    Json j = Json::object();
+    writeFields(j, v);
+    return j;
+}
+
+inline void writeFields(Json& j, const Body& v) {
+    j["id"] = toJsonValue(v.id);
+    j["name"] = toJsonValue(v.name);
+    j["createdBy"] = toJsonValue(v.createdBy);
+    j["visible"] = toJsonValue(v.visible);
+}
+inline Json toJsonValue(const Body& v) {
+    Json j = Json::object();
+    writeFields(j, v);
+    return j;
+}
+
+inline void writeFields(Json& j, const Component& v) {
+    j["id"] = toJsonValue(v.id);
+    j["name"] = toJsonValue(v.name);
+    j["bodies"] = toJsonValue(v.bodies);
+}
+inline Json toJsonValue(const Component& v) {
+    Json j = Json::object();
+    writeFields(j, v);
+    return j;
+}
+
+inline void writeFields(Json& j, const Parameter& v) {
+    j["id"] = toJsonValue(v.id);
+    j["name"] = toJsonValue(v.name);
+    j["value"] = toJsonValue(v.value);
+}
+inline Json toJsonValue(const Parameter& v) {
+    Json j = Json::object();
+    writeFields(j, v);
+    return j;
+}
+
+inline void writeFields(Json& j, const DocumentSettings& v) {
+    j["lengthUnit"] = toJsonValue(v.lengthUnit);
+}
+inline Json toJsonValue(const DocumentSettings& v) {
+    Json j = Json::object();
+    writeFields(j, v);
+    return j;
+}
+
+inline void writeFields(Json& j, const PartcraftDocument& v) {
+    j["format"] = toJsonValue(v.format);
+    j["documentId"] = toJsonValue(v.documentId);
+    j["settings"] = toJsonValue(v.settings);
+    j["nextId"] = toJsonValue(v.nextId);
+    if (v.nextParameter) j["nextParameter"] = toJsonValue(*v.nextParameter);
+    j["parameters"] = toJsonValue(v.parameters);
+    j["components"] = toJsonValue(v.components);
+    j["timeline"] = toJsonValue(v.timeline);
+}
+inline Json toJsonValue(const PartcraftDocument& v) {
+    Json j = Json::object();
+    writeFields(j, v);
+    return j;
 }
 
 inline void writeFields(Json& j, const EngineInfo& v) {
@@ -460,12 +1238,267 @@ inline Json toJsonValue(const KernelSelftestStep& v) {
     return j;
 }
 
+inline void writeFields(Json& j, const Vec3& v) {
+    j["x"] = toJsonValue(v.x);
+    j["y"] = toJsonValue(v.y);
+    j["z"] = toJsonValue(v.z);
+}
+inline Json toJsonValue(const Vec3& v) {
+    Json j = Json::object();
+    writeFields(j, v);
+    return j;
+}
+
+inline void writeFields(Json& j, const PlaneFrame& v) {
+    j["origin"] = toJsonValue(v.origin);
+    j["u"] = toJsonValue(v.u);
+    j["v"] = toJsonValue(v.v);
+    j["normal"] = toJsonValue(v.normal);
+}
+inline Json toJsonValue(const PlaneFrame& v) {
+    Json j = Json::object();
+    writeFields(j, v);
+    return j;
+}
+
+inline void writeFields(Json& j, const BufferRef& v) {
+    j["offset"] = toJsonValue(v.offset);
+    j["byteLength"] = toJsonValue(v.byteLength);
+}
+inline Json toJsonValue(const BufferRef& v) {
+    Json j = Json::object();
+    writeFields(j, v);
+    return j;
+}
+
+inline void writeFields(Json& j, const Problem& v) {
+    j["code"] = toJsonValue(v.code);
+    j["message"] = toJsonValue(v.message);
+    if (v.refs) j["refs"] = toJsonValue(*v.refs);
+    if (v.values) j["values"] = toJsonValue(*v.values);
+}
+inline Json toJsonValue(const Problem& v) {
+    Json j = Json::object();
+    writeFields(j, v);
+    return j;
+}
+
+inline void writeFields(Json& j, const SolvedPoint& v) {
+    j["id"] = toJsonValue(v.id);
+    j["x"] = toJsonValue(v.x);
+    j["y"] = toJsonValue(v.y);
+}
+inline Json toJsonValue(const SolvedPoint& v) {
+    Json j = Json::object();
+    writeFields(j, v);
+    return j;
+}
+
+inline void writeFields(Json& j, const SolvedCircle& v) {
+    j["id"] = toJsonValue(v.id);
+    j["radius"] = toJsonValue(v.radius);
+}
+inline Json toJsonValue(const SolvedCircle& v) {
+    Json j = Json::object();
+    writeFields(j, v);
+    return j;
+}
+
+inline void writeFields(Json& j, const RegionFill& v) {
+    j["positions"] = toJsonValue(v.positions);
+    j["indices"] = toJsonValue(v.indices);
+    j["triangleCount"] = toJsonValue(v.triangleCount);
+}
+inline Json toJsonValue(const RegionFill& v) {
+    Json j = Json::object();
+    writeFields(j, v);
+    return j;
+}
+
+inline void writeFields(Json& j, const Region& v) {
+    j["key"] = toJsonValue(v.key);
+    j["outer"] = toJsonValue(v.outer);
+    j["holes"] = toJsonValue(v.holes);
+    j["area"] = toJsonValue(v.area);
+    j["determined"] = toJsonValue(v.determined);
+    j["fill"] = toJsonValue(v.fill);
+    j["loops"] = toJsonValue(v.loops);
+}
+inline Json toJsonValue(const Region& v) {
+    Json j = Json::object();
+    writeFields(j, v);
+    return j;
+}
+
+inline void writeFields(Json& j, const DragTarget& v) {
+    j["id"] = toJsonValue(v.id);
+    j["x"] = toJsonValue(v.x);
+    j["y"] = toJsonValue(v.y);
+}
+inline Json toJsonValue(const DragTarget& v) {
+    Json j = Json::object();
+    writeFields(j, v);
+    return j;
+}
+
+inline void writeFields(Json& j, const SketchDrag& v) {
+    j["points"] = toJsonValue(v.points);
+}
+inline Json toJsonValue(const SketchDrag& v) {
+    Json j = Json::object();
+    writeFields(j, v);
+    return j;
+}
+
+inline void writeFields(Json& j, const DragPointResult& v) {
+    j["id"] = toJsonValue(v.id);
+    j["error"] = toJsonValue(v.error);
+    j["moved"] = toJsonValue(v.moved);
+}
+inline Json toJsonValue(const DragPointResult& v) {
+    Json j = Json::object();
+    writeFields(j, v);
+    return j;
+}
+
+inline void writeFields(Json& j, const FreedomFact& v) {
+    j["kind"] = toJsonValue(v.kind);
+    j["shape"] = toJsonValue(v.shape);
+    if (v.moves) j["moves"] = toJsonValue(*v.moves);
+    j["elements"] = toJsonValue(v.elements);
+}
+inline Json toJsonValue(const FreedomFact& v) {
+    Json j = Json::object();
+    writeFields(j, v);
+    return j;
+}
+
+inline void writeFields(Json& j, const SketchDragResult& v) {
+    j["points"] = toJsonValue(v.points);
+    j["steps"] = toJsonValue(v.steps);
+    j["complete"] = toJsonValue(v.complete);
+}
+inline Json toJsonValue(const SketchDragResult& v) {
+    Json j = Json::object();
+    writeFields(j, v);
+    return j;
+}
+
+inline void writeFields(Json& j, const StepCheck& v) {
+    j["valid"] = toJsonValue(v.valid);
+    j["volume"] = toJsonValue(v.volume);
+    if (v.expectedVolume) j["expectedVolume"] = toJsonValue(*v.expectedVolume);
+    j["faces"] = toJsonValue(v.faces);
+    if (v.expectedFaces) j["expectedFaces"] = toJsonValue(*v.expectedFaces);
+    j["solids"] = toJsonValue(v.solids);
+}
+inline Json toJsonValue(const StepCheck& v) {
+    Json j = Json::object();
+    writeFields(j, v);
+    return j;
+}
+
+inline void writeFields(Json& j, const StepStatus& v) {
+    j["featureId"] = toJsonValue(v.featureId);
+    j["state"] = toJsonValue(v.state);
+    if (v.problem) j["problem"] = toJsonValue(*v.problem);
+    j["cached"] = toJsonValue(v.cached);
+    j["ms"] = toJsonValue(v.ms);
+    if (v.check) j["check"] = toJsonValue(*v.check);
+}
+inline Json toJsonValue(const StepStatus& v) {
+    Json j = Json::object();
+    writeFields(j, v);
+    return j;
+}
+
+inline void writeFields(Json& j, const BoundingBox& v) {
+    j["min"] = toJsonValue(v.min);
+    j["max"] = toJsonValue(v.max);
+}
+inline Json toJsonValue(const BoundingBox& v) {
+    Json j = Json::object();
+    writeFields(j, v);
+    return j;
+}
+
+inline void writeFields(Json& j, const BodyFace& v) {
+    j["name"] = toJsonValue(v.name);
+    j["surface"] = toJsonValue(v.surface);
+    j["triangleStart"] = toJsonValue(v.triangleStart);
+    j["triangleCount"] = toJsonValue(v.triangleCount);
+}
+inline Json toJsonValue(const BodyFace& v) {
+    Json j = Json::object();
+    writeFields(j, v);
+    return j;
+}
+
+inline void writeFields(Json& j, const BodyEdge& v) {
+    j["name"] = toJsonValue(v.name);
+    j["pointStart"] = toJsonValue(v.pointStart);
+    j["pointCount"] = toJsonValue(v.pointCount);
+}
+inline Json toJsonValue(const BodyEdge& v) {
+    Json j = Json::object();
+    writeFields(j, v);
+    return j;
+}
+
+inline void writeFields(Json& j, const BodyMesh& v) {
+    j["vertexCount"] = toJsonValue(v.vertexCount);
+    j["triangleCount"] = toJsonValue(v.triangleCount);
+    j["edgePointCount"] = toJsonValue(v.edgePointCount);
+    j["positions"] = toJsonValue(v.positions);
+    j["normals"] = toJsonValue(v.normals);
+    j["indices"] = toJsonValue(v.indices);
+    j["triangleFace"] = toJsonValue(v.triangleFace);
+    j["edgePoints"] = toJsonValue(v.edgePoints);
+}
+inline Json toJsonValue(const BodyMesh& v) {
+    Json j = Json::object();
+    writeFields(j, v);
+    return j;
+}
+
+inline void writeFields(Json& j, const BodyResult& v) {
+    j["bodyId"] = toJsonValue(v.bodyId);
+    j["featureId"] = toJsonValue(v.featureId);
+    j["meshKey"] = toJsonValue(v.meshKey);
+    j["preview"] = toJsonValue(v.preview);
+    j["volume"] = toJsonValue(v.volume);
+    j["area"] = toJsonValue(v.area);
+    j["bbox"] = toJsonValue(v.bbox);
+    j["faces"] = toJsonValue(v.faces);
+    j["edges"] = toJsonValue(v.edges);
+    j["mesh"] = toJsonValue(v.mesh);
+}
+inline Json toJsonValue(const BodyResult& v) {
+    Json j = Json::object();
+    writeFields(j, v);
+    return j;
+}
+
+inline void writeFields(Json& j, const ModelTimings& v) {
+    j["rebuildMs"] = toJsonValue(v.rebuildMs);
+    j["meshMs"] = toJsonValue(v.meshMs);
+    j["encodeMs"] = toJsonValue(v.encodeMs);
+    j["totalMs"] = toJsonValue(v.totalMs);
+}
+inline Json toJsonValue(const ModelTimings& v) {
+    Json j = Json::object();
+    writeFields(j, v);
+    return j;
+}
+
 inline void writeFields(Json& j, const HelloResult& v) {
     j["protocol"] = toJsonValue(v.protocol);
+    j["protocolId"] = toJsonValue(v.protocolId);
     j["engine"] = toJsonValue(v.engine);
     j["components"] = toJsonValue(v.components);
     j["capabilities"] = toJsonValue(v.capabilities);
     j["limits"] = toJsonValue(v.limits);
+    j["documentFormat"] = toJsonValue(v.documentFormat);
 }
 
 inline void writeFields(Json& j, const Pong& v) {
@@ -513,6 +1546,35 @@ inline void writeFields(Json& j, const SolverSelftestResult& v) {
     j["timeMs"] = toJsonValue(v.timeMs);
 }
 
+inline void writeFields(Json& j, const SketchSolveResult& v) {
+    j["status"] = toJsonValue(v.status);
+    j["dof"] = toJsonValue(v.dof);
+    j["points"] = toJsonValue(v.points);
+    j["circles"] = toJsonValue(v.circles);
+    j["entities"] = toJsonValue(v.entities);
+    j["constraints"] = toJsonValue(v.constraints);
+    j["conflicting"] = toJsonValue(v.conflicting);
+    j["redundant"] = toJsonValue(v.redundant);
+    j["partiallyRedundant"] = toJsonValue(v.partiallyRedundant);
+    j["reference"] = toJsonValue(v.reference);
+    j["profiles"] = toJsonValue(v.profiles);
+    j["freedom"] = toJsonValue(v.freedom);
+    if (v.drag) j["drag"] = toJsonValue(*v.drag);
+    if (v.problem) j["problem"] = toJsonValue(*v.problem);
+    j["frame"] = toJsonValue(v.frame);
+    if (v.profilesMs) j["profilesMs"] = toJsonValue(*v.profilesMs);
+    j["timeMs"] = toJsonValue(v.timeMs);
+}
+
+inline void writeFields(Json& j, const ModelResult& v) {
+    j["revision"] = toJsonValue(v.revision);
+    j["purpose"] = toJsonValue(v.purpose);
+    j["outcome"] = toJsonValue(v.outcome);
+    j["steps"] = toJsonValue(v.steps);
+    j["bodies"] = toJsonValue(v.bodies);
+    j["timings"] = toJsonValue(v.timings);
+}
+
 inline void writeFields(Json& j, const HangResult& v) {
     j["mode"] = toJsonValue(v.mode);
     j["ms"] = toJsonValue(v.ms);
@@ -535,13 +1597,25 @@ Json messageJson(const Message& m, std::optional<std::int64_t> replyTo) {
     return j;
 }
 
-// ---------------------------------------------------------------- command parsers
+// ---------------------------------------------------------------- readers
 
-// Thrown by the parsers with a complete message that names the command and the field.
+// Thrown by the readers with a complete message that names the command and the path of the field, e.g.
+// Command "model.sync": field "document.timeline[1].distance.value" must be a finite number, got "x".
 class FieldError : public std::runtime_error {
 public:
-    using std::runtime_error::runtime_error;
+    explicit FieldError(const std::string& message, std::string path = {}) : std::runtime_error(message), path_(std::move(path)) {}
+    // Path of the field inside the command ("document.timeline[1].distance.value"); empty for the envelope.
+    const std::string& path() const noexcept { return path_; }
+
+private:
+    std::string path_;
 };
+
+// An empty command names a field of the message envelope (id, type).
+inline std::string fieldWhat(std::string_view command, const std::string& path) {
+    if (command.empty()) return "The message field \"" + path + "\"";
+    return "Command \"" + std::string(command) + "\": field \"" + path + "\"";
+}
 
 inline const Json* findField(const Json& j, const char* name) {
     const auto it = j.find(name);
@@ -554,46 +1628,71 @@ inline std::string describeJson(const Json& v) {
     return s;
 }
 
-inline std::string readString(const Json& v, const std::string& what) {
-    if (!v.is_string()) throw FieldError(what + " must be a string, got " + describeJson(v) + ".");
+inline void requireObject(const Json& v, std::string_view cmd, const std::string& path) {
+    if (!v.is_object()) throw FieldError(fieldWhat(cmd, path) + " must be an object, got " + describeJson(v) + ".", path);
+}
+
+inline void requireArray(const Json& v, std::string_view cmd, const std::string& path) {
+    if (!v.is_array()) throw FieldError(fieldWhat(cmd, path) + " must be an array, got " + describeJson(v) + ".", path);
+}
+
+inline std::string readString(const Json& v, std::string_view cmd, const std::string& path) {
+    if (!v.is_string()) throw FieldError(fieldWhat(cmd, path) + " must be a string, got " + describeJson(v) + ".", path);
     return v.get<std::string>();
 }
 
-inline std::string readEnum(const Json& v, const std::string& what, std::initializer_list<const char*> allowed) {
-    std::string list;
-    for (const char* a : allowed) list += (list.empty() ? "\"" : ", \"") + std::string(a) + "\"";
+inline std::string readEnum(const Json& v, std::string_view cmd, const std::string& path, std::initializer_list<const char*> allowed) {
     if (v.is_string()) {
         const std::string s = v.get<std::string>();
         for (const char* a : allowed)
             if (s == a) return s;
     }
-    throw FieldError(what + " must be one of " + list + ", got " + describeJson(v) + ".");
+    std::string list;
+    for (const char* a : allowed) list += (list.empty() ? "\"" : ", \"") + std::string(a) + "\"";
+    throw FieldError(fieldWhat(cmd, path) + (allowed.size() == 1 ? " must be " : " must be one of ") + list + ", got " + describeJson(v) + ".", path);
 }
 
 // JSON numbers from JavaScript are doubles: an integral double is accepted as an integer.
-inline std::int64_t readInteger(const Json& v, const std::string& what, std::int64_t lo, std::int64_t hi) {
-    const std::string range = " must be an integer from " + std::to_string(lo) + " to " + std::to_string(hi) + ", got ";
+inline std::int64_t readInteger(const Json& v, std::string_view cmd, const std::string& path, std::int64_t lo, std::int64_t hi) {
+    const auto bad = [&] {
+        return FieldError(fieldWhat(cmd, path) + " must be an integer from " + std::to_string(lo) + " to " + std::to_string(hi) + ", got " + describeJson(v) + ".", path);
+    };
     if (v.is_number_integer()) {
-        if (v.is_number_unsigned() && v.get<std::uint64_t>() > static_cast<std::uint64_t>(hi)) throw FieldError(what + range + describeJson(v) + ".");
+        if (v.is_number_unsigned() && v.get<std::uint64_t>() > static_cast<std::uint64_t>(hi)) throw bad();
         const std::int64_t i = v.get<std::int64_t>();
-        if (i < lo || i > hi) throw FieldError(what + range + describeJson(v) + ".");
+        if (i < lo || i > hi) throw bad();
         return i;
     }
     if (v.is_number_float()) {
         const double d = v.get<double>();
         if (std::isfinite(d) && d == std::floor(d) && d >= static_cast<double>(lo) && d <= static_cast<double>(hi)) return static_cast<std::int64_t>(d);
     }
-    throw FieldError(what + range + describeJson(v) + ".");
+    throw bad();
 }
 
-inline double readNumber(const Json& v, const std::string& what) {
-    if (!v.is_number() || !std::isfinite(v.get<double>())) throw FieldError(what + " must be a finite number, got " + describeJson(v) + ".");
+inline double readNumber(const Json& v, std::string_view cmd, const std::string& path) {
+    if (!v.is_number() || !std::isfinite(v.get<double>())) throw FieldError(fieldWhat(cmd, path) + " must be a finite number, got " + describeJson(v) + ".", path);
     return v.get<double>();
 }
 
-inline bool readBool(const Json& v, const std::string& what) {
-    if (!v.is_boolean()) throw FieldError(what + " must be true or false, got " + describeJson(v) + ".");
+inline bool readBool(const Json& v, std::string_view cmd, const std::string& path) {
+    if (!v.is_boolean()) throw FieldError(fieldWhat(cmd, path) + " must be true or false, got " + describeJson(v) + ".", path);
     return v.get<bool>();
+}
+
+inline std::string quotedList(std::initializer_list<const char*> names) {
+    std::string list;
+    for (const char* k : names) list += (list.empty() ? "\"" : ", \"") + std::string(k) + "\"";
+    return list;
+}
+
+// Members other than the listed ones are refused, so typing errors do not pass silently.
+inline void rejectUnknownMembers(const Json& j, std::string_view cmd, const std::string& path, std::initializer_list<const char*> known) {
+    for (auto it = j.begin(); it != j.end(); ++it) {
+        bool ok = false;
+        for (const char* k : known) ok = ok || it.key() == k;
+        if (!ok) throw FieldError(fieldWhat(cmd, path) + " has no member \"" + it.key() + "\"; its members are " + quotedList(known) + ".", path + "." + it.key());
+    }
 }
 
 // Fields other than the envelope (type, id) and the listed ones are refused, so typing errors do not pass silently.
@@ -603,59 +1702,1641 @@ inline void rejectUnknownFields(const Json& j, std::string_view command, std::in
         bool ok = false;
         for (const char* k : known) ok = ok || it.key() == k;
         if (!ok) {
-            std::string list;
-            for (const char* k : known) list += (list.empty() ? "\"" : ", \"") + std::string(k) + "\"";
             throw FieldError("Command \"" + std::string(command) + "\" has no field \"" + it.key() + "\"" +
-                             (list.empty() ? std::string(" (it takes no fields).") : "; its fields are " + list + "."));
+                                 (known.size() == 0 ? std::string(" (it takes no fields).") : "; its fields are " + quotedList(known) + "."),
+                             it.key());
         }
     }
 }
 
+inline void read(const Json& v, Quantity& out, std::string_view cmd, const std::string& path);
+inline void read(const Json& v, Vec2& out, std::string_view cmd, const std::string& path);
+inline void read(const Json& v, OriginPlaneRef& out, std::string_view cmd, const std::string& path);
+inline void read(const Json& v, PlaneRef& out, std::string_view cmd, const std::string& path);
+inline void read(const Json& v, SketchPoint& out, std::string_view cmd, const std::string& path);
+inline void read(const Json& v, SketchLine& out, std::string_view cmd, const std::string& path);
+inline void read(const Json& v, SketchCircle& out, std::string_view cmd, const std::string& path);
+inline void read(const Json& v, GeometricConstraint& out, std::string_view cmd, const std::string& path);
+inline void read(const Json& v, Dimension& out, std::string_view cmd, const std::string& path);
+inline void read(const Json& v, SketchConstraint& out, std::string_view cmd, const std::string& path);
+inline void read(const Json& v, SketchStep& out, std::string_view cmd, const std::string& path);
+inline void read(const Json& v, SketchForm& out, std::string_view cmd, const std::string& path);
+inline void read(const Json& v, SketchData& out, std::string_view cmd, const std::string& path);
+inline void read(const Json& v, SketchFeature& out, std::string_view cmd, const std::string& path);
+inline void read(const Json& v, ProfileRef& out, std::string_view cmd, const std::string& path);
+inline void read(const Json& v, ExtrudeFeature& out, std::string_view cmd, const std::string& path);
+inline void read(const Json& v, Feature& out, std::string_view cmd, const std::string& path);
+inline void read(const Json& v, Body& out, std::string_view cmd, const std::string& path);
+inline void read(const Json& v, Component& out, std::string_view cmd, const std::string& path);
+inline void read(const Json& v, Parameter& out, std::string_view cmd, const std::string& path);
+inline void read(const Json& v, DocumentSettings& out, std::string_view cmd, const std::string& path);
+inline void read(const Json& v, PartcraftDocument& out, std::string_view cmd, const std::string& path);
+inline void read(const Json& v, EngineInfo& out, std::string_view cmd, const std::string& path);
+inline void read(const Json& v, PlanegcsInfo& out, std::string_view cmd, const std::string& path);
+inline void read(const Json& v, ComponentVersions& out, std::string_view cmd, const std::string& path);
+inline void read(const Json& v, Capabilities& out, std::string_view cmd, const std::string& path);
+inline void read(const Json& v, Limits& out, std::string_view cmd, const std::string& path);
+inline void read(const Json& v, KernelSelftestStep& out, std::string_view cmd, const std::string& path);
+inline void read(const Json& v, Vec3& out, std::string_view cmd, const std::string& path);
+inline void read(const Json& v, PlaneFrame& out, std::string_view cmd, const std::string& path);
+inline void read(const Json& v, BufferRef& out, std::string_view cmd, const std::string& path);
+inline void read(const Json& v, Problem& out, std::string_view cmd, const std::string& path);
+inline void read(const Json& v, SolvedPoint& out, std::string_view cmd, const std::string& path);
+inline void read(const Json& v, SolvedCircle& out, std::string_view cmd, const std::string& path);
+inline void read(const Json& v, RegionFill& out, std::string_view cmd, const std::string& path);
+inline void read(const Json& v, Region& out, std::string_view cmd, const std::string& path);
+inline void read(const Json& v, DragTarget& out, std::string_view cmd, const std::string& path);
+inline void read(const Json& v, SketchDrag& out, std::string_view cmd, const std::string& path);
+inline void read(const Json& v, DragPointResult& out, std::string_view cmd, const std::string& path);
+inline void read(const Json& v, FreedomFact& out, std::string_view cmd, const std::string& path);
+inline void read(const Json& v, SketchDragResult& out, std::string_view cmd, const std::string& path);
+inline void read(const Json& v, StepCheck& out, std::string_view cmd, const std::string& path);
+inline void read(const Json& v, StepStatus& out, std::string_view cmd, const std::string& path);
+inline void read(const Json& v, BoundingBox& out, std::string_view cmd, const std::string& path);
+inline void read(const Json& v, BodyFace& out, std::string_view cmd, const std::string& path);
+inline void read(const Json& v, BodyEdge& out, std::string_view cmd, const std::string& path);
+inline void read(const Json& v, BodyMesh& out, std::string_view cmd, const std::string& path);
+inline void read(const Json& v, BodyResult& out, std::string_view cmd, const std::string& path);
+inline void read(const Json& v, ModelTimings& out, std::string_view cmd, const std::string& path);
+
+inline void read(const Json& v, Quantity& out, std::string_view cmd, const std::string& path) {
+    requireObject(v, cmd, path);
+    rejectUnknownMembers(v, cmd, path, {"value", "unit"});
+    if (const Json* p = findField(v, "value")) {
+        out.value = readNumber((*p), cmd, path + ".value");
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".value") + " is missing.", path + ".value");
+    }
+    if (const Json* p = findField(v, "unit")) {
+        out.unit = readEnum((*p), cmd, path + ".unit", {"mm", "deg"});
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".unit") + " is missing.", path + ".unit");
+    }
+}
+
+inline void read(const Json& v, Vec2& out, std::string_view cmd, const std::string& path) {
+    requireObject(v, cmd, path);
+    rejectUnknownMembers(v, cmd, path, {"x", "y"});
+    if (const Json* p = findField(v, "x")) {
+        out.x = readNumber((*p), cmd, path + ".x");
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".x") + " is missing.", path + ".x");
+    }
+    if (const Json* p = findField(v, "y")) {
+        out.y = readNumber((*p), cmd, path + ".y");
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".y") + " is missing.", path + ".y");
+    }
+}
+
+inline void read(const Json& v, OriginPlaneRef& out, std::string_view cmd, const std::string& path) {
+    requireObject(v, cmd, path);
+    rejectUnknownMembers(v, cmd, path, {"kind", "plane"});
+    if (const Json* p = findField(v, "kind")) {
+        out.kind = readEnum((*p), cmd, path + ".kind", {"originPlane"});
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".kind") + " is missing.", path + ".kind");
+    }
+    if (const Json* p = findField(v, "plane")) {
+        out.plane = readEnum((*p), cmd, path + ".plane", {"xy", "xz", "yz"});
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".plane") + " is missing.", path + ".plane");
+    }
+}
+
+inline void read(const Json& v, PlaneRef& out, std::string_view cmd, const std::string& path) {
+    requireObject(v, cmd, path);
+    const Json* t = findField(v, "kind");
+    if (!t) throw FieldError(fieldWhat(cmd, path + ".kind") + " is missing.", path + ".kind");
+    const std::string tag = readEnum(*t, cmd, path + ".kind", {"originPlane"});
+    if (tag == "originPlane") {
+        OriginPlaneRef x;
+        read(v, x, cmd, path);
+        out = std::move(x);
+        return;
+    }
+}
+
+inline void read(const Json& v, SketchPoint& out, std::string_view cmd, const std::string& path) {
+    requireObject(v, cmd, path);
+    rejectUnknownMembers(v, cmd, path, {"id", "x", "y"});
+    if (const Json* p = findField(v, "id")) {
+        out.id = readString((*p), cmd, path + ".id");
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".id") + " is missing.", path + ".id");
+    }
+    if (const Json* p = findField(v, "x")) {
+        out.x = readNumber((*p), cmd, path + ".x");
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".x") + " is missing.", path + ".x");
+    }
+    if (const Json* p = findField(v, "y")) {
+        out.y = readNumber((*p), cmd, path + ".y");
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".y") + " is missing.", path + ".y");
+    }
+}
+
+inline void read(const Json& v, SketchLine& out, std::string_view cmd, const std::string& path) {
+    requireObject(v, cmd, path);
+    rejectUnknownMembers(v, cmd, path, {"id", "p1", "p2", "construction"});
+    if (const Json* p = findField(v, "id")) {
+        out.id = readString((*p), cmd, path + ".id");
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".id") + " is missing.", path + ".id");
+    }
+    if (const Json* p = findField(v, "p1")) {
+        out.p1 = readString((*p), cmd, path + ".p1");
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".p1") + " is missing.", path + ".p1");
+    }
+    if (const Json* p = findField(v, "p2")) {
+        out.p2 = readString((*p), cmd, path + ".p2");
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".p2") + " is missing.", path + ".p2");
+    }
+    if (const Json* p = findField(v, "construction")) {
+        out.construction = readBool((*p), cmd, path + ".construction");
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".construction") + " is missing.", path + ".construction");
+    }
+}
+
+inline void read(const Json& v, SketchCircle& out, std::string_view cmd, const std::string& path) {
+    requireObject(v, cmd, path);
+    rejectUnknownMembers(v, cmd, path, {"id", "center", "radius", "construction"});
+    if (const Json* p = findField(v, "id")) {
+        out.id = readString((*p), cmd, path + ".id");
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".id") + " is missing.", path + ".id");
+    }
+    if (const Json* p = findField(v, "center")) {
+        out.center = readString((*p), cmd, path + ".center");
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".center") + " is missing.", path + ".center");
+    }
+    if (const Json* p = findField(v, "radius")) {
+        out.radius = readNumber((*p), cmd, path + ".radius");
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".radius") + " is missing.", path + ".radius");
+    }
+    if (const Json* p = findField(v, "construction")) {
+        out.construction = readBool((*p), cmd, path + ".construction");
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".construction") + " is missing.", path + ".construction");
+    }
+}
+
+inline void read(const Json& v, GeometricConstraint& out, std::string_view cmd, const std::string& path) {
+    requireObject(v, cmd, path);
+    rejectUnknownMembers(v, cmd, path, {"id", "kind", "refs"});
+    if (const Json* p = findField(v, "id")) {
+        out.id = readString((*p), cmd, path + ".id");
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".id") + " is missing.", path + ".id");
+    }
+    if (const Json* p = findField(v, "kind")) {
+        out.kind = readEnum((*p), cmd, path + ".kind", {"coincident", "pointOnCurve", "horizontal", "vertical", "parallel", "perpendicular", "equal", "fix"});
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".kind") + " is missing.", path + ".kind");
+    }
+    if (const Json* p = findField(v, "refs")) {
+        requireArray((*p), cmd, path + ".refs");
+        out.refs.clear();
+        out.refs.reserve((*p).size());
+        for (std::size_t i0 = 0; i0 < (*p).size(); ++i0) {
+            auto&& e0 = out.refs.emplace_back();
+            e0 = readString((*p)[i0], cmd, path + ".refs" + "[" + std::to_string(i0) + "]");
+        }
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".refs") + " is missing.", path + ".refs");
+    }
+}
+
+inline void read(const Json& v, Dimension& out, std::string_view cmd, const std::string& path) {
+    requireObject(v, cmd, path);
+    rejectUnknownMembers(v, cmd, path, {"id", "kind", "refs", "value", "driving", "number", "reverse", "label"});
+    if (const Json* p = findField(v, "id")) {
+        out.id = readString((*p), cmd, path + ".id");
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".id") + " is missing.", path + ".id");
+    }
+    if (const Json* p = findField(v, "kind")) {
+        out.kind = readEnum((*p), cmd, path + ".kind", {"distance", "distanceX", "distanceY", "angle", "diameter", "radius"});
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".kind") + " is missing.", path + ".kind");
+    }
+    if (const Json* p = findField(v, "refs")) {
+        requireArray((*p), cmd, path + ".refs");
+        out.refs.clear();
+        out.refs.reserve((*p).size());
+        for (std::size_t i0 = 0; i0 < (*p).size(); ++i0) {
+            auto&& e0 = out.refs.emplace_back();
+            e0 = readString((*p)[i0], cmd, path + ".refs" + "[" + std::to_string(i0) + "]");
+        }
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".refs") + " is missing.", path + ".refs");
+    }
+    if (const Json* p = findField(v, "value")) {
+        read((*p), out.value, cmd, path + ".value");
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".value") + " is missing.", path + ".value");
+    }
+    if (const Json* p = findField(v, "driving")) {
+        out.driving = readBool((*p), cmd, path + ".driving");
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".driving") + " is missing.", path + ".driving");
+    }
+    if (const Json* p = findField(v, "number")) {
+        out.number.emplace();
+        (*out.number) = readInteger((*p), cmd, path + ".number", 0, std::numeric_limits<std::int64_t>::max());
+    }
+    if (const Json* p = findField(v, "reverse")) {
+        out.reverse.emplace();
+        requireArray((*p), cmd, path + ".reverse");
+        (*out.reverse).clear();
+        (*out.reverse).reserve((*p).size());
+        for (std::size_t i0 = 0; i0 < (*p).size(); ++i0) {
+            auto&& e0 = (*out.reverse).emplace_back();
+            e0 = readBool((*p)[i0], cmd, path + ".reverse" + "[" + std::to_string(i0) + "]");
+        }
+    }
+    if (const Json* p = findField(v, "label")) {
+        read((*p), out.label, cmd, path + ".label");
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".label") + " is missing.", path + ".label");
+    }
+}
+
+inline void read(const Json& v, SketchConstraint& out, std::string_view cmd, const std::string& path) {
+    requireObject(v, cmd, path);
+    const Json* t = findField(v, "kind");
+    if (!t) throw FieldError(fieldWhat(cmd, path + ".kind") + " is missing.", path + ".kind");
+    const std::string tag = readEnum(*t, cmd, path + ".kind", {"coincident", "pointOnCurve", "horizontal", "vertical", "parallel", "perpendicular", "equal", "fix", "distance", "distanceX", "distanceY", "angle", "diameter", "radius"});
+    if (tag == "coincident" || tag == "pointOnCurve" || tag == "horizontal" || tag == "vertical" || tag == "parallel" || tag == "perpendicular" || tag == "equal" || tag == "fix") {
+        GeometricConstraint x;
+        read(v, x, cmd, path);
+        out = std::move(x);
+        return;
+    }
+    if (tag == "distance" || tag == "distanceX" || tag == "distanceY" || tag == "angle" || tag == "diameter" || tag == "radius") {
+        Dimension x;
+        read(v, x, cmd, path);
+        out = std::move(x);
+        return;
+    }
+}
+
+inline void read(const Json& v, SketchStep& out, std::string_view cmd, const std::string& path) {
+    requireObject(v, cmd, path);
+    rejectUnknownMembers(v, cmd, path, {"id", "kind", "members", "number"});
+    if (const Json* p = findField(v, "id")) {
+        out.id = readString((*p), cmd, path + ".id");
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".id") + " is missing.", path + ".id");
+    }
+    if (const Json* p = findField(v, "kind")) {
+        out.kind = readEnum((*p), cmd, path + ".kind", {"line", "rectangle", "circle", "constraint", "dimension"});
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".kind") + " is missing.", path + ".kind");
+    }
+    if (const Json* p = findField(v, "members")) {
+        requireArray((*p), cmd, path + ".members");
+        out.members.clear();
+        out.members.reserve((*p).size());
+        for (std::size_t i0 = 0; i0 < (*p).size(); ++i0) {
+            auto&& e0 = out.members.emplace_back();
+            e0 = readString((*p)[i0], cmd, path + ".members" + "[" + std::to_string(i0) + "]");
+        }
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".members") + " is missing.", path + ".members");
+    }
+    if (const Json* p = findField(v, "number")) {
+        out.number.emplace();
+        (*out.number) = readInteger((*p), cmd, path + ".number", 1, std::numeric_limits<std::int64_t>::max());
+    }
+}
+
+inline void read(const Json& v, SketchForm& out, std::string_view cmd, const std::string& path) {
+    requireObject(v, cmd, path);
+    rejectUnknownMembers(v, cmd, path, {"number", "shapes"});
+    if (const Json* p = findField(v, "number")) {
+        out.number = readInteger((*p), cmd, path + ".number", 1, std::numeric_limits<std::int64_t>::max());
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".number") + " is missing.", path + ".number");
+    }
+    if (const Json* p = findField(v, "shapes")) {
+        requireArray((*p), cmd, path + ".shapes");
+        out.shapes.clear();
+        out.shapes.reserve((*p).size());
+        for (std::size_t i0 = 0; i0 < (*p).size(); ++i0) {
+            auto&& e0 = out.shapes.emplace_back();
+            e0 = readString((*p)[i0], cmd, path + ".shapes" + "[" + std::to_string(i0) + "]");
+        }
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".shapes") + " is missing.", path + ".shapes");
+    }
+}
+
+inline void read(const Json& v, SketchData& out, std::string_view cmd, const std::string& path) {
+    requireObject(v, cmd, path);
+    rejectUnknownMembers(v, cmd, path, {"points", "lines", "circles", "constraints", "forms", "shapeCounts", "steps"});
+    if (const Json* p = findField(v, "points")) {
+        requireArray((*p), cmd, path + ".points");
+        out.points.clear();
+        out.points.reserve((*p).size());
+        for (std::size_t i0 = 0; i0 < (*p).size(); ++i0) {
+            auto&& e0 = out.points.emplace_back();
+            read((*p)[i0], e0, cmd, path + ".points" + "[" + std::to_string(i0) + "]");
+        }
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".points") + " is missing.", path + ".points");
+    }
+    if (const Json* p = findField(v, "lines")) {
+        requireArray((*p), cmd, path + ".lines");
+        out.lines.clear();
+        out.lines.reserve((*p).size());
+        for (std::size_t i0 = 0; i0 < (*p).size(); ++i0) {
+            auto&& e0 = out.lines.emplace_back();
+            read((*p)[i0], e0, cmd, path + ".lines" + "[" + std::to_string(i0) + "]");
+        }
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".lines") + " is missing.", path + ".lines");
+    }
+    if (const Json* p = findField(v, "circles")) {
+        requireArray((*p), cmd, path + ".circles");
+        out.circles.clear();
+        out.circles.reserve((*p).size());
+        for (std::size_t i0 = 0; i0 < (*p).size(); ++i0) {
+            auto&& e0 = out.circles.emplace_back();
+            read((*p)[i0], e0, cmd, path + ".circles" + "[" + std::to_string(i0) + "]");
+        }
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".circles") + " is missing.", path + ".circles");
+    }
+    if (const Json* p = findField(v, "constraints")) {
+        requireArray((*p), cmd, path + ".constraints");
+        out.constraints.clear();
+        out.constraints.reserve((*p).size());
+        for (std::size_t i0 = 0; i0 < (*p).size(); ++i0) {
+            auto&& e0 = out.constraints.emplace_back();
+            read((*p)[i0], e0, cmd, path + ".constraints" + "[" + std::to_string(i0) + "]");
+        }
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".constraints") + " is missing.", path + ".constraints");
+    }
+    if (const Json* p = findField(v, "forms")) {
+        out.forms.emplace();
+        requireArray((*p), cmd, path + ".forms");
+        (*out.forms).clear();
+        (*out.forms).reserve((*p).size());
+        for (std::size_t i0 = 0; i0 < (*p).size(); ++i0) {
+            auto&& e0 = (*out.forms).emplace_back();
+            read((*p)[i0], e0, cmd, path + ".forms" + "[" + std::to_string(i0) + "]");
+        }
+    }
+    if (const Json* p = findField(v, "shapeCounts")) {
+        out.shapeCounts.emplace();
+        requireObject((*p), cmd, path + ".shapeCounts");
+        (*out.shapeCounts).clear();
+        for (auto i0 = (*p).begin(); i0 != (*p).end(); ++i0) {
+            auto& e0 = (*out.shapeCounts)[i0.key()];
+            e0 = readInteger(i0.value(), cmd, path + ".shapeCounts" + "." + i0.key(), 0, std::numeric_limits<std::int64_t>::max());
+        }
+    }
+    if (const Json* p = findField(v, "steps")) {
+        out.steps.emplace();
+        requireArray((*p), cmd, path + ".steps");
+        (*out.steps).clear();
+        (*out.steps).reserve((*p).size());
+        for (std::size_t i0 = 0; i0 < (*p).size(); ++i0) {
+            auto&& e0 = (*out.steps).emplace_back();
+            read((*p)[i0], e0, cmd, path + ".steps" + "[" + std::to_string(i0) + "]");
+        }
+    }
+}
+
+inline void read(const Json& v, SketchFeature& out, std::string_view cmd, const std::string& path) {
+    requireObject(v, cmd, path);
+    rejectUnknownMembers(v, cmd, path, {"id", "type", "name", "component", "visible", "plane", "sketch"});
+    if (const Json* p = findField(v, "id")) {
+        out.id = readString((*p), cmd, path + ".id");
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".id") + " is missing.", path + ".id");
+    }
+    if (const Json* p = findField(v, "type")) {
+        out.type = readEnum((*p), cmd, path + ".type", {"sketch"});
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".type") + " is missing.", path + ".type");
+    }
+    if (const Json* p = findField(v, "name")) {
+        out.name = readString((*p), cmd, path + ".name");
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".name") + " is missing.", path + ".name");
+    }
+    if (const Json* p = findField(v, "component")) {
+        out.component = readString((*p), cmd, path + ".component");
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".component") + " is missing.", path + ".component");
+    }
+    if (const Json* p = findField(v, "visible")) {
+        out.visible = readBool((*p), cmd, path + ".visible");
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".visible") + " is missing.", path + ".visible");
+    }
+    if (const Json* p = findField(v, "plane")) {
+        read((*p), out.plane, cmd, path + ".plane");
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".plane") + " is missing.", path + ".plane");
+    }
+    if (const Json* p = findField(v, "sketch")) {
+        read((*p), out.sketch, cmd, path + ".sketch");
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".sketch") + " is missing.", path + ".sketch");
+    }
+}
+
+inline void read(const Json& v, ProfileRef& out, std::string_view cmd, const std::string& path) {
+    requireObject(v, cmd, path);
+    rejectUnknownMembers(v, cmd, path, {"sketch", "region"});
+    if (const Json* p = findField(v, "sketch")) {
+        out.sketch = readString((*p), cmd, path + ".sketch");
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".sketch") + " is missing.", path + ".sketch");
+    }
+    if (const Json* p = findField(v, "region")) {
+        out.region = readString((*p), cmd, path + ".region");
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".region") + " is missing.", path + ".region");
+    }
+}
+
+inline void read(const Json& v, ExtrudeFeature& out, std::string_view cmd, const std::string& path) {
+    requireObject(v, cmd, path);
+    rejectUnknownMembers(v, cmd, path, {"id", "type", "name", "component", "profile", "extent", "distance", "operation", "body"});
+    if (const Json* p = findField(v, "id")) {
+        out.id = readString((*p), cmd, path + ".id");
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".id") + " is missing.", path + ".id");
+    }
+    if (const Json* p = findField(v, "type")) {
+        out.type = readEnum((*p), cmd, path + ".type", {"extrude"});
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".type") + " is missing.", path + ".type");
+    }
+    if (const Json* p = findField(v, "name")) {
+        out.name = readString((*p), cmd, path + ".name");
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".name") + " is missing.", path + ".name");
+    }
+    if (const Json* p = findField(v, "component")) {
+        out.component = readString((*p), cmd, path + ".component");
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".component") + " is missing.", path + ".component");
+    }
+    if (const Json* p = findField(v, "profile")) {
+        read((*p), out.profile, cmd, path + ".profile");
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".profile") + " is missing.", path + ".profile");
+    }
+    if (const Json* p = findField(v, "extent")) {
+        out.extent = readEnum((*p), cmd, path + ".extent", {"oneSide", "symmetric"});
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".extent") + " is missing.", path + ".extent");
+    }
+    if (const Json* p = findField(v, "distance")) {
+        read((*p), out.distance, cmd, path + ".distance");
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".distance") + " is missing.", path + ".distance");
+    }
+    if (const Json* p = findField(v, "operation")) {
+        out.operation = readEnum((*p), cmd, path + ".operation", {"newBody"});
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".operation") + " is missing.", path + ".operation");
+    }
+    if (const Json* p = findField(v, "body")) {
+        out.body = readString((*p), cmd, path + ".body");
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".body") + " is missing.", path + ".body");
+    }
+}
+
+inline void read(const Json& v, Feature& out, std::string_view cmd, const std::string& path) {
+    requireObject(v, cmd, path);
+    const Json* t = findField(v, "type");
+    if (!t) throw FieldError(fieldWhat(cmd, path + ".type") + " is missing.", path + ".type");
+    const std::string tag = readEnum(*t, cmd, path + ".type", {"sketch", "extrude"});
+    if (tag == "sketch") {
+        SketchFeature x;
+        read(v, x, cmd, path);
+        out = std::move(x);
+        return;
+    }
+    if (tag == "extrude") {
+        ExtrudeFeature x;
+        read(v, x, cmd, path);
+        out = std::move(x);
+        return;
+    }
+}
+
+inline void read(const Json& v, Body& out, std::string_view cmd, const std::string& path) {
+    requireObject(v, cmd, path);
+    rejectUnknownMembers(v, cmd, path, {"id", "name", "createdBy", "visible"});
+    if (const Json* p = findField(v, "id")) {
+        out.id = readString((*p), cmd, path + ".id");
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".id") + " is missing.", path + ".id");
+    }
+    if (const Json* p = findField(v, "name")) {
+        out.name = readString((*p), cmd, path + ".name");
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".name") + " is missing.", path + ".name");
+    }
+    if (const Json* p = findField(v, "createdBy")) {
+        out.createdBy = readString((*p), cmd, path + ".createdBy");
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".createdBy") + " is missing.", path + ".createdBy");
+    }
+    if (const Json* p = findField(v, "visible")) {
+        out.visible = readBool((*p), cmd, path + ".visible");
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".visible") + " is missing.", path + ".visible");
+    }
+}
+
+inline void read(const Json& v, Component& out, std::string_view cmd, const std::string& path) {
+    requireObject(v, cmd, path);
+    rejectUnknownMembers(v, cmd, path, {"id", "name", "bodies"});
+    if (const Json* p = findField(v, "id")) {
+        out.id = readString((*p), cmd, path + ".id");
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".id") + " is missing.", path + ".id");
+    }
+    if (const Json* p = findField(v, "name")) {
+        out.name = readString((*p), cmd, path + ".name");
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".name") + " is missing.", path + ".name");
+    }
+    if (const Json* p = findField(v, "bodies")) {
+        requireArray((*p), cmd, path + ".bodies");
+        out.bodies.clear();
+        out.bodies.reserve((*p).size());
+        for (std::size_t i0 = 0; i0 < (*p).size(); ++i0) {
+            auto&& e0 = out.bodies.emplace_back();
+            read((*p)[i0], e0, cmd, path + ".bodies" + "[" + std::to_string(i0) + "]");
+        }
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".bodies") + " is missing.", path + ".bodies");
+    }
+}
+
+inline void read(const Json& v, Parameter& out, std::string_view cmd, const std::string& path) {
+    requireObject(v, cmd, path);
+    rejectUnknownMembers(v, cmd, path, {"id", "name", "value"});
+    if (const Json* p = findField(v, "id")) {
+        out.id = readString((*p), cmd, path + ".id");
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".id") + " is missing.", path + ".id");
+    }
+    if (const Json* p = findField(v, "name")) {
+        out.name = readString((*p), cmd, path + ".name");
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".name") + " is missing.", path + ".name");
+    }
+    if (const Json* p = findField(v, "value")) {
+        read((*p), out.value, cmd, path + ".value");
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".value") + " is missing.", path + ".value");
+    }
+}
+
+inline void read(const Json& v, DocumentSettings& out, std::string_view cmd, const std::string& path) {
+    requireObject(v, cmd, path);
+    rejectUnknownMembers(v, cmd, path, {"lengthUnit"});
+    if (const Json* p = findField(v, "lengthUnit")) {
+        out.lengthUnit = readEnum((*p), cmd, path + ".lengthUnit", {"mm"});
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".lengthUnit") + " is missing.", path + ".lengthUnit");
+    }
+}
+
+inline void read(const Json& v, PartcraftDocument& out, std::string_view cmd, const std::string& path) {
+    requireObject(v, cmd, path);
+    rejectUnknownMembers(v, cmd, path, {"format", "documentId", "settings", "nextId", "nextParameter", "parameters", "components", "timeline"});
+    if (const Json* p = findField(v, "format")) {
+        out.format = readInteger((*p), cmd, path + ".format", 1, std::numeric_limits<std::int64_t>::max());
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".format") + " is missing.", path + ".format");
+    }
+    if (const Json* p = findField(v, "documentId")) {
+        out.documentId = readString((*p), cmd, path + ".documentId");
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".documentId") + " is missing.", path + ".documentId");
+    }
+    if (const Json* p = findField(v, "settings")) {
+        read((*p), out.settings, cmd, path + ".settings");
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".settings") + " is missing.", path + ".settings");
+    }
+    if (const Json* p = findField(v, "nextId")) {
+        out.nextId = readInteger((*p), cmd, path + ".nextId", 1, std::numeric_limits<std::int64_t>::max());
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".nextId") + " is missing.", path + ".nextId");
+    }
+    if (const Json* p = findField(v, "nextParameter")) {
+        out.nextParameter.emplace();
+        (*out.nextParameter) = readInteger((*p), cmd, path + ".nextParameter", 0, std::numeric_limits<std::int64_t>::max());
+    }
+    if (const Json* p = findField(v, "parameters")) {
+        requireArray((*p), cmd, path + ".parameters");
+        out.parameters.clear();
+        out.parameters.reserve((*p).size());
+        for (std::size_t i0 = 0; i0 < (*p).size(); ++i0) {
+            auto&& e0 = out.parameters.emplace_back();
+            read((*p)[i0], e0, cmd, path + ".parameters" + "[" + std::to_string(i0) + "]");
+        }
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".parameters") + " is missing.", path + ".parameters");
+    }
+    if (const Json* p = findField(v, "components")) {
+        requireArray((*p), cmd, path + ".components");
+        out.components.clear();
+        out.components.reserve((*p).size());
+        for (std::size_t i0 = 0; i0 < (*p).size(); ++i0) {
+            auto&& e0 = out.components.emplace_back();
+            read((*p)[i0], e0, cmd, path + ".components" + "[" + std::to_string(i0) + "]");
+        }
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".components") + " is missing.", path + ".components");
+    }
+    if (const Json* p = findField(v, "timeline")) {
+        requireArray((*p), cmd, path + ".timeline");
+        out.timeline.clear();
+        out.timeline.reserve((*p).size());
+        for (std::size_t i0 = 0; i0 < (*p).size(); ++i0) {
+            auto&& e0 = out.timeline.emplace_back();
+            read((*p)[i0], e0, cmd, path + ".timeline" + "[" + std::to_string(i0) + "]");
+        }
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".timeline") + " is missing.", path + ".timeline");
+    }
+}
+
+inline void read(const Json& v, EngineInfo& out, std::string_view cmd, const std::string& path) {
+    requireObject(v, cmd, path);
+    rejectUnknownMembers(v, cmd, path, {"name", "version", "versionFull", "buildType", "platform", "os", "compiler", "testCommands"});
+    if (const Json* p = findField(v, "name")) {
+        out.name = readEnum((*p), cmd, path + ".name", {"partcraft-engine"});
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".name") + " is missing.", path + ".name");
+    }
+    if (const Json* p = findField(v, "version")) {
+        out.version = readString((*p), cmd, path + ".version");
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".version") + " is missing.", path + ".version");
+    }
+    if (const Json* p = findField(v, "versionFull")) {
+        out.versionFull = readString((*p), cmd, path + ".versionFull");
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".versionFull") + " is missing.", path + ".versionFull");
+    }
+    if (const Json* p = findField(v, "buildType")) {
+        out.buildType = readString((*p), cmd, path + ".buildType");
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".buildType") + " is missing.", path + ".buildType");
+    }
+    if (const Json* p = findField(v, "platform")) {
+        out.platform = readEnum((*p), cmd, path + ".platform", {"native", "wasm"});
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".platform") + " is missing.", path + ".platform");
+    }
+    if (const Json* p = findField(v, "os")) {
+        out.os = readString((*p), cmd, path + ".os");
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".os") + " is missing.", path + ".os");
+    }
+    if (const Json* p = findField(v, "compiler")) {
+        out.compiler = readString((*p), cmd, path + ".compiler");
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".compiler") + " is missing.", path + ".compiler");
+    }
+    if (const Json* p = findField(v, "testCommands")) {
+        out.testCommands = readBool((*p), cmd, path + ".testCommands");
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".testCommands") + " is missing.", path + ".testCommands");
+    }
+}
+
+inline void read(const Json& v, PlanegcsInfo& out, std::string_view cmd, const std::string& path) {
+    requireObject(v, cmd, path);
+    rejectUnknownMembers(v, cmd, path, {"source", "commit"});
+    if (const Json* p = findField(v, "source")) {
+        out.source = readString((*p), cmd, path + ".source");
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".source") + " is missing.", path + ".source");
+    }
+    if (const Json* p = findField(v, "commit")) {
+        out.commit = readString((*p), cmd, path + ".commit");
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".commit") + " is missing.", path + ".commit");
+    }
+}
+
+inline void read(const Json& v, ComponentVersions& out, std::string_view cmd, const std::string& path) {
+    requireObject(v, cmd, path);
+    rejectUnknownMembers(v, cmd, path, {"occt", "planegcs", "eigen", "boost", "nlohmannJson"});
+    if (const Json* p = findField(v, "occt")) {
+        out.occt = readString((*p), cmd, path + ".occt");
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".occt") + " is missing.", path + ".occt");
+    }
+    if (const Json* p = findField(v, "planegcs")) {
+        read((*p), out.planegcs, cmd, path + ".planegcs");
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".planegcs") + " is missing.", path + ".planegcs");
+    }
+    if (const Json* p = findField(v, "eigen")) {
+        out.eigen = readString((*p), cmd, path + ".eigen");
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".eigen") + " is missing.", path + ".eigen");
+    }
+    if (const Json* p = findField(v, "boost")) {
+        out.boost = readString((*p), cmd, path + ".boost");
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".boost") + " is missing.", path + ".boost");
+    }
+    if (const Json* p = findField(v, "nlohmannJson")) {
+        out.nlohmannJson = readString((*p), cmd, path + ".nlohmannJson");
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".nlohmannJson") + " is missing.", path + ".nlohmannJson");
+    }
+}
+
+inline void read(const Json& v, Capabilities& out, std::string_view cmd, const std::string& path) {
+    requireObject(v, cmd, path);
+    rejectUnknownMembers(v, cmd, path, {"pingWhileBusy", "cancelWhileBusy"});
+    if (const Json* p = findField(v, "pingWhileBusy")) {
+        out.pingWhileBusy = readBool((*p), cmd, path + ".pingWhileBusy");
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".pingWhileBusy") + " is missing.", path + ".pingWhileBusy");
+    }
+    if (const Json* p = findField(v, "cancelWhileBusy")) {
+        out.cancelWhileBusy = readBool((*p), cmd, path + ".cancelWhileBusy");
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".cancelWhileBusy") + " is missing.", path + ".cancelWhileBusy");
+    }
+}
+
+inline void read(const Json& v, Limits& out, std::string_view cmd, const std::string& path) {
+    requireObject(v, cmd, path);
+    rejectUnknownMembers(v, cmd, path, {"maxHeaderBytes", "maxPayloadBytes", "payloadAlignment", "maxRequestId"});
+    if (const Json* p = findField(v, "maxHeaderBytes")) {
+        out.maxHeaderBytes = readInteger((*p), cmd, path + ".maxHeaderBytes", 0, std::numeric_limits<std::int64_t>::max());
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".maxHeaderBytes") + " is missing.", path + ".maxHeaderBytes");
+    }
+    if (const Json* p = findField(v, "maxPayloadBytes")) {
+        out.maxPayloadBytes = readInteger((*p), cmd, path + ".maxPayloadBytes", 0, std::numeric_limits<std::int64_t>::max());
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".maxPayloadBytes") + " is missing.", path + ".maxPayloadBytes");
+    }
+    if (const Json* p = findField(v, "payloadAlignment")) {
+        out.payloadAlignment = readInteger((*p), cmd, path + ".payloadAlignment", 1, std::numeric_limits<std::int64_t>::max());
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".payloadAlignment") + " is missing.", path + ".payloadAlignment");
+    }
+    if (const Json* p = findField(v, "maxRequestId")) {
+        out.maxRequestId = readInteger((*p), cmd, path + ".maxRequestId", 1, std::numeric_limits<std::int64_t>::max());
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".maxRequestId") + " is missing.", path + ".maxRequestId");
+    }
+}
+
+inline void read(const Json& v, KernelSelftestStep& out, std::string_view cmd, const std::string& path) {
+    requireObject(v, cmd, path);
+    rejectUnknownMembers(v, cmd, path, {"name", "valid", "volume", "expectedVolume", "faceCount", "expectedFaceCount", "solidCount", "timeMs", "problem"});
+    if (const Json* p = findField(v, "name")) {
+        out.name = readString((*p), cmd, path + ".name");
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".name") + " is missing.", path + ".name");
+    }
+    if (const Json* p = findField(v, "valid")) {
+        out.valid = readBool((*p), cmd, path + ".valid");
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".valid") + " is missing.", path + ".valid");
+    }
+    if (const Json* p = findField(v, "volume")) {
+        out.volume = readNumber((*p), cmd, path + ".volume");
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".volume") + " is missing.", path + ".volume");
+    }
+    if (const Json* p = findField(v, "expectedVolume")) {
+        out.expectedVolume = readNumber((*p), cmd, path + ".expectedVolume");
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".expectedVolume") + " is missing.", path + ".expectedVolume");
+    }
+    if (const Json* p = findField(v, "faceCount")) {
+        out.faceCount = readInteger((*p), cmd, path + ".faceCount", 0, std::numeric_limits<std::int64_t>::max());
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".faceCount") + " is missing.", path + ".faceCount");
+    }
+    if (const Json* p = findField(v, "expectedFaceCount")) {
+        out.expectedFaceCount = readInteger((*p), cmd, path + ".expectedFaceCount", 0, std::numeric_limits<std::int64_t>::max());
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".expectedFaceCount") + " is missing.", path + ".expectedFaceCount");
+    }
+    if (const Json* p = findField(v, "solidCount")) {
+        out.solidCount = readInteger((*p), cmd, path + ".solidCount", 0, std::numeric_limits<std::int64_t>::max());
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".solidCount") + " is missing.", path + ".solidCount");
+    }
+    if (const Json* p = findField(v, "timeMs")) {
+        out.timeMs = readNumber((*p), cmd, path + ".timeMs");
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".timeMs") + " is missing.", path + ".timeMs");
+    }
+    if (const Json* p = findField(v, "problem")) {
+        out.problem.emplace();
+        (*out.problem) = readString((*p), cmd, path + ".problem");
+    }
+}
+
+inline void read(const Json& v, Vec3& out, std::string_view cmd, const std::string& path) {
+    requireObject(v, cmd, path);
+    rejectUnknownMembers(v, cmd, path, {"x", "y", "z"});
+    if (const Json* p = findField(v, "x")) {
+        out.x = readNumber((*p), cmd, path + ".x");
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".x") + " is missing.", path + ".x");
+    }
+    if (const Json* p = findField(v, "y")) {
+        out.y = readNumber((*p), cmd, path + ".y");
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".y") + " is missing.", path + ".y");
+    }
+    if (const Json* p = findField(v, "z")) {
+        out.z = readNumber((*p), cmd, path + ".z");
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".z") + " is missing.", path + ".z");
+    }
+}
+
+inline void read(const Json& v, PlaneFrame& out, std::string_view cmd, const std::string& path) {
+    requireObject(v, cmd, path);
+    rejectUnknownMembers(v, cmd, path, {"origin", "u", "v", "normal"});
+    if (const Json* p = findField(v, "origin")) {
+        read((*p), out.origin, cmd, path + ".origin");
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".origin") + " is missing.", path + ".origin");
+    }
+    if (const Json* p = findField(v, "u")) {
+        read((*p), out.u, cmd, path + ".u");
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".u") + " is missing.", path + ".u");
+    }
+    if (const Json* p = findField(v, "v")) {
+        read((*p), out.v, cmd, path + ".v");
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".v") + " is missing.", path + ".v");
+    }
+    if (const Json* p = findField(v, "normal")) {
+        read((*p), out.normal, cmd, path + ".normal");
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".normal") + " is missing.", path + ".normal");
+    }
+}
+
+inline void read(const Json& v, BufferRef& out, std::string_view cmd, const std::string& path) {
+    requireObject(v, cmd, path);
+    rejectUnknownMembers(v, cmd, path, {"offset", "byteLength"});
+    if (const Json* p = findField(v, "offset")) {
+        out.offset = readInteger((*p), cmd, path + ".offset", 0, std::numeric_limits<std::int64_t>::max());
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".offset") + " is missing.", path + ".offset");
+    }
+    if (const Json* p = findField(v, "byteLength")) {
+        out.byteLength = readInteger((*p), cmd, path + ".byteLength", 0, std::numeric_limits<std::int64_t>::max());
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".byteLength") + " is missing.", path + ".byteLength");
+    }
+}
+
+inline void read(const Json& v, Problem& out, std::string_view cmd, const std::string& path) {
+    requireObject(v, cmd, path);
+    rejectUnknownMembers(v, cmd, path, {"code", "message", "refs", "values"});
+    if (const Json* p = findField(v, "code")) {
+        out.code = readEnum((*p), cmd, path + ".code", {"sketch_unsolvable", "sketch_conflicting", "sketch_redundant", "profile_not_found", "profile_open", "profile_intersecting", "extrude_zero_distance", "kernel_failed", "result_invalid", "result_implausible", "upstream_failed"});
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".code") + " is missing.", path + ".code");
+    }
+    if (const Json* p = findField(v, "message")) {
+        out.message = readString((*p), cmd, path + ".message");
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".message") + " is missing.", path + ".message");
+    }
+    if (const Json* p = findField(v, "refs")) {
+        out.refs.emplace();
+        requireArray((*p), cmd, path + ".refs");
+        (*out.refs).clear();
+        (*out.refs).reserve((*p).size());
+        for (std::size_t i0 = 0; i0 < (*p).size(); ++i0) {
+            auto&& e0 = (*out.refs).emplace_back();
+            e0 = readString((*p)[i0], cmd, path + ".refs" + "[" + std::to_string(i0) + "]");
+        }
+    }
+    if (const Json* p = findField(v, "values")) {
+        out.values.emplace();
+        requireObject((*p), cmd, path + ".values");
+        (*out.values).clear();
+        for (auto i0 = (*p).begin(); i0 != (*p).end(); ++i0) {
+            auto& e0 = (*out.values)[i0.key()];
+            e0 = readNumber(i0.value(), cmd, path + ".values" + "." + i0.key());
+        }
+    }
+}
+
+inline void read(const Json& v, SolvedPoint& out, std::string_view cmd, const std::string& path) {
+    requireObject(v, cmd, path);
+    rejectUnknownMembers(v, cmd, path, {"id", "x", "y"});
+    if (const Json* p = findField(v, "id")) {
+        out.id = readString((*p), cmd, path + ".id");
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".id") + " is missing.", path + ".id");
+    }
+    if (const Json* p = findField(v, "x")) {
+        out.x = readNumber((*p), cmd, path + ".x");
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".x") + " is missing.", path + ".x");
+    }
+    if (const Json* p = findField(v, "y")) {
+        out.y = readNumber((*p), cmd, path + ".y");
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".y") + " is missing.", path + ".y");
+    }
+}
+
+inline void read(const Json& v, SolvedCircle& out, std::string_view cmd, const std::string& path) {
+    requireObject(v, cmd, path);
+    rejectUnknownMembers(v, cmd, path, {"id", "radius"});
+    if (const Json* p = findField(v, "id")) {
+        out.id = readString((*p), cmd, path + ".id");
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".id") + " is missing.", path + ".id");
+    }
+    if (const Json* p = findField(v, "radius")) {
+        out.radius = readNumber((*p), cmd, path + ".radius");
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".radius") + " is missing.", path + ".radius");
+    }
+}
+
+inline void read(const Json& v, RegionFill& out, std::string_view cmd, const std::string& path) {
+    requireObject(v, cmd, path);
+    rejectUnknownMembers(v, cmd, path, {"positions", "indices", "triangleCount"});
+    if (const Json* p = findField(v, "positions")) {
+        read((*p), out.positions, cmd, path + ".positions");
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".positions") + " is missing.", path + ".positions");
+    }
+    if (const Json* p = findField(v, "indices")) {
+        read((*p), out.indices, cmd, path + ".indices");
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".indices") + " is missing.", path + ".indices");
+    }
+    if (const Json* p = findField(v, "triangleCount")) {
+        out.triangleCount = readInteger((*p), cmd, path + ".triangleCount", 0, std::numeric_limits<std::int64_t>::max());
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".triangleCount") + " is missing.", path + ".triangleCount");
+    }
+}
+
+inline void read(const Json& v, Region& out, std::string_view cmd, const std::string& path) {
+    requireObject(v, cmd, path);
+    rejectUnknownMembers(v, cmd, path, {"key", "outer", "holes", "area", "determined", "fill", "loops"});
+    if (const Json* p = findField(v, "key")) {
+        out.key = readString((*p), cmd, path + ".key");
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".key") + " is missing.", path + ".key");
+    }
+    if (const Json* p = findField(v, "outer")) {
+        requireArray((*p), cmd, path + ".outer");
+        out.outer.clear();
+        out.outer.reserve((*p).size());
+        for (std::size_t i0 = 0; i0 < (*p).size(); ++i0) {
+            auto&& e0 = out.outer.emplace_back();
+            e0 = readString((*p)[i0], cmd, path + ".outer" + "[" + std::to_string(i0) + "]");
+        }
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".outer") + " is missing.", path + ".outer");
+    }
+    if (const Json* p = findField(v, "holes")) {
+        requireArray((*p), cmd, path + ".holes");
+        out.holes.clear();
+        out.holes.reserve((*p).size());
+        for (std::size_t i0 = 0; i0 < (*p).size(); ++i0) {
+            auto&& e0 = out.holes.emplace_back();
+            requireArray((*p)[i0], cmd, path + ".holes" + "[" + std::to_string(i0) + "]");
+            e0.clear();
+            e0.reserve((*p)[i0].size());
+            for (std::size_t i1 = 0; i1 < (*p)[i0].size(); ++i1) {
+                auto&& e1 = e0.emplace_back();
+                e1 = readString((*p)[i0][i1], cmd, path + ".holes" + "[" + std::to_string(i0) + "]" + "[" + std::to_string(i1) + "]");
+            }
+        }
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".holes") + " is missing.", path + ".holes");
+    }
+    if (const Json* p = findField(v, "area")) {
+        out.area = readNumber((*p), cmd, path + ".area");
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".area") + " is missing.", path + ".area");
+    }
+    if (const Json* p = findField(v, "determined")) {
+        out.determined = readBool((*p), cmd, path + ".determined");
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".determined") + " is missing.", path + ".determined");
+    }
+    if (const Json* p = findField(v, "fill")) {
+        read((*p), out.fill, cmd, path + ".fill");
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".fill") + " is missing.", path + ".fill");
+    }
+    if (const Json* p = findField(v, "loops")) {
+        requireArray((*p), cmd, path + ".loops");
+        out.loops.clear();
+        out.loops.reserve((*p).size());
+        for (std::size_t i0 = 0; i0 < (*p).size(); ++i0) {
+            auto&& e0 = out.loops.emplace_back();
+            read((*p)[i0], e0, cmd, path + ".loops" + "[" + std::to_string(i0) + "]");
+        }
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".loops") + " is missing.", path + ".loops");
+    }
+}
+
+inline void read(const Json& v, DragTarget& out, std::string_view cmd, const std::string& path) {
+    requireObject(v, cmd, path);
+    rejectUnknownMembers(v, cmd, path, {"id", "x", "y"});
+    if (const Json* p = findField(v, "id")) {
+        out.id = readString((*p), cmd, path + ".id");
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".id") + " is missing.", path + ".id");
+    }
+    if (const Json* p = findField(v, "x")) {
+        out.x = readNumber((*p), cmd, path + ".x");
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".x") + " is missing.", path + ".x");
+    }
+    if (const Json* p = findField(v, "y")) {
+        out.y = readNumber((*p), cmd, path + ".y");
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".y") + " is missing.", path + ".y");
+    }
+}
+
+inline void read(const Json& v, SketchDrag& out, std::string_view cmd, const std::string& path) {
+    requireObject(v, cmd, path);
+    rejectUnknownMembers(v, cmd, path, {"points"});
+    if (const Json* p = findField(v, "points")) {
+        requireArray((*p), cmd, path + ".points");
+        out.points.clear();
+        out.points.reserve((*p).size());
+        for (std::size_t i0 = 0; i0 < (*p).size(); ++i0) {
+            auto&& e0 = out.points.emplace_back();
+            read((*p)[i0], e0, cmd, path + ".points" + "[" + std::to_string(i0) + "]");
+        }
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".points") + " is missing.", path + ".points");
+    }
+}
+
+inline void read(const Json& v, DragPointResult& out, std::string_view cmd, const std::string& path) {
+    requireObject(v, cmd, path);
+    rejectUnknownMembers(v, cmd, path, {"id", "error", "moved"});
+    if (const Json* p = findField(v, "id")) {
+        out.id = readString((*p), cmd, path + ".id");
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".id") + " is missing.", path + ".id");
+    }
+    if (const Json* p = findField(v, "error")) {
+        out.error = readNumber((*p), cmd, path + ".error");
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".error") + " is missing.", path + ".error");
+    }
+    if (const Json* p = findField(v, "moved")) {
+        out.moved = readBool((*p), cmd, path + ".moved");
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".moved") + " is missing.", path + ".moved");
+    }
+}
+
+inline void read(const Json& v, FreedomFact& out, std::string_view cmd, const std::string& path) {
+    requireObject(v, cmd, path);
+    rejectUnknownMembers(v, cmd, path, {"kind", "shape", "moves", "elements"});
+    if (const Json* p = findField(v, "kind")) {
+        out.kind = readEnum((*p), cmd, path + ".kind", {"position", "rotation", "length", "direction", "radius", "point"});
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".kind") + " is missing.", path + ".kind");
+    }
+    if (const Json* p = findField(v, "shape")) {
+        out.shape = readEnum((*p), cmd, path + ".shape", {"point", "line", "circle", "rectangle", "shape"});
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".shape") + " is missing.", path + ".shape");
+    }
+    if (const Json* p = findField(v, "moves")) {
+        out.moves.emplace();
+        (*out.moves) = readInteger((*p), cmd, path + ".moves", 0, 2);
+    }
+    if (const Json* p = findField(v, "elements")) {
+        requireArray((*p), cmd, path + ".elements");
+        out.elements.clear();
+        out.elements.reserve((*p).size());
+        for (std::size_t i0 = 0; i0 < (*p).size(); ++i0) {
+            auto&& e0 = out.elements.emplace_back();
+            e0 = readString((*p)[i0], cmd, path + ".elements" + "[" + std::to_string(i0) + "]");
+        }
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".elements") + " is missing.", path + ".elements");
+    }
+}
+
+inline void read(const Json& v, SketchDragResult& out, std::string_view cmd, const std::string& path) {
+    requireObject(v, cmd, path);
+    rejectUnknownMembers(v, cmd, path, {"points", "steps", "complete"});
+    if (const Json* p = findField(v, "points")) {
+        requireArray((*p), cmd, path + ".points");
+        out.points.clear();
+        out.points.reserve((*p).size());
+        for (std::size_t i0 = 0; i0 < (*p).size(); ++i0) {
+            auto&& e0 = out.points.emplace_back();
+            read((*p)[i0], e0, cmd, path + ".points" + "[" + std::to_string(i0) + "]");
+        }
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".points") + " is missing.", path + ".points");
+    }
+    if (const Json* p = findField(v, "steps")) {
+        out.steps = readInteger((*p), cmd, path + ".steps", 0, std::numeric_limits<std::int64_t>::max());
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".steps") + " is missing.", path + ".steps");
+    }
+    if (const Json* p = findField(v, "complete")) {
+        out.complete = readBool((*p), cmd, path + ".complete");
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".complete") + " is missing.", path + ".complete");
+    }
+}
+
+inline void read(const Json& v, StepCheck& out, std::string_view cmd, const std::string& path) {
+    requireObject(v, cmd, path);
+    rejectUnknownMembers(v, cmd, path, {"valid", "volume", "expectedVolume", "faces", "expectedFaces", "solids"});
+    if (const Json* p = findField(v, "valid")) {
+        out.valid = readBool((*p), cmd, path + ".valid");
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".valid") + " is missing.", path + ".valid");
+    }
+    if (const Json* p = findField(v, "volume")) {
+        out.volume = readNumber((*p), cmd, path + ".volume");
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".volume") + " is missing.", path + ".volume");
+    }
+    if (const Json* p = findField(v, "expectedVolume")) {
+        out.expectedVolume.emplace();
+        (*out.expectedVolume) = readNumber((*p), cmd, path + ".expectedVolume");
+    }
+    if (const Json* p = findField(v, "faces")) {
+        out.faces = readInteger((*p), cmd, path + ".faces", 0, std::numeric_limits<std::int64_t>::max());
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".faces") + " is missing.", path + ".faces");
+    }
+    if (const Json* p = findField(v, "expectedFaces")) {
+        out.expectedFaces.emplace();
+        (*out.expectedFaces) = readInteger((*p), cmd, path + ".expectedFaces", 0, std::numeric_limits<std::int64_t>::max());
+    }
+    if (const Json* p = findField(v, "solids")) {
+        out.solids = readInteger((*p), cmd, path + ".solids", 0, std::numeric_limits<std::int64_t>::max());
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".solids") + " is missing.", path + ".solids");
+    }
+}
+
+inline void read(const Json& v, StepStatus& out, std::string_view cmd, const std::string& path) {
+    requireObject(v, cmd, path);
+    rejectUnknownMembers(v, cmd, path, {"featureId", "state", "problem", "cached", "ms", "check"});
+    if (const Json* p = findField(v, "featureId")) {
+        out.featureId = readString((*p), cmd, path + ".featureId");
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".featureId") + " is missing.", path + ".featureId");
+    }
+    if (const Json* p = findField(v, "state")) {
+        out.state = readEnum((*p), cmd, path + ".state", {"ok", "warning", "error", "skipped"});
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".state") + " is missing.", path + ".state");
+    }
+    if (const Json* p = findField(v, "problem")) {
+        out.problem.emplace();
+        read((*p), (*out.problem), cmd, path + ".problem");
+    }
+    if (const Json* p = findField(v, "cached")) {
+        out.cached = readBool((*p), cmd, path + ".cached");
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".cached") + " is missing.", path + ".cached");
+    }
+    if (const Json* p = findField(v, "ms")) {
+        out.ms = readNumber((*p), cmd, path + ".ms");
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".ms") + " is missing.", path + ".ms");
+    }
+    if (const Json* p = findField(v, "check")) {
+        out.check.emplace();
+        read((*p), (*out.check), cmd, path + ".check");
+    }
+}
+
+inline void read(const Json& v, BoundingBox& out, std::string_view cmd, const std::string& path) {
+    requireObject(v, cmd, path);
+    rejectUnknownMembers(v, cmd, path, {"min", "max"});
+    if (const Json* p = findField(v, "min")) {
+        read((*p), out.min, cmd, path + ".min");
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".min") + " is missing.", path + ".min");
+    }
+    if (const Json* p = findField(v, "max")) {
+        read((*p), out.max, cmd, path + ".max");
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".max") + " is missing.", path + ".max");
+    }
+}
+
+inline void read(const Json& v, BodyFace& out, std::string_view cmd, const std::string& path) {
+    requireObject(v, cmd, path);
+    rejectUnknownMembers(v, cmd, path, {"name", "surface", "triangleStart", "triangleCount"});
+    if (const Json* p = findField(v, "name")) {
+        out.name = readString((*p), cmd, path + ".name");
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".name") + " is missing.", path + ".name");
+    }
+    if (const Json* p = findField(v, "surface")) {
+        out.surface = readEnum((*p), cmd, path + ".surface", {"plane", "cylinder", "cone", "sphere", "torus", "bspline", "other"});
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".surface") + " is missing.", path + ".surface");
+    }
+    if (const Json* p = findField(v, "triangleStart")) {
+        out.triangleStart = readInteger((*p), cmd, path + ".triangleStart", 0, std::numeric_limits<std::int64_t>::max());
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".triangleStart") + " is missing.", path + ".triangleStart");
+    }
+    if (const Json* p = findField(v, "triangleCount")) {
+        out.triangleCount = readInteger((*p), cmd, path + ".triangleCount", 0, std::numeric_limits<std::int64_t>::max());
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".triangleCount") + " is missing.", path + ".triangleCount");
+    }
+}
+
+inline void read(const Json& v, BodyEdge& out, std::string_view cmd, const std::string& path) {
+    requireObject(v, cmd, path);
+    rejectUnknownMembers(v, cmd, path, {"name", "pointStart", "pointCount"});
+    if (const Json* p = findField(v, "name")) {
+        out.name = readString((*p), cmd, path + ".name");
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".name") + " is missing.", path + ".name");
+    }
+    if (const Json* p = findField(v, "pointStart")) {
+        out.pointStart = readInteger((*p), cmd, path + ".pointStart", 0, std::numeric_limits<std::int64_t>::max());
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".pointStart") + " is missing.", path + ".pointStart");
+    }
+    if (const Json* p = findField(v, "pointCount")) {
+        out.pointCount = readInteger((*p), cmd, path + ".pointCount", 0, std::numeric_limits<std::int64_t>::max());
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".pointCount") + " is missing.", path + ".pointCount");
+    }
+}
+
+inline void read(const Json& v, BodyMesh& out, std::string_view cmd, const std::string& path) {
+    requireObject(v, cmd, path);
+    rejectUnknownMembers(v, cmd, path, {"vertexCount", "triangleCount", "edgePointCount", "positions", "normals", "indices", "triangleFace", "edgePoints"});
+    if (const Json* p = findField(v, "vertexCount")) {
+        out.vertexCount = readInteger((*p), cmd, path + ".vertexCount", 0, std::numeric_limits<std::int64_t>::max());
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".vertexCount") + " is missing.", path + ".vertexCount");
+    }
+    if (const Json* p = findField(v, "triangleCount")) {
+        out.triangleCount = readInteger((*p), cmd, path + ".triangleCount", 0, std::numeric_limits<std::int64_t>::max());
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".triangleCount") + " is missing.", path + ".triangleCount");
+    }
+    if (const Json* p = findField(v, "edgePointCount")) {
+        out.edgePointCount = readInteger((*p), cmd, path + ".edgePointCount", 0, std::numeric_limits<std::int64_t>::max());
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".edgePointCount") + " is missing.", path + ".edgePointCount");
+    }
+    if (const Json* p = findField(v, "positions")) {
+        read((*p), out.positions, cmd, path + ".positions");
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".positions") + " is missing.", path + ".positions");
+    }
+    if (const Json* p = findField(v, "normals")) {
+        read((*p), out.normals, cmd, path + ".normals");
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".normals") + " is missing.", path + ".normals");
+    }
+    if (const Json* p = findField(v, "indices")) {
+        read((*p), out.indices, cmd, path + ".indices");
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".indices") + " is missing.", path + ".indices");
+    }
+    if (const Json* p = findField(v, "triangleFace")) {
+        read((*p), out.triangleFace, cmd, path + ".triangleFace");
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".triangleFace") + " is missing.", path + ".triangleFace");
+    }
+    if (const Json* p = findField(v, "edgePoints")) {
+        read((*p), out.edgePoints, cmd, path + ".edgePoints");
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".edgePoints") + " is missing.", path + ".edgePoints");
+    }
+}
+
+inline void read(const Json& v, BodyResult& out, std::string_view cmd, const std::string& path) {
+    requireObject(v, cmd, path);
+    rejectUnknownMembers(v, cmd, path, {"bodyId", "featureId", "meshKey", "preview", "volume", "area", "bbox", "faces", "edges", "mesh"});
+    if (const Json* p = findField(v, "bodyId")) {
+        out.bodyId = readString((*p), cmd, path + ".bodyId");
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".bodyId") + " is missing.", path + ".bodyId");
+    }
+    if (const Json* p = findField(v, "featureId")) {
+        out.featureId = readString((*p), cmd, path + ".featureId");
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".featureId") + " is missing.", path + ".featureId");
+    }
+    if (const Json* p = findField(v, "meshKey")) {
+        out.meshKey = readString((*p), cmd, path + ".meshKey");
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".meshKey") + " is missing.", path + ".meshKey");
+    }
+    if (const Json* p = findField(v, "preview")) {
+        out.preview = readBool((*p), cmd, path + ".preview");
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".preview") + " is missing.", path + ".preview");
+    }
+    if (const Json* p = findField(v, "volume")) {
+        out.volume = readNumber((*p), cmd, path + ".volume");
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".volume") + " is missing.", path + ".volume");
+    }
+    if (const Json* p = findField(v, "area")) {
+        out.area = readNumber((*p), cmd, path + ".area");
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".area") + " is missing.", path + ".area");
+    }
+    if (const Json* p = findField(v, "bbox")) {
+        read((*p), out.bbox, cmd, path + ".bbox");
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".bbox") + " is missing.", path + ".bbox");
+    }
+    if (const Json* p = findField(v, "faces")) {
+        requireArray((*p), cmd, path + ".faces");
+        out.faces.clear();
+        out.faces.reserve((*p).size());
+        for (std::size_t i0 = 0; i0 < (*p).size(); ++i0) {
+            auto&& e0 = out.faces.emplace_back();
+            read((*p)[i0], e0, cmd, path + ".faces" + "[" + std::to_string(i0) + "]");
+        }
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".faces") + " is missing.", path + ".faces");
+    }
+    if (const Json* p = findField(v, "edges")) {
+        requireArray((*p), cmd, path + ".edges");
+        out.edges.clear();
+        out.edges.reserve((*p).size());
+        for (std::size_t i0 = 0; i0 < (*p).size(); ++i0) {
+            auto&& e0 = out.edges.emplace_back();
+            read((*p)[i0], e0, cmd, path + ".edges" + "[" + std::to_string(i0) + "]");
+        }
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".edges") + " is missing.", path + ".edges");
+    }
+    if (const Json* p = findField(v, "mesh")) {
+        read((*p), out.mesh, cmd, path + ".mesh");
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".mesh") + " is missing.", path + ".mesh");
+    }
+}
+
+inline void read(const Json& v, ModelTimings& out, std::string_view cmd, const std::string& path) {
+    requireObject(v, cmd, path);
+    rejectUnknownMembers(v, cmd, path, {"rebuildMs", "meshMs", "encodeMs", "totalMs"});
+    if (const Json* p = findField(v, "rebuildMs")) {
+        out.rebuildMs = readNumber((*p), cmd, path + ".rebuildMs");
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".rebuildMs") + " is missing.", path + ".rebuildMs");
+    }
+    if (const Json* p = findField(v, "meshMs")) {
+        out.meshMs = readNumber((*p), cmd, path + ".meshMs");
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".meshMs") + " is missing.", path + ".meshMs");
+    }
+    if (const Json* p = findField(v, "encodeMs")) {
+        out.encodeMs = readNumber((*p), cmd, path + ".encodeMs");
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".encodeMs") + " is missing.", path + ".encodeMs");
+    }
+    if (const Json* p = findField(v, "totalMs")) {
+        out.totalMs = readNumber((*p), cmd, path + ".totalMs");
+    } else {
+        throw FieldError(fieldWhat(cmd, path + ".totalMs") + " is missing.", path + ".totalMs");
+    }
+}
+
+// ---------------------------------------------------------------- command parsers
+
 inline void parse(const Json& j, HelloCommand& out) {
-    rejectUnknownFields(j, HelloCommand::kType, {"protocol", "client"});
-    if (const Json* p = findField(j, "protocol")) out.protocol = readInteger(*p, std::string("Command \"hello\": field \"protocol\""), std::numeric_limits<std::int64_t>::min(), std::numeric_limits<std::int64_t>::max());
-    else throw FieldError(std::string("Command \"hello\": field \"protocol\"") + " is missing.");
-    if (const Json* p = findField(j, "client")) out.client = readString(*p, std::string("Command \"hello\": field \"client\""));
-    else throw FieldError(std::string("Command \"hello\": field \"client\"") + " is missing.");
+    constexpr std::string_view cmd = HelloCommand::kType;
+    rejectUnknownFields(j, cmd, {"protocol", "protocolId", "client"});
+    if (const Json* p = findField(j, "protocol")) {
+        out.protocol = readInteger((*p), cmd, std::string("protocol"), std::numeric_limits<std::int64_t>::min(), std::numeric_limits<std::int64_t>::max());
+    } else {
+        throw FieldError(fieldWhat(cmd, std::string("protocol")) + " is missing.", std::string("protocol"));
+    }
+    if (const Json* p = findField(j, "protocolId")) {
+        out.protocolId.emplace();
+        (*out.protocolId) = readString((*p), cmd, std::string("protocolId"));
+    }
+    if (const Json* p = findField(j, "client")) {
+        out.client = readString((*p), cmd, std::string("client"));
+    } else {
+        throw FieldError(fieldWhat(cmd, std::string("client")) + " is missing.", std::string("client"));
+    }
 }
 
 inline void parse(const Json& j, PingCommand& out) {
-    rejectUnknownFields(j, PingCommand::kType, {});
+    constexpr std::string_view cmd = PingCommand::kType;
+    rejectUnknownFields(j, cmd, {});
     (void)out;
 }
 
 inline void parse(const Json& j, CancelCommand& out) {
-    rejectUnknownFields(j, CancelCommand::kType, {"target"});
-    if (const Json* p = findField(j, "target")) out.target = readInteger(*p, std::string("Command \"cancel\": field \"target\""), 1, 2147483647);
-    else throw FieldError(std::string("Command \"cancel\": field \"target\"") + " is missing.");
+    constexpr std::string_view cmd = CancelCommand::kType;
+    rejectUnknownFields(j, cmd, {"target"});
+    if (const Json* p = findField(j, "target")) {
+        out.target = readInteger((*p), cmd, std::string("target"), 1, 2147483647);
+    } else {
+        throw FieldError(fieldWhat(cmd, std::string("target")) + " is missing.", std::string("target"));
+    }
 }
 
 inline void parse(const Json& j, ShutdownCommand& out) {
-    rejectUnknownFields(j, ShutdownCommand::kType, {});
+    constexpr std::string_view cmd = ShutdownCommand::kType;
+    rejectUnknownFields(j, cmd, {});
     (void)out;
 }
 
 inline void parse(const Json& j, DiagnosticsKernelSelftestCommand& out) {
-    rejectUnknownFields(j, DiagnosticsKernelSelftestCommand::kType, {});
+    constexpr std::string_view cmd = DiagnosticsKernelSelftestCommand::kType;
+    rejectUnknownFields(j, cmd, {});
     (void)out;
 }
 
 inline void parse(const Json& j, DiagnosticsSolverSelftestCommand& out) {
-    rejectUnknownFields(j, DiagnosticsSolverSelftestCommand::kType, {});
+    constexpr std::string_view cmd = DiagnosticsSolverSelftestCommand::kType;
+    rejectUnknownFields(j, cmd, {});
     (void)out;
 }
 
+inline void parse(const Json& j, SketchSolveCommand& out) {
+    constexpr std::string_view cmd = SketchSolveCommand::kType;
+    rejectUnknownFields(j, cmd, {"sketch", "plane", "diagnose", "profiles", "drag"});
+    if (const Json* p = findField(j, "sketch")) {
+        read((*p), out.sketch, cmd, std::string("sketch"));
+    } else {
+        throw FieldError(fieldWhat(cmd, std::string("sketch")) + " is missing.", std::string("sketch"));
+    }
+    if (const Json* p = findField(j, "plane")) {
+        read((*p), out.plane, cmd, std::string("plane"));
+    } else {
+        throw FieldError(fieldWhat(cmd, std::string("plane")) + " is missing.", std::string("plane"));
+    }
+    if (const Json* p = findField(j, "diagnose")) {
+        out.diagnose = readBool((*p), cmd, std::string("diagnose"));
+    }
+    if (const Json* p = findField(j, "profiles")) {
+        out.profiles = readBool((*p), cmd, std::string("profiles"));
+    }
+    if (const Json* p = findField(j, "drag")) {
+        out.drag.emplace();
+        read((*p), (*out.drag), cmd, std::string("drag"));
+    }
+}
+
+inline void parse(const Json& j, ModelSyncCommand& out) {
+    constexpr std::string_view cmd = ModelSyncCommand::kType;
+    rejectUnknownFields(j, cmd, {"revision", "document", "purpose", "previewFeatures"});
+    if (const Json* p = findField(j, "revision")) {
+        out.revision = readInteger((*p), cmd, std::string("revision"), 1, 9007199254740991);
+    } else {
+        throw FieldError(fieldWhat(cmd, std::string("revision")) + " is missing.", std::string("revision"));
+    }
+    if (const Json* p = findField(j, "document")) {
+        read((*p), out.document, cmd, std::string("document"));
+    } else {
+        throw FieldError(fieldWhat(cmd, std::string("document")) + " is missing.", std::string("document"));
+    }
+    if (const Json* p = findField(j, "purpose")) {
+        out.purpose = readEnum((*p), cmd, std::string("purpose"), {"commit", "preview"});
+    } else {
+        throw FieldError(fieldWhat(cmd, std::string("purpose")) + " is missing.", std::string("purpose"));
+    }
+    if (const Json* p = findField(j, "previewFeatures")) {
+        out.previewFeatures.emplace();
+        requireArray((*p), cmd, std::string("previewFeatures"));
+        (*out.previewFeatures).clear();
+        (*out.previewFeatures).reserve((*p).size());
+        for (std::size_t i0 = 0; i0 < (*p).size(); ++i0) {
+            auto&& e0 = (*out.previewFeatures).emplace_back();
+            e0 = readString((*p)[i0], cmd, std::string("previewFeatures") + "[" + std::to_string(i0) + "]");
+        }
+    }
+}
+
 inline void parse(const Json& j, DiagnosticsCrashCommand& out) {
-    rejectUnknownFields(j, DiagnosticsCrashCommand::kType, {"mode"});
-    if (const Json* p = findField(j, "mode")) out.mode = readEnum(*p, std::string("Command \"diagnostics.crash\": field \"mode\""), {"abort", "nullcall", "intdiv"});
-    else throw FieldError(std::string("Command \"diagnostics.crash\": field \"mode\"") + " is missing.");
+    constexpr std::string_view cmd = DiagnosticsCrashCommand::kType;
+    rejectUnknownFields(j, cmd, {"mode"});
+    if (const Json* p = findField(j, "mode")) {
+        out.mode = readEnum((*p), cmd, std::string("mode"), {"abort", "nullcall", "intdiv"});
+    } else {
+        throw FieldError(fieldWhat(cmd, std::string("mode")) + " is missing.", std::string("mode"));
+    }
 }
 
 inline void parse(const Json& j, DiagnosticsHangCommand& out) {
-    rejectUnknownFields(j, DiagnosticsHangCommand::kType, {"mode", "ms"});
-    if (const Json* p = findField(j, "mode")) out.mode = readEnum(*p, std::string("Command \"diagnostics.hang\": field \"mode\""), {"busy", "frozen"});
-    else throw FieldError(std::string("Command \"diagnostics.hang\": field \"mode\"") + " is missing.");
-    if (const Json* p = findField(j, "ms")) out.ms = readInteger(*p, std::string("Command \"diagnostics.hang\": field \"ms\""), 0, 3600000);
+    constexpr std::string_view cmd = DiagnosticsHangCommand::kType;
+    rejectUnknownFields(j, cmd, {"mode", "ms"});
+    if (const Json* p = findField(j, "mode")) {
+        out.mode = readEnum((*p), cmd, std::string("mode"), {"busy", "frozen"});
+    } else {
+        throw FieldError(fieldWhat(cmd, std::string("mode")) + " is missing.", std::string("mode"));
+    }
+    if (const Json* p = findField(j, "ms")) {
+        out.ms.emplace();
+        (*out.ms) = readInteger((*p), cmd, std::string("ms"), 0, 3600000);
+    }
+}
+
+// Parses the fields of a command of the given type (throws FieldError). Returns false for an unknown type.
+inline bool validateCommand(std::string_view type, const Json& j) {
+    if (type == HelloCommand::kType) {
+        HelloCommand c;
+        parse(j, c);
+        return true;
+    }
+    if (type == PingCommand::kType) {
+        PingCommand c;
+        parse(j, c);
+        return true;
+    }
+    if (type == CancelCommand::kType) {
+        CancelCommand c;
+        parse(j, c);
+        return true;
+    }
+    if (type == ShutdownCommand::kType) {
+        ShutdownCommand c;
+        parse(j, c);
+        return true;
+    }
+    if (type == DiagnosticsKernelSelftestCommand::kType) {
+        DiagnosticsKernelSelftestCommand c;
+        parse(j, c);
+        return true;
+    }
+    if (type == DiagnosticsSolverSelftestCommand::kType) {
+        DiagnosticsSolverSelftestCommand c;
+        parse(j, c);
+        return true;
+    }
+    if (type == SketchSolveCommand::kType) {
+        SketchSolveCommand c;
+        parse(j, c);
+        return true;
+    }
+    if (type == ModelSyncCommand::kType) {
+        ModelSyncCommand c;
+        parse(j, c);
+        return true;
+    }
+    if (type == DiagnosticsCrashCommand::kType) {
+        DiagnosticsCrashCommand c;
+        parse(j, c);
+        return true;
+    }
+    if (type == DiagnosticsHangCommand::kType) {
+        DiagnosticsHangCommand c;
+        parse(j, c);
+        return true;
+    }
+    return false;
 }
 
 } // namespace pc::protocol

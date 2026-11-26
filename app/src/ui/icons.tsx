@@ -150,3 +150,33 @@ export function StepIcon({ state, className = "" }: { state: StepIconState; clas
       );
   }
 }
+
+// Tabler Icons (MIT), 24 px grid, used by "About Partcraft".
+export const IconFileText = outline(
+  <>
+    <path d="M14 3v4a1 1 0 0 0 1 1h4" />
+    <path d="M17 21h-10a2 2 0 0 1-2-2v-14a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2" />
+    <path d="M9 9h1M9 13h6M9 17h6" />
+  </>,
+  2,
+);
+export const IconGithub = outline(
+  <path d="M9 19c-4.3 1.4-4.3-2.5-6-3m12 5v-3.5c0-1 .1-1.4-.5-2c2.8-.3 5.5-1.4 5.5-6a4.6 4.6 0 0 0-1.3-3.2a4.2 4.2 0 0 0-.1-3.2s-1.1-.3-3.5 1.3a12.3 12.3 0 0 0-6.2 0c-2.4-1.6-3.5-1.3-3.5-1.3a4.2 4.2 0 0 0-.1 3.2a4.6 4.6 0 0 0-1.3 3.2c0 4.6 2.7 5.7 5.5 6c-.6.6-.6 1.2-.5 2v3.5" />,
+  2,
+);
+export const IconExternal = outline(
+  <>
+    <path d="M12 6h-6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6" />
+    <path d="M11 13l9-9" />
+    <path d="M15 4h5v5" />
+  </>,
+  2,
+);
+export const IconArrowLeft = outline(<path d="M5 12h14M5 12l6 6M5 12l6-6" />, 2);
+export const IconSearch = outline(
+  <>
+    <circle cx="10" cy="10" r="7" />
+    <path d="M21 21l-6-6" />
+  </>,
+  2,
+);

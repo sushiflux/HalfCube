@@ -1,0 +1,421 @@
+{
+  "name": "sync-hole-symmetric",
+  "recordedWith": {
+    "engine": "v2026.11.6.12.24867",
+    "platform": "native",
+    "os": "windows-x64"
+  },
+  "command": {
+    "type": "model.sync",
+    "revision": 1,
+    "document": {
+      "format": 1,
+      "documentId": "doc-fixture",
+      "settings": {
+        "lengthUnit": "mm"
+      },
+      "nextId": 100,
+      "parameters": [],
+      "components": [
+        {
+          "id": "root",
+          "name": "Teil",
+          "bodies": [
+            {
+              "id": "b1",
+              "name": "Körper1",
+              "createdBy": "f2",
+              "visible": true
+            }
+          ]
+        }
+      ],
+      "timeline": [
+        {
+          "id": "f1",
+          "type": "sketch",
+          "name": "Skizze1",
+          "component": "root",
+          "visible": true,
+          "plane": {
+            "kind": "originPlane",
+            "plane": "xy"
+          },
+          "sketch": {
+            "points": [
+              {
+                "id": "p1",
+                "x": 0.5,
+                "y": -0.3
+              },
+              {
+                "id": "p2",
+                "x": 61,
+                "y": 0.2
+              },
+              {
+                "id": "p3",
+                "x": 59,
+                "y": 41
+              },
+              {
+                "id": "p4",
+                "x": -0.4,
+                "y": 39
+              },
+              {
+                "id": "pc",
+                "x": 20,
+                "y": 20
+              }
+            ],
+            "lines": [
+              {
+                "id": "l1",
+                "p1": "p1",
+                "p2": "p2",
+                "construction": false
+              },
+              {
+                "id": "l2",
+                "p1": "p2",
+                "p2": "p3",
+                "construction": false
+              },
+              {
+                "id": "l3",
+                "p1": "p3",
+                "p2": "p4",
+                "construction": false
+              },
+              {
+                "id": "l4",
+                "p1": "p4",
+                "p2": "p1",
+                "construction": false
+              }
+            ],
+            "circles": [
+              {
+                "id": "c1",
+                "center": "pc",
+                "radius": 5,
+                "construction": false
+              }
+            ],
+            "constraints": [
+              {
+                "id": "k1",
+                "kind": "horizontal",
+                "refs": [
+                  "l1"
+                ]
+              },
+              {
+                "id": "k2",
+                "kind": "horizontal",
+                "refs": [
+                  "l3"
+                ]
+              },
+              {
+                "id": "k3",
+                "kind": "vertical",
+                "refs": [
+                  "l2"
+                ]
+              },
+              {
+                "id": "k4",
+                "kind": "vertical",
+                "refs": [
+                  "l4"
+                ]
+              },
+              {
+                "id": "d1",
+                "kind": "distance",
+                "refs": [
+                  "l1"
+                ],
+                "value": {
+                  "value": 60,
+                  "unit": "mm"
+                },
+                "driving": true,
+                "label": {
+                  "x": 0,
+                  "y": 0
+                }
+              },
+              {
+                "id": "d2",
+                "kind": "distance",
+                "refs": [
+                  "l2"
+                ],
+                "value": {
+                  "value": 40,
+                  "unit": "mm"
+                },
+                "driving": true,
+                "label": {
+                  "x": 0,
+                  "y": 0
+                }
+              },
+              {
+                "id": "k5",
+                "kind": "coincident",
+                "refs": [
+                  "p1",
+                  "@origin"
+                ]
+              },
+              {
+                "id": "k6",
+                "kind": "fix",
+                "refs": [
+                  "pc"
+                ]
+              },
+              {
+                "id": "d3",
+                "kind": "radius",
+                "refs": [
+                  "c1"
+                ],
+                "value": {
+                  "value": 5,
+                  "unit": "mm"
+                },
+                "driving": true,
+                "label": {
+                  "x": 0,
+                  "y": 0
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": "f2",
+          "type": "extrude",
+          "name": "Extrusion1",
+          "component": "root",
+          "profile": {
+            "sketch": "f1",
+            "region": "l1,l2,l3,l4|c1"
+          },
+          "extent": "symmetric",
+          "distance": {
+            "value": 10,
+            "unit": "mm"
+          },
+          "operation": "newBody",
+          "body": "b1"
+        }
+      ]
+    },
+    "purpose": "commit"
+  },
+  "reply": {
+    "type": "modelResult",
+    "replyTo": null,
+    "revision": 3,
+    "purpose": "commit",
+    "outcome": "ok",
+    "steps": [
+      {
+        "featureId": "f1",
+        "state": "ok",
+        "cached": false,
+        "ms": 0.1541
+      },
+      {
+        "featureId": "f2",
+        "state": "ok",
+        "cached": false,
+        "ms": 3.3094,
+        "check": {
+          "valid": true,
+          "volume": 23214.601836602553,
+          "expectedVolume": 23214.601836602553,
+          "faces": 7,
+          "expectedFaces": 7,
+          "solids": 1
+        }
+      }
+    ],
+    "bodies": [
+      {
+        "bodyId": "b1",
+        "featureId": "f2",
+        "meshKey": "b33318b78c582ae7",
+        "preview": false,
+        "volume": 23214.601836602553,
+        "area": 6957.079632679489,
+        "bbox": {
+          "min": {
+            "x": 0,
+            "y": 0,
+            "z": -5
+          },
+          "max": {
+            "x": 60,
+            "y": 40,
+            "z": 5
+          }
+        },
+        "faces": [
+          {
+            "name": "f2:start",
+            "surface": "plane",
+            "triangleStart": 0,
+            "triangleCount": 40
+          },
+          {
+            "name": "f2:end",
+            "surface": "plane",
+            "triangleStart": 40,
+            "triangleCount": 40
+          },
+          {
+            "name": "f2:side:l1",
+            "surface": "plane",
+            "triangleStart": 80,
+            "triangleCount": 2
+          },
+          {
+            "name": "f2:side:l2",
+            "surface": "plane",
+            "triangleStart": 82,
+            "triangleCount": 2
+          },
+          {
+            "name": "f2:side:l3",
+            "surface": "plane",
+            "triangleStart": 84,
+            "triangleCount": 2
+          },
+          {
+            "name": "f2:side:l4",
+            "surface": "plane",
+            "triangleStart": 86,
+            "triangleCount": 2
+          },
+          {
+            "name": "f2:side:c1",
+            "surface": "cylinder",
+            "triangleStart": 88,
+            "triangleCount": 72
+          }
+        ],
+        "edges": [
+          {
+            "name": "f2:start:l1",
+            "pointStart": 0,
+            "pointCount": 2
+          },
+          {
+            "name": "f2:end:l1",
+            "pointStart": 2,
+            "pointCount": 2
+          },
+          {
+            "name": "f2:start:l2",
+            "pointStart": 4,
+            "pointCount": 2
+          },
+          {
+            "name": "f2:end:l2",
+            "pointStart": 6,
+            "pointCount": 2
+          },
+          {
+            "name": "f2:start:l3",
+            "pointStart": 8,
+            "pointCount": 2
+          },
+          {
+            "name": "f2:end:l3",
+            "pointStart": 10,
+            "pointCount": 2
+          },
+          {
+            "name": "f2:start:l4",
+            "pointStart": 12,
+            "pointCount": 2
+          },
+          {
+            "name": "f2:end:l4",
+            "pointStart": 14,
+            "pointCount": 2
+          },
+          {
+            "name": "f2:start:c1",
+            "pointStart": 16,
+            "pointCount": 37
+          },
+          {
+            "name": "f2:end:c1",
+            "pointStart": 53,
+            "pointCount": 37
+          },
+          {
+            "name": "f2:lateral:p1",
+            "pointStart": 90,
+            "pointCount": 2
+          },
+          {
+            "name": "f2:lateral:p2",
+            "pointStart": 92,
+            "pointCount": 2
+          },
+          {
+            "name": "f2:lateral:p3",
+            "pointStart": 94,
+            "pointCount": 2
+          },
+          {
+            "name": "f2:lateral:p4",
+            "pointStart": 96,
+            "pointCount": 2
+          }
+        ],
+        "mesh": {
+          "vertexCount": 170,
+          "triangleCount": 160,
+          "edgePointCount": 98,
+          "positions": {
+            "offset": 0,
+            "byteLength": 2040
+          },
+          "normals": {
+            "offset": 2048,
+            "byteLength": 2040
+          },
+          "indices": {
+            "offset": 4096,
+            "byteLength": 1920
+          },
+          "triangleFace": {
+            "offset": 6016,
+            "byteLength": 640
+          },
+          "edgePoints": {
+            "offset": 6656,
+            "byteLength": 1176
+          }
+        }
+      }
+    ],
+    "timings": {
+      "rebuildMs": 1.5522999999999996,
+      "meshMs": 1.3922,
+      "encodeMs": 0.5431999999999999,
+      "totalMs": 3.4877
+    }
+  },
+  "payload": "sync-hole-symmetric.bin"
+}

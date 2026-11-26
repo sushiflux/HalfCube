@@ -1,5 +1,6 @@
 // A scriptable engine transport for unit tests: the test sees every command the client sends and plays the engine's
 // answers by hand, without any engine process.
+import { DOCUMENT_FORMAT, PROTOCOL_ID, PROTOCOL_VERSION } from "../../../../app/src/engine/generated/protocol.ts";
 import type { EngineTransport, ExitInfo } from "../../../../app/src/engine/transport.ts";
 
 export interface SentCommand {
@@ -69,7 +70,9 @@ export function helloResult(replyTo: number, kind: "native" | "wasm" = "native")
   return {
     type: "helloResult",
     replyTo,
-    protocol: 1,
+    protocol: PROTOCOL_VERSION,
+    protocolId: PROTOCOL_ID,
+    documentFormat: DOCUMENT_FORMAT,
     engine: {
       name: "partcraft-engine",
       version: "v2026.11.5",

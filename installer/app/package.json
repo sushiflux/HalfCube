@@ -3,9 +3,9 @@
   "productName": "Partcraft",
   "version": "0.0.0",
   "private": true,
-  "description": "Open-source parametric 3D CAD program",
+  "description": "Source-available parametric 3D CAD program",
   "author": "SushiFlux",
-  "license": "GPL-3.0-or-later",
+  "license": "SEE LICENSE IN LICENSE",
   "main": "entry.cjs",
   "dependencies": {
     "velopack": "1.2.161"

@@ -1,6 +1,8 @@
-// Launches the real Electron program (the build in _build/e2e/desktop) for a test: never visible or focused
-// (PARTCRAFT_WINDOW=inactive), with its own empty user data folder, a first-start file, and a check that no engine process
-// is left behind when it is closed.
+// Launches the real Electron program (the build in _build/e2e/desktop) for a test: visible on the secondary monitor, but a
+// window that can never be activated, so it never becomes the foreground window and has no taskbar button
+// (PARTCRAFT_WINDOW=inactive, PARTCRAFT_WINDOW_DISPLAY=secondary), with its own empty user data folder, a first-start
+// file, and a check that no engine process is left behind when it is closed. Keyboard, focus and clicks of the tests go
+// through the DevTools protocol and Playwright's focus emulation, never through the operating system's focus.
 import { spawnSync } from "node:child_process";
 import { existsSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { createRequire } from "node:module";
@@ -68,6 +70,8 @@ export async function launchElectron(options: ElectronOptions = {}): Promise<Lau
   delete env.PARTCRAFT_DEV_URL;
   Object.assign(env, {
     PARTCRAFT_WINDOW: "inactive",
+    // The window is visible (shown inactive, so the page renders); it opens on the secondary monitor, not the primary one.
+    PARTCRAFT_WINDOW_DISPLAY: "secondary",
     PARTCRAFT_USER_DATA: join(userData, "data"),
     PARTCRAFT_ENGINE_EXE: engineExecutable(),
     PARTCRAFT_SETUP_CHOICES_FILE: choices,
@@ -79,6 +83,14 @@ export async function launchElectron(options: ElectronOptions = {}): Promise<Lau
   const launcherPid = app.process().pid;
   const pid = await app.evaluate(() => process.pid);
   const page = await app.firstWindow({ timeout: 60_000 });
+  // A test window that could be activated could take the foreground from whatever the owner is doing (a fullscreen
+  // game loses its frame): refuse to run with it.
+  const focusable = await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows().map((w) => w.isFocusable()));
+  if (focusable.some(Boolean)) {
+    await app.close().catch(() => undefined);
+    rmSync(userData, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
+    throw new Error(`The program's window can be activated (isFocusable: ${focusable.join(", ")}); PARTCRAFT_WINDOW=inactive must create it with focusable: false (desktop/src/main.ts).`);
+  }
   const errors: string[] = [];
   page.on("pageerror", (e) => errors.push(`pageerror: ${e.message}`));
   page.on("console", (m) => {

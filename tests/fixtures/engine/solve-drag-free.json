@@ -1,0 +1,223 @@
+{
+  "name": "solve-drag-free",
+  "recordedWith": {
+    "engine": "v2026.11.6.12.24867",
+    "platform": "native",
+    "os": "windows-x64"
+  },
+  "command": {
+    "type": "sketch.solve",
+    "sketch": {
+      "points": [
+        {
+          "id": "p1",
+          "x": 0.5,
+          "y": -0.3
+        },
+        {
+          "id": "p2",
+          "x": 61,
+          "y": 0.2
+        },
+        {
+          "id": "p3",
+          "x": 59,
+          "y": 41
+        },
+        {
+          "id": "p4",
+          "x": -0.4,
+          "y": 39
+        }
+      ],
+      "lines": [
+        {
+          "id": "l1",
+          "p1": "p1",
+          "p2": "p2",
+          "construction": false
+        },
+        {
+          "id": "l2",
+          "p1": "p2",
+          "p2": "p3",
+          "construction": false
+        },
+        {
+          "id": "l3",
+          "p1": "p3",
+          "p2": "p4",
+          "construction": false
+        },
+        {
+          "id": "l4",
+          "p1": "p4",
+          "p2": "p1",
+          "construction": false
+        }
+      ],
+      "circles": [],
+      "constraints": [
+        {
+          "id": "k1",
+          "kind": "horizontal",
+          "refs": [
+            "l1"
+          ]
+        },
+        {
+          "id": "k2",
+          "kind": "horizontal",
+          "refs": [
+            "l3"
+          ]
+        },
+        {
+          "id": "k3",
+          "kind": "vertical",
+          "refs": [
+            "l2"
+          ]
+        },
+        {
+          "id": "k4",
+          "kind": "vertical",
+          "refs": [
+            "l4"
+          ]
+        }
+      ]
+    },
+    "plane": {
+      "kind": "originPlane",
+      "plane": "xy"
+    },
+    "profiles": true,
+    "drag": {
+      "points": [
+        {
+          "id": "p3",
+          "x": 70,
+          "y": 55
+        }
+      ]
+    }
+  },
+  "reply": {
+    "type": "sketchSolveResult",
+    "replyTo": null,
+    "status": "solved",
+    "dof": 4,
+    "points": [
+      {
+        "id": "p1",
+        "x": -0.4,
+        "y": -0.3
+      },
+      {
+        "id": "p2",
+        "x": 70,
+        "y": -0.3
+      },
+      {
+        "id": "p3",
+        "x": 70,
+        "y": 55
+      },
+      {
+        "id": "p4",
+        "x": -0.4,
+        "y": 55
+      }
+    ],
+    "circles": [],
+    "entities": {
+      "l1": "under",
+      "l2": "under",
+      "l3": "under",
+      "l4": "under",
+      "p1": "under",
+      "p2": "under",
+      "p3": "under",
+      "p4": "under"
+    },
+    "constraints": {
+      "k1": "ok",
+      "k2": "ok",
+      "k3": "ok",
+      "k4": "ok"
+    },
+    "conflicting": [],
+    "redundant": [],
+    "partiallyRedundant": [],
+    "reference": {},
+    "profiles": [
+      {
+        "key": "l1,l2,l3,l4",
+        "outer": [
+          "l1",
+          "l2",
+          "l3",
+          "l4"
+        ],
+        "holes": [],
+        "area": 3893.12,
+        "determined": false,
+        "fill": {
+          "positions": {
+            "offset": 0,
+            "byteLength": 32
+          },
+          "indices": {
+            "offset": 32,
+            "byteLength": 24
+          },
+          "triangleCount": 2
+        },
+        "loops": [
+          {
+            "offset": 64,
+            "byteLength": 32
+          }
+        ]
+      }
+    ],
+    "freedom": [],
+    "drag": {
+      "points": [
+        {
+          "id": "p3",
+          "error": 0,
+          "moved": true
+        }
+      ],
+      "steps": 2,
+      "complete": true
+    },
+    "frame": {
+      "origin": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "u": {
+        "x": 1,
+        "y": 0,
+        "z": 0
+      },
+      "v": {
+        "x": 0,
+        "y": 1,
+        "z": 0
+      },
+      "normal": {
+        "x": 0,
+        "y": 0,
+        "z": 1
+      }
+    },
+    "profilesMs": 0.3838,
+    "timeMs": 0.5074
+  },
+  "payload": "solve-drag-free.bin"
+}

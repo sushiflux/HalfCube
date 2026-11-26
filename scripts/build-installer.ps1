@@ -18,7 +18,8 @@
 #   4. vpk pack     Velopack 1.2.161 from the local tool manifest (.config\dotnet-tools.json, never a global install) creates the
 #                   Velopack Setup.exe and the package
 #   5. setup        installer\setup (.NET 11 WinForms, the designed window) is published as one self-contained exe
-#   6. payload      Velopack's Setup.exe + payload.json + LICENSE become a ZIP appended to that exe: one file, Partcraft-Setup-<id>-<channel>.exe
+#   6. payload      Velopack's Setup.exe + payload.json + LICENSE + NOTICE become a ZIP appended to that exe: one file, Partcraft-Setup-<id>-<channel>.exe
+#                   (LGPL-2.1 section 6 wants the notice and the licence text with every copy; the setup shows both on its licence page)
 # The path of the result is printed at the end.
 #
 # Version mapping (Velopack accepts only three-part SemVer2, "vpk pack" rejects the five-part id; the program itself always shows the
@@ -283,6 +284,8 @@ try {
             # Velopack's Setup.exe is compressed already: stored, so the setup can copy it out without a decompression pass
             [void][IO.Compression.ZipFileExtensions]::CreateEntryFromFile($zip, $vpkSetup[0].FullName, 'Setup.exe', [IO.Compression.CompressionLevel]::NoCompression)
             [void][IO.Compression.ZipFileExtensions]::CreateEntryFromFile($zip, (Join-Path $root 'LICENSE'), 'LICENSE', [IO.Compression.CompressionLevel]::Optimal)
+            # The NOTICE file (Required Notice, LGPL-2.1 section 6 permission, OCCT notice) travels next to the licence text; a missing file stops the build
+            [void][IO.Compression.ZipFileExtensions]::CreateEntryFromFile($zip, (Join-Path $root 'NOTICE'), 'NOTICE', [IO.Compression.CompressionLevel]::Optimal)
             $entry = $zip.CreateEntry('payload.json')
             $writer = New-Object IO.StreamWriter($entry.Open(), (New-Object Text.UTF8Encoding $false))
             try { $writer.Write(($info | ConvertTo-Json)) } finally { $writer.Dispose() }

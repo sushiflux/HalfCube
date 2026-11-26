@@ -3,8 +3,9 @@
 #
 # Jobs
 #   windows      typecheck, lint, unit tests, protocol check, native engine (MSVC), C++ unit tests, engine drive test
-#   web          browser UI build (npm run build:web)
-#   engine-wasm  WebAssembly engine in the pinned emscripten/emsdk container, driven through its message interface
+#   web          browser UI build (npm run build:web), third-party list covers the bundle (npm run check:notices-bundle)
+#   engine-wasm  WebAssembly engine in the pinned emscripten/emsdk container, driven through its message interface,
+#                third-party notices up to date (npm run check:notices; needs the engine licence files and the WebAssembly build)
 #   linux        compile check of the native engine, no tests, no package (Linux comes later)
 #   ci-ok        single result of all jobs above (what a later release job and branch protection depend on)
 #
@@ -160,6 +161,10 @@ jobs:
 
       - run: npm run build:web
 
+      # Every npm package in the production bundle has an entry in the third-party list.
+      - name: Third-party list covers the bundle
+        run: npm run check:notices-bundle
+
   engine-wasm:
     name: WebAssembly engine
     runs-on: ubuntu-24.04
@@ -169,10 +174,11 @@ jobs:
         with:
           persist-credentials: false
 
-      # fetch-deps.sh and the drive test need Node; no npm packages are needed here.
+      # fetch-deps.sh and the drive test need Node; the third-party notices check at the end needs the npm packages.
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: ${{ env.NODE_VERSION }}
+          cache: npm
 
       - name: OCCT cache key
         id: key
@@ -205,6 +211,18 @@ jobs:
 
       - name: Drive the engine through its message interface
         run: node engine/tests/drive-engine.mjs --wasm engine/_build/wasm --out engine/_build/results/wasm.json
+
+      # The licence list of the info view is built from the real files: UI packages from node_modules, engine libraries from
+      # engine/_deps, the Emscripten runtime from the build above. This job is the only one that has all of them.
+      - name: Install npm packages
+        run: npm ci
+
+      # With an OCCT cache hit the sources were skipped above; the licence texts and source headers are needed here.
+      - name: OCCT sources for the notices check
+        run: sh engine/scripts/fetch-deps.sh --only occt
+
+      - name: Third-party notices are up to date
+        run: npm run check:notices
 
       - name: Upload build logs
         if: failure()

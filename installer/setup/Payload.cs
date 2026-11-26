@@ -23,7 +23,7 @@ internal sealed record PayloadInfo(
 /// <summary>
 /// What the setup carries: a ZIP appended to the end of the setup exe (scripts/build-installer.ps1), found through a trailer -
 /// "PCRAFTP1", offset and length of the ZIP (little-endian Int64) and its SHA-256. The ZIP holds Velopack's own <c>Setup.exe</c>
-/// (stored, not compressed again: it is already compressed), <c>payload.json</c> and the licence text. The trailer is searched in the
+/// (stored, not compressed again: it is already compressed), <c>payload.json</c>, the licence text and the NOTICE file (LGPL-2.1 section 6 wants both with every copy). The trailer is searched in the
 /// last 64 KiB, so a later Authenticode signature (which appends its certificate table) does not break it. The checksum is verified
 /// before anything is run: a damaged download never starts a half installation. For tests the ZIP can come from a file
 /// (<c>--payload</c>).
@@ -35,6 +35,7 @@ internal sealed class Payload : IDisposable
     public const string VelopackEntry = "Setup.exe";
     public const string InfoEntry = "payload.json";
     public const string LicenceEntry = "LICENSE";
+    public const string NoticeEntry = "NOTICE";
 
     private readonly string _file;
     private readonly long _offset;

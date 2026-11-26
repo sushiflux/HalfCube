@@ -27,7 +27,7 @@ Json last(const CaptureOutput& out) {
     return out.messages.back();
 }
 
-void hello(Engine& e) { send(e, Json{{"type", "hello"}, {"id", 1}, {"protocol", protocol::kVersion}, {"client", "unit test"}}); }
+void hello(Engine& e) { send(e, Json{{"type", "hello"}, {"id", 1}, {"protocol", protocol::kVersion}, {"protocolId", protocol::kProtocolId}, {"client", "unit test"}}); }
 
 } // namespace
 
@@ -39,6 +39,7 @@ TEST_CASE("hello answers with versions and build facts") {
     CHECK(r["type"] == "helloResult");
     CHECK(r["replyTo"] == 1);
     CHECK(r["protocol"] == protocol::kVersion);
+    CHECK(r["protocolId"] == std::string(protocol::kProtocolId));
     CHECK(r["engine"]["name"] == "partcraft-engine");
     CHECK(r["engine"]["platform"] == "native");
     CHECK(r["components"]["occt"] == "8.0.2");
@@ -65,6 +66,29 @@ TEST_CASE("a different protocol version is refused") {
     send(e, Json{{"type", "hello"}, {"id", 1}, {"protocol", 99}, {"client", "old ui"}});
     CHECK(last(out)["code"] == "protocol_mismatch");
     CHECK(last(out)["message"].get<std::string>().find("asked for version 99") != std::string::npos);
+}
+
+TEST_CASE("a different or missing protocol id is refused with both values named") {
+    const std::string version = std::to_string(protocol::kVersion);
+    {
+        CaptureOutput out;
+        Engine e(out, EngineOptions{});
+        send(e, Json{{"type", "hello"}, {"id", 1}, {"protocol", protocol::kVersion}, {"protocolId", "0123456789abcdef"}, {"client", "other ui"}});
+        CHECK(last(out)["code"] == "protocol_mismatch");
+        const std::string text = last(out)["message"].get<std::string>();
+        CHECK(text.find("The engine speaks protocol \"" + std::string(protocol::kProtocolId) + "\" (version " + version + ")") != std::string::npos);
+        CHECK(text.find("named protocol \"0123456789abcdef\" (version " + version + ")") != std::string::npos);
+        // The handshake was not accepted: other commands stay refused.
+        send(e, Json{{"type", "ping"}, {"id", 2}});
+        CHECK(last(out)["code"] == "not_initialized");
+    }
+    {
+        CaptureOutput out;
+        Engine e(out, EngineOptions{});
+        send(e, Json{{"type", "hello"}, {"id", 1}, {"protocol", protocol::kVersion}, {"client", "no id"}});
+        CHECK(last(out)["code"] == "protocol_mismatch");
+        CHECK(last(out)["message"].get<std::string>().find("named protocol nothing (no protocolId in hello)") != std::string::npos);
+    }
 }
 
 TEST_CASE("malformed messages get specific errors") {

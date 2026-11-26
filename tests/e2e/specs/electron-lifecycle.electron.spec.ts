@@ -19,7 +19,7 @@ test("the program starts inactive, shows its version in the title, runs one engi
 
   // The engine is ready when the welcome screen follows the loading screen.
   await expect(page.getByRole("dialog", { name: "Sketch first, then build" })).toBeVisible({ timeout: 60_000 });
-  await expect(page.getByTestId("version")).toHaveText(`Version ${expectedVersionDisplay()}`);
+  await expect(page.getByTestId("version")).toHaveText(`Partcraft ${expectedVersionDisplay()}`);
 
   const window = await app.evaluate(({ BrowserWindow }) => {
     const win = BrowserWindow.getAllWindows()[0];

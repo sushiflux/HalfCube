@@ -12,21 +12,26 @@ export function CopyButton({
   getText,
   variant = "neutral",
   className,
+  label,
+  size,
 }: {
   getText: () => string;
+  /** The idle label, when "Copy" is not specific enough ("Copy version"). */
+  label?: string;
+  size?: "sm" | "md" | "lg";
   variant?: ButtonVariant;
   className?: string;
 }) {
   const t = useT();
   const { state, copy } = useCopy(getText);
   const labels = [
-    { id: "idle", icon: <IconCopy />, text: t("common.copy") },
+    { id: "idle", icon: <IconCopy />, text: label ?? t("common.copy") },
     { id: "copied", icon: <IconCheck />, text: t("common.copied") },
     { id: "failed", icon: <IconAlert />, text: t("common.copyFailed") },
   ] as const;
   return (
     <>
-      <Button variant={variant} onClick={copy} className={className} data-copy-state={state}>
+      <Button variant={variant} size={size} onClick={copy} className={className} data-copy-state={state}>
         <span className="inline-grid">
           {labels.map((label) => (
             <span

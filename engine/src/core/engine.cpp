@@ -3,6 +3,7 @@
 #include "core/errors.hpp"
 #include "diagnostics/test_commands.hpp"
 #include "kernel/kernel_selftest.hpp"
+#include "model/model.hpp"
 #include "partcraft/build_info.hpp"
 #include "sketch/sketch_solver.hpp"
 #include "sketch/solver_selftest.hpp"
@@ -49,12 +50,31 @@ void validateAs(const Json& msg) {
     protocol::parse(msg, c);
 }
 
-void validateQueued(const std::string& type, const Json& msg) {
-    if (type == cmd::kShutdown) validateAs<protocol::ShutdownCommand>(msg);
-    else if (type == cmd::kDiagnosticsKernelSelftest) validateAs<protocol::DiagnosticsKernelSelftestCommand>(msg);
-    else if (type == cmd::kDiagnosticsSolverSelftest) validateAs<protocol::DiagnosticsSolverSelftestCommand>(msg);
-    else if (type == cmd::kDiagnosticsCrash) validateAs<protocol::DiagnosticsCrashCommand>(msg);
-    else if (type == cmd::kDiagnosticsHang) validateAs<protocol::DiagnosticsHangCommand>(msg);
+// A malformed field inside the document or sketch is a bad_document (the message names the path); everything else
+// in a command is a bad_message.
+const char* fieldErrorCode(const std::string& type, const protocol::FieldError& e) {
+    const std::string& path = e.path();
+    const auto under = [&](std::string_view root) {
+        return path.compare(0, root.size(), root) == 0 && (path.size() == root.size() || path[root.size()] == '.' || path[root.size()] == '[');
+    };
+    if (type == cmd::kModelSync && under("document")) return err::kBadDocument;
+    if (type == cmd::kSketchSolve && under("sketch")) return err::kBadDocument;
+    return err::kBadMessage;
+}
+
+// A document from a newer Partcraft is refused before its fields are read, so the user learns the real reason
+// instead of a field error about something this engine does not know yet.
+void checkDocumentFormat(const std::string& type, const Json& msg) {
+    if (type != cmd::kModelSync) return;
+    const Json* doc = protocol::findField(msg, "document");
+    if (!doc || !doc->is_object()) return;
+    const Json* format = protocol::findField(*doc, "format");
+    if (!format || !format->is_number_integer()) return;
+    const auto value = format->get<std::int64_t>();
+    if (value > static_cast<std::int64_t>(protocol::kDocumentFormat))
+        throw EngineError(err::kUnsupportedDocument,
+                          "The document has format version " + std::to_string(value) + ", this engine reads up to version " +
+                              std::to_string(protocol::kDocumentFormat) + ". It was saved by a newer Partcraft; update Partcraft to open it.");
 }
 
 std::string compilerText() {
@@ -75,8 +95,15 @@ std::string jsonLibraryVersion() {
 
 Engine::Engine(Output& out, EngineOptions options) : out_(out), opt_(std::move(options)) {}
 
-void Engine::sendJson(const Json& j) {
-    out_.send(j.dump(-1, ' ', false, Json::error_handler_t::replace), nullptr);
+void Engine::sendJson(const Json& j, const std::vector<std::uint8_t>* payload) {
+    out_.send(j.dump(-1, ' ', false, Json::error_handler_t::replace), payload && !payload->empty() ? payload : nullptr);
+}
+
+void Engine::checkPayloadSize(std::size_t bytes, std::string_view message) {
+    if (bytes > protocol::kMaxPayloadBytes)
+        throw EngineError(err::kInternal, "The answer \"" + std::string(message) + "\" would carry " + std::to_string(bytes) +
+                                              " bytes of binary data; the protocol allows at most " +
+                                              std::to_string(protocol::kMaxPayloadBytes) + " bytes per message.");
 }
 
 void Engine::sendError(std::optional<std::int64_t> replyTo, const char* code, const std::string& message,
@@ -106,7 +133,7 @@ void Engine::receive(std::string_view header, std::vector<std::uint8_t> payload)
     try {
         const Json* idField = protocol::findField(msg, "id");
         if (!idField) throw protocol::FieldError("The message field \"id\" is missing.");
-        id = protocol::readInteger(*idField, "The message field \"id\"", 1, protocol::kMaxRequestId);
+        id = protocol::readInteger(*idField, {}, "id", 1, protocol::kMaxRequestId);
     } catch (const protocol::FieldError& e) {
         sendError(std::nullopt, err::kBadMessage, e.what());
         return;
@@ -157,9 +184,13 @@ void Engine::receive(std::string_view header, std::vector<std::uint8_t> payload)
             handleCancel(id, msg);
             return;
         }
-        validateQueued(type, msg);
+        checkDocumentFormat(type, msg);
+        protocol::validateCommand(type, msg);
     } catch (const protocol::FieldError& e) {
-        sendError(id, err::kBadMessage, e.what(), {}, type);
+        sendError(id, fieldErrorCode(type, e), e.what(), {}, type);
+        return;
+    } catch (const EngineError& e) {
+        sendError(id, e.code().c_str(), e.what(), e.detail(), type);
         return;
     }
     {
@@ -185,8 +216,19 @@ void Engine::handleHello(std::int64_t id, const Json& msg) {
                   {}, cmd::kHello);
         return;
     }
+    // The version number is the same in unrelated builds; the protocol id says that both sides mean the same messages.
+    if (!c.protocolId || *c.protocolId != protocol::kProtocolId) {
+        sendError(id, err::kProtocolMismatch,
+                  "The engine speaks protocol \"" + std::string(protocol::kProtocolId) + "\" (version " + std::to_string(protocol::kVersion) +
+                      "), the client \"" + c.client + "\" named protocol " +
+                      (c.protocolId ? "\"" + *c.protocolId + "\"" : std::string("nothing (no protocolId in hello)")) + " (version " +
+                      std::to_string(c.protocol) + "). User interface and engine come from different builds; reinstall Partcraft.",
+                  {}, cmd::kHello);
+        return;
+    }
     protocol::HelloResult r;
     r.protocol = protocol::kVersion;
+    r.protocolId = std::string(protocol::kProtocolId);
     r.engine.version = build::kVersion;
     r.engine.versionFull = build::kVersionFull;
     r.engine.buildType = PC_BUILD_TYPE;
@@ -206,6 +248,7 @@ void Engine::handleHello(std::int64_t id, const Json& msg) {
     r.limits.maxPayloadBytes = protocol::kMaxPayloadBytes;
     r.limits.payloadAlignment = protocol::kPayloadAlignment;
     r.limits.maxRequestId = protocol::kMaxRequestId;
+    r.documentFormat = protocol::kDocumentFormat;
     hello_ = true;
     reply(id, r);
 }
@@ -261,7 +304,7 @@ bool Engine::runNext(bool wait) {
     } catch (const EngineError& e) {
         sendError(p.id, e.code().c_str(), e.what(), e.detail(), p.type);
     } catch (const protocol::FieldError& e) {
-        sendError(p.id, err::kBadMessage, e.what(), {}, p.type);
+        sendError(p.id, fieldErrorCode(p.type, e), e.what(), {}, p.type);
     } catch (...) {
         const std::string detail = describeCurrentException();
         std::fprintf(stderr, "partcraft-engine: command \"%s\" (id %lld) failed: %s\n", p.type.c_str(),
@@ -298,6 +341,24 @@ void Engine::execute(const Pending& p) {
     }
     if (p.type == cmd::kDiagnosticsSolverSelftest) {
         reply(id, sketch::runSelftest(cancelled));
+        return;
+    }
+    if (p.type == cmd::kSketchSolve) {
+        protocol::SketchSolveCommand c;
+        protocol::parse(p.msg, c);
+        const auto answer = model::solveSketch(c, cancelled);
+        replyWithPayload(id, answer.message, answer.payload);
+        return;
+    }
+    if (p.type == cmd::kModelSync) {
+        protocol::ModelSyncCommand c;
+        protocol::parse(p.msg, c);
+        if (c.revision <= lastRevision_)
+            throw EngineError(err::kStaleRevision, "model.sync revision " + std::to_string(c.revision) + " is not newer than revision " +
+                                                       std::to_string(lastRevision_) + ", which this engine already accepted; the document was not rebuilt.");
+        lastRevision_ = c.revision;
+        const auto answer = model_.sync(c, cancelled);
+        replyWithPayload(id, answer.message, answer.payload);
         return;
     }
 #if defined(PARTCRAFT_TEST_COMMANDS)

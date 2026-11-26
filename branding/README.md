@@ -11,6 +11,6 @@ This folder holds the product name and the logo files.
 
 ## Licence
 
-The code of this repository is licensed under GPL-3.0-or-later (see `LICENSE` in the repository root). The product name
+The code of this repository is licensed under the PolyForm Shield License 1.0.0 (see `LICENSE` in the repository root). The product name
 and the logo in this folder are **not** covered by the code licence. They are the property of the owner, and rules for
 using them will follow.

@@ -59,6 +59,8 @@
   --color-toggle-off: var(--c-toggle-off);
   --color-accent-1: var(--c-accent-1);
   --color-accent-2: var(--c-accent-2);
+  /* Accent of the two-tone function icons (toolbar and timeline). */
+  --color-fn: var(--c-fn);
   --color-viewport: var(--c-viewport);
   --color-viewport-2: var(--c-viewport-2);
   --color-face-top: var(--c-face-top);
@@ -66,6 +68,7 @@
   --color-face-right: var(--c-face-right);
   --color-sketch-under: var(--c-sketch-under);
   --color-sketch-full: var(--c-sketch-full);
+  --color-sketch-full-blue: var(--c-sketch-full-blue);
   --color-sketch-over: var(--c-sketch-over);
   --color-construction: var(--c-construction);
   --color-centre: var(--c-centre);
@@ -86,6 +89,9 @@
   --color-selection: var(--c-selection);
   --color-hover: var(--c-hover);
   --color-error: var(--c-error);
+  /* The background of the value field that has the keyboard (primary) and of a wrong value (error); mixed in the base layer below. */
+  --color-field-tint: var(--c-field-tint);
+  --color-field-tint-error: var(--c-field-tint-error);
   /* The amber of the hover highlight doubles as the warning colour (no extra token needed). */
   --color-warning: var(--c-hover);
   --color-veil: var(--veil);
@@ -116,6 +122,12 @@
 
 /* Base rules live in the base layer, so Tailwind utilities (text-on-primary ...) can override them. */
 @layer base {
+  :root {
+    /* The tint behind the active (primary) and the wrong (error) value field; the shares are FIELD_TINT_SHARE and FIELD_TINT_ERROR_SHARE in theme/contrast.ts (text and frame checked there in every theme). */
+    --c-field-tint: color-mix(in srgb, var(--c-primary) 18%, var(--c-surface));
+    --c-field-tint-error: color-mix(in srgb, var(--c-error) 12%, var(--c-surface));
+  }
+
   html,
   body,
   #root {

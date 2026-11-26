@@ -369,10 +369,16 @@ public sealed class PcToggle : PcControl
     }
 }
 
-/// <summary>Checkbox row for agreements (not an on/off setting): square box with a check, text beside it, whole row clickable.</summary>
+/// <summary>
+/// Checkbox row for agreements (not an on/off setting): square box with a check, text beside it, whole row clickable. Space toggles it
+/// (Enter does not: Enter belongs to the default action of the window), Tab reaches it and a focus ring shows where it is. The unticked
+/// box is outlined in the muted text colour, which reaches 3:1 (WCAG 1.4.11) against the page in light and dark; the ticked box is the
+/// accent colour with the on-accent check (the layout check measures both).
+/// </summary>
 public sealed class PcCheck : PcControl
 {
     private bool _checked;
+    private bool _hover;
 
     public PcCheck()
     {
@@ -391,10 +397,17 @@ public sealed class PcCheck : PcControl
             _checked = value;
             Invalidate();
             CheckedChanged?.Invoke(this, EventArgs.Empty);
+            AccessibilityNotifyClients(AccessibleEvents.StateChange, -1);
         }
     }
 
+    /// <summary>Draws the focus ring although the keyboard was not used (the offscreen pictures of the layout check).</summary>
+    public bool ForceFocusRing { get; set; }
+
     public event EventHandler? CheckedChanged;
+
+    /// <summary>The colour of the unticked box's outline (also what the layout check measures against the page).</summary>
+    public static Color OutlineColor(Palette p) => p.Muted;
 
     protected override void OnClick(EventArgs e) { Checked = !Checked; base.OnClick(e); }
 
@@ -406,14 +419,27 @@ public sealed class PcCheck : PcControl
         base.OnKeyDown(e);
     }
 
+    protected override void OnMouseEnter(EventArgs e) { _hover = true; Invalidate(); base.OnMouseEnter(e); }
+    protected override void OnMouseLeave(EventArgs e) { _hover = false; Invalidate(); base.OnMouseLeave(e); }
     protected override void OnGotFocus(EventArgs e) { Invalidate(); base.OnGotFocus(e); }
     protected override void OnLostFocus(EventArgs e) { Invalidate(); base.OnLostFocus(e); }
+    protected override void OnTextChanged(EventArgs e) { Invalidate(); base.OnTextChanged(e); }
+
+    protected override AccessibleObject CreateAccessibilityInstance() => new CheckAccessibleObject(this);
+
+    /// <summary>Tells screen readers that the row is a check box and whether it is ticked.</summary>
+    private sealed class CheckAccessibleObject(PcCheck owner) : ControlAccessibleObject(owner)
+    {
+        public override AccessibleStates State => base.State | (owner.Checked ? AccessibleStates.Checked : AccessibleStates.None);
+
+        public override string DefaultAction => owner.Checked ? "Uncheck" : "Check";
+    }
 
     protected override void OnPaint(PaintEventArgs e)
     {
         var g = e.Graphics;
         Draw.Smooth(g);
-        var box = new RectangleF(U(1), (Height - U(20)) / 2f, U(20), U(20));
+        var box = new RectangleF(U(4), (Height - U(20)) / 2f, U(20), U(20));
         if (Checked)
         {
             Draw.FillRounded(g, box, U(4), P.Accent);
@@ -422,11 +448,11 @@ public sealed class PcCheck : PcControl
         else
         {
             Draw.FillRounded(g, box, U(4), P.Surface);
-            Draw.StrokeRounded(g, box, U(4), P.BorderStrong, Math.Max(1f, U(1.5f)));
+            Draw.StrokeRounded(g, RectangleF.Inflate(box, -U(0.75f), -U(0.75f)), U(3.5f), _hover ? P.Text : OutlineColor(P), Math.Max(1f, U(1.5f)));
         }
-        if (Focused && ShowFocusCues) Draw.StrokeRounded(g, RectangleF.Inflate(box, U(3), U(3)), U(6), P.Focus, Math.Max(1.5f, U(2)));
+        if (Focused && ShowFocusCues || ForceFocusRing) Draw.StrokeRounded(g, RectangleF.Inflate(box, U(3.5f), U(3.5f)), U(6.5f), P.Focus, Math.Max(1.5f, U(2)));
         Draw.Text(g, Text, Fonts.Get(10f, S, FontStyle.Bold), P.Text,
-            new Rectangle((int)U(32), 0, Width - (int)U(32), Height), TextFormatFlags.VerticalCenter);
+            new Rectangle((int)U(38), 0, Width - (int)U(38), Height), TextFormatFlags.VerticalCenter);
     }
 }
 

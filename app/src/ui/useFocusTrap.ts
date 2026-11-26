@@ -5,7 +5,8 @@ const tabbable =
 
 function tabbables(container: HTMLElement): HTMLElement[] {
   return Array.from(container.querySelectorAll<HTMLElement>(tabbable)).filter(
-    (el) => !el.hasAttribute("inert") && el.getClientRects().length > 0,
+    // Not inside an inert or hidden part: a tab panel that is not showing keeps its controls in the page, but they cannot be focused.
+    (el) => el.getAttribute("tabindex") !== "-1" && el.closest("[inert]") === null && getComputedStyle(el).visibility !== "hidden" && el.getClientRects().length > 0,
   );
 }
 
@@ -38,6 +39,8 @@ export function useFocusTrap(
       const tail = items[items.length - 1];
       const current = document.activeElement;
       if (!head || !tail) return;
+      // Focus inside a modal that stands on top of this one (the About view over the welcome screen): that modal traps it.
+      if (current instanceof HTMLElement && !root.contains(current) && current.closest("[aria-modal=\"true\"]")) return;
       if (!root.contains(current)) {
         event.preventDefault();
         head.focus();

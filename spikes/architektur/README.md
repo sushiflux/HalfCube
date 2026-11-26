@@ -168,4 +168,4 @@ indices, per-triangle face ids, edge segments, edge ids) travel in the binary pa
 OCCT: `LGPL-2.1-only WITH OCCT-exception-1.0`. Emscripten (build tool only): MIT or University of Illinois/NCSA.
 Development dependencies: TypeScript (Apache-2.0), Ajv (MIT), `@types/node` (MIT), Electron (MIT; ships Chromium
 under its own licences), three.js and `@types/three` (MIT), React and React DOM (MIT), `@types/react` and
-`@types/react-dom` (MIT), Vite and `@vitejs/plugin-react` (MIT). This spike: GPL-3.0-or-later.
+`@types/react-dom` (MIT), Vite and `@vitejs/plugin-react` (MIT). This spike: PolyForm Shield License 1.0.0 (see `LICENSE` in the repository root).

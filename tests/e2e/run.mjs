@@ -9,7 +9,7 @@
 //                                 line of the browser project says so.
 //
 // Further arguments go to `playwright test`:  npm run test:e2e -- welcome --project=electron
-// Environment: PARTCRAFT_E2E_PORT_WS (default 3100) for the Docker browser server, PARTCRAFT_E2E_HOST (default 127.0.0.1)
+// Environment: PARTCRAFT_E2E_CONTAINER (name of the browser container, default partcraft-e2e-browser-<pid>), PARTCRAFT_E2E_PORT_WS (default 3100) for the Docker browser server, PARTCRAFT_E2E_HOST (default 127.0.0.1)
 // for the address the test web server listens on. Docker Desktop on Windows reaches the loopback-only server through
 // host.docker.internal, so the default needs no change there; another address can make Windows show a firewall prompt.
 import { spawn, spawnSync } from "node:child_process";
@@ -29,7 +29,7 @@ const cli = join(root, "node_modules", "@playwright", "test", "cli.js");
 const version = JSON.parse(readFileSync(join(root, "node_modules", "@playwright", "test", "package.json"), "utf8")).version;
 const wsPort = Number(process.env.PARTCRAFT_E2E_PORT_WS ?? 3100);
 const image = `mcr.microsoft.com/playwright:v${version}-noble`;
-const container = `partcraft-e2e-browser-${process.pid}`;
+const container = process.env.PARTCRAFT_E2E_CONTAINER ?? `partcraft-e2e-browser-${process.pid}`;
 
 // http://host.docker.internal is not a trustworthy origin (no clipboard, no cross-origin isolation for the engine worker),
 // http://localhost is. So the container forwards its own 127.0.0.1:<server port> to the host's loopback server.

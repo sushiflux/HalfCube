@@ -1,0 +1,225 @@
+{
+  "name": "sync-disc-xz",
+  "recordedWith": {
+    "engine": "v2026.11.6.12.24867",
+    "platform": "native",
+    "os": "windows-x64"
+  },
+  "command": {
+    "type": "model.sync",
+    "revision": 1,
+    "document": {
+      "format": 1,
+      "documentId": "doc-fixture",
+      "settings": {
+        "lengthUnit": "mm"
+      },
+      "nextId": 100,
+      "parameters": [],
+      "components": [
+        {
+          "id": "root",
+          "name": "Teil",
+          "bodies": [
+            {
+              "id": "b1",
+              "name": "Körper1",
+              "createdBy": "f2",
+              "visible": true
+            }
+          ]
+        }
+      ],
+      "timeline": [
+        {
+          "id": "f1",
+          "type": "sketch",
+          "name": "Skizze1",
+          "component": "root",
+          "visible": true,
+          "plane": {
+            "kind": "originPlane",
+            "plane": "xz"
+          },
+          "sketch": {
+            "points": [
+              {
+                "id": "m",
+                "x": 1,
+                "y": -1
+              }
+            ],
+            "lines": [],
+            "circles": [
+              {
+                "id": "c1",
+                "center": "m",
+                "radius": 12,
+                "construction": false
+              }
+            ],
+            "constraints": [
+              {
+                "id": "k1",
+                "kind": "coincident",
+                "refs": [
+                  "m",
+                  "@origin"
+                ]
+              },
+              {
+                "id": "d1",
+                "kind": "diameter",
+                "refs": [
+                  "c1"
+                ],
+                "value": {
+                  "value": 30,
+                  "unit": "mm"
+                },
+                "driving": true,
+                "label": {
+                  "x": 0,
+                  "y": 0
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": "f2",
+          "type": "extrude",
+          "name": "Extrusion1",
+          "component": "root",
+          "profile": {
+            "sketch": "f1",
+            "region": "c1"
+          },
+          "extent": "oneSide",
+          "distance": {
+            "value": 5,
+            "unit": "mm"
+          },
+          "operation": "newBody",
+          "body": "b1"
+        }
+      ]
+    },
+    "purpose": "commit"
+  },
+  "reply": {
+    "type": "modelResult",
+    "replyTo": null,
+    "revision": 2,
+    "purpose": "commit",
+    "outcome": "ok",
+    "steps": [
+      {
+        "featureId": "f1",
+        "state": "ok",
+        "cached": false,
+        "ms": 0.0859
+      },
+      {
+        "featureId": "f2",
+        "state": "ok",
+        "cached": false,
+        "ms": 1.6797,
+        "check": {
+          "valid": true,
+          "volume": 3534.291735288518,
+          "expectedVolume": 3534.291735288517,
+          "faces": 3,
+          "expectedFaces": 3,
+          "solids": 1
+        }
+      }
+    ],
+    "bodies": [
+      {
+        "bodyId": "b1",
+        "featureId": "f2",
+        "meshKey": "37b847c29011ecb4",
+        "preview": false,
+        "volume": 3534.291735288518,
+        "area": 1884.9555921538763,
+        "bbox": {
+          "min": {
+            "x": -15,
+            "y": -5,
+            "z": -15
+          },
+          "max": {
+            "x": 15,
+            "y": 0,
+            "z": 15
+          }
+        },
+        "faces": [
+          {
+            "name": "f2:start",
+            "surface": "plane",
+            "triangleStart": 0,
+            "triangleCount": 53
+          },
+          {
+            "name": "f2:end",
+            "surface": "plane",
+            "triangleStart": 53,
+            "triangleCount": 53
+          },
+          {
+            "name": "f2:side:c1",
+            "surface": "cylinder",
+            "triangleStart": 106,
+            "triangleCount": 110
+          }
+        ],
+        "edges": [
+          {
+            "name": "f2:start:c1",
+            "pointStart": 0,
+            "pointCount": 56
+          },
+          {
+            "name": "f2:end:c1",
+            "pointStart": 56,
+            "pointCount": 56
+          }
+        ],
+        "mesh": {
+          "vertexCount": 222,
+          "triangleCount": 216,
+          "edgePointCount": 112,
+          "positions": {
+            "offset": 0,
+            "byteLength": 2664
+          },
+          "normals": {
+            "offset": 2672,
+            "byteLength": 2664
+          },
+          "indices": {
+            "offset": 5344,
+            "byteLength": 2592
+          },
+          "triangleFace": {
+            "offset": 7936,
+            "byteLength": 864
+          },
+          "edgePoints": {
+            "offset": 8800,
+            "byteLength": 1344
+          }
+        }
+      }
+    ],
+    "timings": {
+      "rebuildMs": 0.5943999999999999,
+      "meshMs": 1.0178,
+      "encodeMs": 0.1828,
+      "totalMs": 1.795
+    }
+  },
+  "payload": "sync-disc-xz.bin"
+}

@@ -34,17 +34,21 @@ internal static class SetupTexts
     public static readonly Msg EnglishText = new("Program and manual in English.", "Program and manual in English.");
     public static readonly Msg FeatureSketch = new("Skizzen mit Bedingungen und Maßen", "Sketches with constraints and dimensions");
     public static readonly Msg FeatureTimeline = new("Zeitleiste: jeder Schritt bleibt änderbar", "Timeline: every step stays editable");
-    public static readonly Msg FeatureFree = new("Frei und offen, ohne Konto", "Free and open, no account");
+    public static readonly Msg FeatureFree = new("Kostenlos nutzbar, quelloffen, ohne Konto", "Free to use, source-available, no account");
 
     // ---- licence -------------------------------------------------------------------------------------------------------------
     public static readonly Msg LicenceKicker = new("Lizenz", "Licence");
-    public static readonly Msg LicenceTitle = new("Freie Software", "Free software");
+    public static readonly Msg LicenceTitle = new("Quelloffene Software", "Source-available software");
     public static readonly Msg LicenceSubtitle = new(
-        "Partcraft steht unter der GNU GPL 3.0 oder neuer: kostenlos nutzbar, nichts zu akzeptieren. Die Lizenz regelt Weitergabe und Änderung.",
-        "Partcraft is licensed under the GNU GPL 3.0 or later: free to use, nothing to accept. The licence covers sharing and changing it.");
+        "Partcraft wird unter der PolyForm Shield License 1.0.0 bereitgestellt. Sie erlaubt die kostenlose Nutzung, privat und geschäftlich, sowie Änderungen für den eigenen Gebrauch. Ausgenommen ist das Anbieten von Produkten, die mit Partcraft im Wettbewerb stehen. Ohne Gewährleistung.",
+        "Partcraft is provided under the PolyForm Shield License 1.0.0. It permits free use, private and commercial, and changes for your own use. Offering products that compete with Partcraft is excluded. No warranty.");
     public static readonly Msg LicenceSource = new(
-        "Quellcode: github.com/sushiflux/Partcraft · der Lizenztext ist das englische Original der Free Software Foundation.",
-        "Source code: github.com/sushiflux/Partcraft · the licence text is the original published by the Free Software Foundation.");
+        "Quellcode: github.com/sushiflux/Partcraft · der Lizenztext ist das englische Original des PolyForm Project (polyformproject.org).",
+        "Source code: github.com/sushiflux/Partcraft · the licence text is the original published by the PolyForm Project (polyformproject.org).");
+    public static readonly Msg LicenceAgree = new("Ich stimme den Lizenzbedingungen zu", "I agree to the licence terms");
+    public static readonly Msg LicenceAgreeHint = new("Bitte stimme den Lizenzbedingungen zu, um fortzufahren.", "Please agree to the licence terms to continue.");
+    // Heading of the second section in the licence box (the NOTICE file: Required Notice, LGPL permission, OCCT notice, history)
+    public static readonly Msg NoticeHeading = new("Hinweise (Datei NOTICE, englisches Original)", "Notices (file NOTICE)");
     public static readonly Msg LicenceMissing = new(
         "Der Lizenztext fehlt im Installationspaket (PC-SETUP-005). Bitte die Installationsdatei erneut herunterladen.",
         "The licence text is missing from the setup package (PC-SETUP-005). Please download the setup file again.");

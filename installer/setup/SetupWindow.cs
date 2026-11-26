@@ -15,6 +15,7 @@ internal sealed partial class SetupWindow : WizardWindow
     private readonly Func<InstallRequest, IProgress<InstallProgress>, Task> _install;
     private readonly InstallingPage _installing;
     private readonly LocationPage _location;
+    private readonly LicencePage _licence;
     private bool _running;
 
     public SetupWindow(SetupState state, Func<InstallRequest, IProgress<InstallProgress>, Task> install, float? forcedScale = null)
@@ -28,8 +29,10 @@ internal sealed partial class SetupWindow : WizardWindow
         _state = state;
         _install = install;
         _location = pages.OfType<LocationPage>().Single();
+        _licence = pages.OfType<LicencePage>().Single();
         _installing = pages.OfType<InstallingPage>().Single();
         _location.Changed = UpdateButtons;
+        _licence.Changed = UpdateButtons;
 
         Next.Click += async (_, _) => await OnNextAsync();
         Back.Click += (_, _) => OnBack();
@@ -81,8 +84,8 @@ internal sealed partial class SetupWindow : WizardWindow
                 break;
             case LicencePage:
                 Next.Text = CommonTexts.Next;
-                // The GPL is not a contract to accept (using Partcraft needs no consent); only a broken package stops here
-                Next.Enabled = _state.LicenceText is not null;
+                // Shield asks users to agree to its terms: Next stays disabled until the agreement box is ticked; otherwise only a broken package stops here
+                Next.Enabled = _state.LicenceText is not null && _state.LicenceAgreed;
                 break;
             case LocationPage:
                 Next.Text = _state.IsUpdate ? SetupTexts.Update : SetupTexts.Install;
@@ -223,7 +226,17 @@ internal sealed partial class SetupWindow : WizardWindow
     {
         var original = _state.InstallDir;
         yield return ("welcome", () => { GoTo(0); UpdateButtons(); });
-        yield return ("licence", () => { GoTo(1); UpdateButtons(); });
+        // The licence page in its three states: not agreed (hint shown, "Next" disabled), agreed, and not agreed with the focus ring on the box
+        yield return ("licence", () => { _licence.SetAgreed(false); GoTo(1); UpdateButtons(); });
+        yield return ("licence-agreed", () => _licence.SetAgreed(true));
+        yield return ("licence-focus", () =>
+        {
+            _licence.SetAgreed(false);
+            _licence.Agreement!.ForceFocusRing = true;
+        });
+        yield return ("licence-agreed-focus", () => _licence.SetAgreed(true));
+        // The end of the scrolling area: the NOTICE section that follows the licence text
+        yield return ("licence-agreed-end", () => Controls.Find("txtLicence", true).OfType<PcScrollText>().Single().ScrollBy(int.MaxValue / 2));
         yield return ("location", () => { GoTo(2); UpdateButtons(); });
         if (!_state.IsUpdate)
         {
@@ -297,18 +310,47 @@ internal sealed partial class SetupWindow : WizardWindow
         public override Msg Title => SetupTexts.LicenceTitle;
         public override Msg Subtitle => SetupTexts.LicenceSubtitle;
 
+        // The summary of the licence runs to four lines in German at 100 %: its slot is 34 units taller than the standard two lines
+        public override int ExtraSubtitleHeight => 34;
+
+        private PcCheck? _agree;
+        private PcText? _hint;
+
+        /// <summary>Raised when the agreement box was ticked or unticked (the window enables or disables "Next").</summary>
+        public Action? Changed { get; set; }
+
+        /// <summary>The agreement box (the layout check ticks it and sends keys to it).</summary>
+        public PcCheck? Agreement => _agree;
+
+        public void SetAgreed(bool agreed)
+        {
+            if (_agree is { } box) box.Checked = agreed;
+            else state.LicenceAgreed = agreed;
+        }
+
         public override void Build(PageCanvas c)
         {
-            // The official GNU GPL v3 text (English only, like every official GNU licence text). Nothing to tick: the licence grants
-            // rights and needs no consent to use the program
-            var box = c.Add(new PcScrollText { Framed = true, Points = 8.8f }, 0, 0, PageCanvas.Width, 150, "txtLicence");
-            if (state.LicenceText is { } text) box.SetText(LicenceForDisplay(text), p => p.Text);
+            // The official PolyForm Shield 1.0.0 text (English only, Markdown), shown as plain text
+            // The NOTICE file follows below it in the same scrolling area, under a heading of its own
+            var box = c.Add(new PcScrollText { Framed = true, Points = 8.8f }, 0, 0, PageCanvas.Width, 142, "txtLicence");
+            if (state.LicenceText is { } text) box.SetText(LicenceWithNotice(text, state.NoticeText, SetupTexts.NoticeHeading.ToString()), p => p.Text);
             else box.SetText(SetupTexts.LicenceMissing, p => p.Danger);
-            c.Text(SetupTexts.LicenceSource, 0, 160, PageCanvas.Width, 38, 9.5f, color: p => p.Muted, name: "lblLicenceSource");
+            c.Text(SetupTexts.LicenceSource, 0, 148, PageCanvas.Width, 38, 9.5f, color: p => p.Muted, name: "lblLicenceSource");
             var width = (PageCanvas.Width - 20) / 3;
-            c.Add(new LibraryCard { Text = SetupTexts.LibOcct, Licence = SetupTexts.LibOcctLicence }, 0, 206, width, 52, "libOcct");
-            c.Add(new LibraryCard { Text = SetupTexts.LibPlanegcs, Licence = SetupTexts.LibPlanegcsLicence }, width + 10, 206, width, 52, "libPlanegcs");
-            c.Add(new LibraryCard { Text = SetupTexts.LibEigen, Licence = SetupTexts.LibEigenLicence }, 2 * (width + 10), 206, width, 52, "libEigen");
+            c.Add(new LibraryCard { Text = SetupTexts.LibOcct, Licence = SetupTexts.LibOcctLicence }, 0, 194, width, 52, "libOcct");
+            c.Add(new LibraryCard { Text = SetupTexts.LibPlanegcs, Licence = SetupTexts.LibPlanegcsLicence }, width + 10, 194, width, 52, "libPlanegcs");
+            c.Add(new LibraryCard { Text = SetupTexts.LibEigen, Licence = SetupTexts.LibEigenLicence }, 2 * (width + 10), 194, width, 52, "libEigen");
+
+            // The agreement: the box is a row of its own and the hint under it has its slot from the start (it only gets text or loses
+            // it, nothing around it moves)
+            _agree = c.Add(new PcCheck { Text = SetupTexts.LicenceAgree, Checked = state.LicenceAgreed }, 0, 256, PageCanvas.Width, 32, "chkAgree");
+            _hint = c.Text(state.LicenceAgreed ? string.Empty : SetupTexts.LicenceAgreeHint, 38, 290, PageCanvas.Width - 38, 22, 9.5f, color: p => p.Muted, name: "lblAgreeHint");
+            _agree.CheckedChanged += (_, _) =>
+            {
+                state.LicenceAgreed = _agree.Checked;
+                _hint.Text = _agree.Checked ? string.Empty : SetupTexts.LicenceAgreeHint;
+                Changed?.Invoke();
+            };
         }
     }
 
@@ -604,9 +646,22 @@ internal sealed partial class SetupWindow : WizardWindow
     }
 
     /// <summary>
-    /// The plain licence text for the scrolling box: the hard line breaks of the official text (about 70 characters) are joined within a
-    /// paragraph, so the box wraps it to its own width. Blank lines stay paragraph breaks (one at most); a line indented by eight or more
-    /// spaces (the centred title lines) stays a line of its own.
+    /// The text of the licence box: the licence as plain text, then - under a heading of its own - the NOTICE file as plain text
+    /// (LGPL-2.1 section 6 wants the notice with every copy; the same scrolling area keeps the page as it is).
+    /// </summary>
+    public static string LicenceWithNotice(string licence, string? notice, string noticeHeading)
+    {
+        var text = LicenceForDisplay(licence);
+        return string.IsNullOrWhiteSpace(notice) ? text : text + "\n\n" + noticeHeading + "\n\n" + LicenceForDisplay(notice);
+    }
+
+    /// <summary>
+    /// The plain text for the scrolling box, readable without any markup: the hard line breaks of a text (about 70 characters) are joined
+    /// within a paragraph, so the box wraps it to its own width. Blank lines stay paragraph breaks (one at most); a line indented by eight
+    /// or more spaces (centred title lines) stays a line of its own. The Markdown of the PolyForm Shield text is resolved: headings
+    /// ("#", "##", or a line underlined with "===" / "---") become lines of their own with a blank line around them, the marks of bold and
+    /// italic text and of code go away, a link "[text](#anchor)" keeps its text (an anchor inside the text means nothing here, any other
+    /// target follows in brackets), "&lt;https://...&gt;" loses its angle brackets, "&gt; " quotes lose the marker.
     /// </summary>
     public static string LicenceForDisplay(string text)
     {
@@ -617,26 +672,95 @@ internal sealed partial class SetupWindow : WizardWindow
             if (current.Count > 0) paragraphs.Add(string.Join(' ', current));
             current.Clear();
         }
-        foreach (var raw in text.Replace("\r\n", "\n").TrimStart('\uFEFF').Split('\n'))
+        void Blank()
+        {
+            Flush();
+            if (paragraphs.Count > 0 && paragraphs[^1].Length > 0) paragraphs.Add(string.Empty);
+        }
+        void OwnLine(string line)
+        {
+            Flush();
+            paragraphs.Add(line);
+        }
+        foreach (var raw in text.Replace("\r\n", "\n").TrimStart('﻿').Split('\n'))
         {
             var line = raw.TrimEnd();
             if (line.Length == 0)
             {
-                Flush();
-                if (paragraphs.Count > 0 && paragraphs[^1].Length > 0) paragraphs.Add(string.Empty);
+                Blank();
                 continue;
             }
+            if (RuleLine().IsMatch(line.Trim()))
+            {
+                // Under a text line it underlines a heading; on its own it is a separator
+                if (current.Count > 0)
+                {
+                    var title = current[^1];
+                    current.RemoveAt(current.Count - 1);
+                    Blank();
+                    OwnLine(title);
+                }
+                Blank();
+                continue;
+            }
+            if (HeadingLine().Match(line) is { Success: true } heading)
+            {
+                Blank();
+                OwnLine(PlainInline(heading.Groups[1].Value.Trim().TrimEnd('#').Trim()));
+                Blank();
+                continue;
+            }
+            if (BulletLine().Match(line) is { Success: true } bullet)
+            {
+                OwnLine("•  " + PlainInline(bullet.Groups[1].Value.Trim()));
+                continue;
+            }
+            line = QuoteMarker().Replace(line, string.Empty);
             var centred = CentredLine().IsMatch(line);
             if (centred) Flush();
-            current.Add(line.Trim());
+            current.Add(PlainInline(line.Trim()));
             if (centred) Flush();
         }
         Flush();
         return string.Join('\n', paragraphs).Trim();
     }
 
+    /// <summary>The Markdown marks inside one line of text removed (see <see cref="LicenceForDisplay"/>).</summary>
+    private static string PlainInline(string line)
+    {
+        line = InlineLink().Replace(line, m =>
+        {
+            var target = m.Groups[2].Value.Trim();
+            return target.Length == 0 || target[0] == '#' ? m.Groups[1].Value : $"{m.Groups[1].Value} ({target})";
+        });
+        line = AngleLink().Replace(line, "$1");
+        line = Emphasis().Replace(line, "$2");
+        return line.Replace("`", string.Empty);
+    }
+
     [GeneratedRegex(@"^ {8,}\S")]
     private static partial Regex CentredLine();
+
+    [GeneratedRegex(@"^(?:={3,}|-{3,})$")]
+    private static partial Regex RuleLine();
+
+    [GeneratedRegex(@"^\s{0,3}#{1,6}\s+(.*)$")]
+    private static partial Regex HeadingLine();
+
+    [GeneratedRegex(@"^\s{0,3}[-*+]\s+(.*)$")]
+    private static partial Regex BulletLine();
+
+    [GeneratedRegex(@"^\s{0,3}>\s?")]
+    private static partial Regex QuoteMarker();
+
+    [GeneratedRegex(@"\[([^\]]+)\]\(([^)]*)\)")]
+    private static partial Regex InlineLink();
+
+    [GeneratedRegex(@"<([^<>\s]+)>")]
+    private static partial Regex AngleLink();
+
+    [GeneratedRegex(@"(\*{1,3})(?=\S)(.+?)(?<=\S)\1")]
+    private static partial Regex Emphasis();
 }
 
 /// <summary>What the setup knows and what the user chose (shared by the pages).</summary>
@@ -646,6 +770,11 @@ internal sealed class SetupState
     public string? InstalledVersion { get; init; }
     public bool IsUpdate => InstalledVersion is not null;
     public string? LicenceText { get; init; }
+    public string? NoticeText { get; init; }
+
+    /// <summary>The user ticked "I agree to the licence terms" on the licence page; "Next" stays disabled until then.</summary>
+    public bool LicenceAgreed { get; set; }
+
     public required string InstallDir { get; set; }
     public bool StartMenu { get; set; } = true;
     public bool DesktopShortcut { get; set; } = true;

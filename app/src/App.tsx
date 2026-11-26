@@ -1,35 +1,26 @@
 import { MotionConfig } from "motion/react";
 import { lazy, Suspense, useState } from "react";
+import { AboutDialog } from "./about/AboutDialog.tsx";
+import { LICENCE_ITEM } from "./about/catalogue.ts";
+import { aboutStore } from "./about/state.ts";
 import { devParams } from "./dev/params.ts";
 import { useI18n } from "./i18n/runtime.ts";
-import { detectPlatform } from "./platform.ts";
+import { MainWindow } from "./screens/main/MainWindow.tsx";
+import { getMainModel, startNewDocument } from "./screens/main/main-model.ts";
+import { patchUrl, readUrlState } from "./screens/main/url-state.ts";
 import { isWelcomeHidden, setWelcomeHidden } from "./screens/welcome/preference.ts";
 import { Welcome } from "./screens/welcome/Welcome.tsx";
-import { Logo, Wordmark } from "./ui/Brand.tsx";
 import { ConfirmProvider, useConfirm } from "./ui/Confirm.tsx";
-import { cx } from "./ui/cx.ts";
 import { engineStatusToProgress, selectEngineView } from "./ui/loading/engine.ts";
 import { LoadingPanel } from "./ui/loading/LoadingPanel.tsx";
 import { LoadingScreen } from "./ui/loading/LoadingScreen.tsx";
 import { useEngineSession } from "./ui/loading/useEngineSession.ts";
-import { currentVersion } from "./version.ts";
 
 // Dev-only demo scenes: loaded on demand and only reachable in the dev channel (see dev/params.ts).
 const DemoStartup = lazy(() => import("./dev/demos.tsx").then((m) => ({ default: m.DemoStartup })));
 const DemoPanel = lazy(() => import("./dev/demos.tsx").then((m) => ({ default: m.DemoPanel })));
 const DemoGallery = lazy(() => import("./dev/demos.tsx").then((m) => ({ default: m.DemoGallery })));
 const DemoCrash = lazy(() => import("./dev/demos.tsx").then((m) => ({ default: m.DemoCrash })));
-
-/** Placeholder header until the main window exists: logo and wordmark top left. */
-function AppHeader({ arrived }: { arrived: boolean }) {
-  return (
-    <header className="flex h-10 flex-none items-center gap-2.5 border-b border-line bg-surface px-2.5">
-      {/* The logo of the loading screen flies to this spot and is shown once it has arrived. */}
-      <Logo size={24} source="small" data-handover-target="" className={cx(!arrived && "opacity-0")} />
-      <Wordmark size={18} className={cx("transition-opacity duration-300", !arrived && "opacity-0")} />
-    </header>
-  );
-}
 
 function Shell() {
   const { t } = useI18n();
@@ -42,7 +33,14 @@ function Shell() {
   const real = demo === undefined;
   const engine = useEngineSession(real);
   const [startupDone, setStartupDone] = useState(!real && startupDemo === undefined);
-  const [welcomeOpen, setWelcomeOpen] = useState(() => (demo === "welcome" ? true : panelDemo === undefined && demo !== "crash" && !isWelcomeHidden()));
+  // Once the welcome screen was dealt with the address says so (screen=main), so a reload goes straight to the main window.
+  const [welcomeOpen, setWelcomeOpen] = useState(() =>
+    demo === "welcome" ? true : panelDemo === undefined && demo !== "crash" && !isWelcomeHidden() && readUrlState().screen !== "main",
+  );
+  const closeWelcome = () => {
+    setWelcomeOpen(false);
+    patchUrl({ screen: "main" });
+  };
   const [dontShowAgain, setDontShowAgain] = useState(() => isWelcomeHidden());
 
   const notAvailable = (messageKey: "app.notAvailableOpen" | "app.notAvailableTour") => {
@@ -62,29 +60,24 @@ function Shell() {
     if (id === "retry") void engine?.session.retry();
   };
 
-  const version = currentVersion();
-  const platform = detectPlatform();
-
   return (
-    <div className="flex h-full flex-col bg-bg text-fg">
-      <AppHeader arrived={startupDone} />
-      <main className="relative flex min-h-0 flex-1 flex-col items-center justify-center gap-3 p-4">
-        <p className="text-base text-fg">{t("app.status")}</p>
-        <p className="text-sm text-muted">{t("app.workAreaPlaceholder")}</p>
-        <p className="mono text-sm text-muted" data-testid="version">
-          {t("app.versionLabel")} {version.display}
-        </p>
-        <p className="text-xs text-muted" data-testid="platform" data-platform={platform}>
-          {platform === "desktop" ? t("app.platformDesktop") : t("app.platformBrowser")}
-        </p>
-        <Suspense fallback={null}>
-          {panelDemo ? <DemoPanel name={panelDemo} /> : null}
-          {demo === "crash" ? <DemoCrash /> : null}
-        </Suspense>
-        {engine && view === "panel" ? (
-          <LoadingPanel progress={engineStatusToProgress(engine.status, t, "running")} onAction={onEngineAction} />
-        ) : null}
-      </main>
+    <div className="h-full bg-bg text-fg">
+      <MainWindow
+        session={engine?.session ?? null}
+        engineReady={engine?.status.phase === "ready"}
+        arrived={startupDone}
+        overlay={
+          <>
+            <Suspense fallback={null}>
+              {panelDemo ? <DemoPanel name={panelDemo} /> : null}
+              {demo === "crash" ? <DemoCrash /> : null}
+            </Suspense>
+            {engine && view === "panel" ? (
+              <LoadingPanel progress={engineStatusToProgress(engine.status, t, "running")} onAction={onEngineAction} />
+            ) : null}
+          </>
+        }
+      />
 
       {engine && view === "screen" ? (
         <LoadingScreen
@@ -102,16 +95,24 @@ function Shell() {
 
       <Welcome
         open={welcomeOpen && startupDone}
-        onClose={() => setWelcomeOpen(false)}
-        onNewProject={() => setWelcomeOpen(false)}
+        onClose={closeWelcome}
+        onNewProject={() => {
+          // The main window is already there behind the welcome screen; "new" makes sure it holds an empty document.
+          startNewDocument(getMainModel(engine?.session ?? null));
+          closeWelcome();
+        }}
         onOpenProject={() => notAvailable("app.notAvailableOpen")}
         onTour={() => notAvailable("app.notAvailableTour")}
+        onShowLicence={() => aboutStore.open({ tab: "licenses", item: LICENCE_ITEM })}
         dontShowAgain={dontShowAgain}
         onDontShowAgainChange={(value) => {
           setDontShowAgain(value);
           setWelcomeHidden(value);
         }}
       />
+
+      {/* One view for the whole window, over the main window and over the welcome screen; its state is in the address. */}
+      <AboutDialog ready={startupDone} />
     </div>
   );
 }

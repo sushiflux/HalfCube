@@ -2,7 +2,7 @@
 // same assertions wherever the two behave alike. Needs a build with test commands (diagnostics.crash / diagnostics.hang).
 import { afterAll, beforeAll, expect, it } from "vitest";
 import { EngineCrashedError, isCancelled } from "../../../../app/src/engine/errors.ts";
-import type { ErrorMessage, HelloResult } from "../../../../app/src/engine/generated/protocol.ts";
+import { DOCUMENT_FORMAT, PROTOCOL_ID, PROTOCOL_VERSION, type ErrorMessage, type HelloResult } from "../../../../app/src/engine/generated/protocol.ts";
 import { describeUnless } from "./builds.ts";
 import { delay, rawExchange, startEngine, type EngineLocation, type TestEngine } from "./harness.ts";
 
@@ -28,9 +28,12 @@ export function defineContract(label: string, where: EngineLocation, crash: Cras
       expect(e.schemaErrors, "every message and command matches the JSON Schema").toEqual([]);
     });
 
-    it("handshake reports protocol 1, the platform, the components and the capabilities", () => {
+    it("handshake reports the protocol, the document format, the platform, the components and the capabilities", () => {
       const h = e.client.hello as HelloResult;
-      expect(h.protocol).toBe(1);
+      expect(h.protocol).toBe(PROTOCOL_VERSION);
+      expect(h.protocol).toBe(3);
+      expect(h.protocolId).toBe(PROTOCOL_ID);
+      expect(h.documentFormat).toBe(DOCUMENT_FORMAT);
       expect(h.engine.name).toBe("partcraft-engine");
       expect(h.engine.platform).toBe(where.kind);
       expect(h.engine.testCommands).toBe(true);
@@ -88,9 +91,18 @@ export function defineContract(label: string, where: EngineLocation, crash: Cras
     it("refuses commands before hello, a wrong protocol version and unreadable messages", async () => {
       const early = (await rawExchange(where, JSON.stringify({ type: "ping", id: 1 }))) as ErrorMessage;
       expect(early).toMatchObject({ code: "not_initialized", replyTo: 1 });
-      const wrong = (await rawExchange(where, JSON.stringify({ type: "hello", id: 1, protocol: 99, client: "x" }))) as ErrorMessage;
+      const wrong = (await rawExchange(where, JSON.stringify({ type: "hello", id: 1, protocol: 99, protocolId: PROTOCOL_ID, client: "x" }))) as ErrorMessage;
       expect(wrong.code).toBe("protocol_mismatch");
-      expect(wrong.message).toMatch(/protocol version 1, the client "x" asked for version 99/);
+      expect(wrong.message).toMatch(new RegExp(`protocol version ${PROTOCOL_VERSION}, the client "x" asked for version 99`));
+      const old = (await rawExchange(where, JSON.stringify({ type: "hello", id: 1, protocol: 1, client: "old ui" }))) as ErrorMessage;
+      expect(old.code).toBe("protocol_mismatch");
+      const other = (await rawExchange(where, JSON.stringify({ type: "hello", id: 1, protocol: PROTOCOL_VERSION, protocolId: "0123456789abcdef", client: "other ui" }))) as ErrorMessage;
+      expect(other.code).toBe("protocol_mismatch");
+      expect(other.message).toContain(`protocol "${PROTOCOL_ID}" (version ${PROTOCOL_VERSION})`);
+      expect(other.message).toContain(`named protocol "0123456789abcdef" (version ${PROTOCOL_VERSION})`);
+      const noId = (await rawExchange(where, JSON.stringify({ type: "hello", id: 1, protocol: PROTOCOL_VERSION, client: "no id" }))) as ErrorMessage;
+      expect(noId.code).toBe("protocol_mismatch");
+      expect(noId.message).toContain("nothing (no protocolId in hello)");
       const broken = (await rawExchange(where, '{"type": "hello", ')) as ErrorMessage;
       expect(broken).toMatchObject({ code: "bad_message", replyTo: null });
       expect(broken.message).toMatch(/not valid JSON/);

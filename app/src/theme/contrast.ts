@@ -24,10 +24,26 @@ export function contrastRatio(a: string, b: string): number {
   return (Math.max(la, lb) + 0.05) / (Math.min(la, lb) + 0.05);
 }
 
+/** The share of the primary colour in the tint behind the active value field (index.css: --c-field-tint). */
+export const FIELD_TINT_SHARE = 0.18;
+/** The share of the error colour in the tint behind a wrong value field (index.css: --c-field-tint-error). */
+export const FIELD_TINT_ERROR_SHARE = 0.12;
+
+/** A colour mixed over the surface as index.css's color-mix does it (srgb, rounded per channel). */
+export function mixOverSurface(colour: string, surface: string, share: number): string {
+  const [pr, pg, pb] = parseHex(colour);
+  const [sr, sg, sb] = parseHex(surface);
+  const mix = (a: number, b: number) => Math.round(a * share + b * (1 - share));
+  return `#${[mix(pr, sr), mix(pg, sg), mix(pb, sb)].map((v) => v.toString(16).padStart(2, "0")).join("")}`;
+}
+
 export type PairKind = "text" | "brand" | "ui" | "line";
 
-/** Foreground: a theme token, or a fixed brand colour per mode (the wordmark). */
-export type PairColour = ColourTokenName | { fixed: Record<Mode, string> };
+/** Colours that are mixed in the stylesheet, not stored in a theme: the tints behind the value field (index.css). */
+export type DerivedColourName = "fieldTint" | "fieldTintError";
+
+/** Foreground: a theme token, a derived tint, or a fixed brand colour per mode (the wordmark). */
+export type PairColour = ColourTokenName | DerivedColourName | { fixed: Record<Mode, string> };
 
 export interface ContrastPair {
   id: string;
@@ -35,7 +51,13 @@ export interface ContrastPair {
   kind: PairKind;
   fg: PairColour;
   /** The worst of these backgrounds counts. */
-  bgs: readonly ColourTokenName[];
+  bgs: readonly (ColourTokenName | DerivedColourName)[];
+}
+
+function resolveColour(tokens: Theme["tokens"][Mode], name: ColourTokenName | DerivedColourName): string {
+  if (name === "fieldTint") return mixOverSurface(tokens.primary, tokens.surface, FIELD_TINT_SHARE);
+  if (name === "fieldTintError") return mixOverSurface(tokens.error, tokens.surface, FIELD_TINT_ERROR_SHARE);
+  return tokens[name];
 }
 
 /** Minimum ratio per kind: normal themes, and the High contrast theme. */
@@ -65,7 +87,21 @@ export const contrastPairs: readonly ContrastPair[] = [
   { id: "t14", label: "Text on destructive button", kind: "text", fg: "onDestructive", bgs: ["destructive"] },
   { id: "t15", label: "Text in the view", kind: "text", fg: "text", bgs: view },
   { id: "t16", label: "Muted text in the view", kind: "text", fg: "muted", bgs: view },
+  { id: "t18", label: "Error colour as text on surface (status bar)", kind: "text", fg: "error", bgs: ["surface"] },
   { id: "t17", label: "Dimension text in the view", kind: "text", fg: "dimText", bgs: view },
+  { id: "t19", label: "Dimension text on its value label (surface)", kind: "text", fg: "dimText", bgs: ["surface"] },
+  // The value fields at the geometry: the filled label ("Etikett") and the text on the dimension line.
+  { id: "t20", label: "Value label, grey (follows the pointer): text on the muted fill", kind: "text", fg: "surface", bgs: ["muted"] },
+  { id: "t21", label: "Value label, red (wrong value): text on the error fill", kind: "text", fg: "surface", bgs: ["error"] },
+  { id: "t22", label: "Message under a value (error colour) in the view", kind: "text", fg: "error", bgs: view },
+  { id: "t23", label: "Value label, selected text: primary on the on-primary colour", kind: "text", fg: "primary", bgs: ["onPrimary"] },
+  { id: "u8", label: "Live dimension line and the frame of the active value field (primary) in the view", kind: "ui", fg: "primary", bgs: view },
+  // The active and the wrong value field: a tint with a frame all round. Selected text inside them is on-primary on primary (t10) and surface on error (t21).
+  { id: "t24", label: "Value field, active: text on the primary tint", kind: "text", fg: "text", bgs: ["fieldTint"] },
+  { id: "t25", label: "Value field, wrong value: error text on the error tint", kind: "text", fg: "error", bgs: ["fieldTintError"] },
+  { id: "u9", label: "Value field, active: primary frame on the primary tint", kind: "ui", fg: "primary", bgs: ["fieldTint"] },
+  { id: "u11", label: "Value field, editable but not active: neutral (muted) frame in the view and on the surface; its text is t2", kind: "ui", fg: "muted", bgs: [...view, "surface"] },
+  { id: "u10", label: "Value field, wrong value: error frame in the view and on the error tint", kind: "ui", fg: "error", bgs: [...view, "fieldTintError"] },
   {
     id: "m1",
     label: 'Wordmark "Part" on title bar',
@@ -91,8 +127,11 @@ export const contrastPairs: readonly ContrastPair[] = [
     fg: "primary",
     bgs: ["surface", "bg"],
   },
+  { id: "u6", label: "Function icon accent on toolbar, background and selected surface", kind: "ui", fg: "fn", bgs: ["surface", "bg", "primarySoft"] },
+  { id: "u7", label: "Failed-step icon on the tree band and surface", kind: "ui", fg: "error", bgs: ["surface", "primarySoft", "surface2"] },
   { id: "l1", label: "Sketch line, under-constrained", kind: "line", fg: "sketchUnder", bgs: view },
   { id: "l2", label: "Sketch line, fully constrained", kind: "line", fg: "sketchFull", bgs: view },
+  { id: "l2b", label: "Sketch line, fully constrained, blue (setting)", kind: "line", fg: "sketchFullBlue", bgs: view },
   { id: "l3", label: "Sketch line, over-constrained", kind: "line", fg: "sketchOver", bgs: view },
   { id: "l4", label: "Construction line", kind: "line", fg: "construction", bgs: view },
   { id: "l5", label: "Centre line", kind: "line", fg: "centre", bgs: view },
@@ -111,12 +150,17 @@ export const contrastPairs: readonly ContrastPair[] = [
   { id: "l18", label: "Selection highlight", kind: "line", fg: "selection", bgs: [...view, "faceLeft"] },
   { id: "l19", label: "Hover highlight", kind: "line", fg: "hover", bgs: [...view, "faceTop"] },
   { id: "l20", label: "Error", kind: "line", fg: "error", bgs: [...view, "faceTop", "faceLeft"] },
+  { id: "l21", label: "Dimension label border on surface", kind: "line", fg: "dimLine", bgs: ["surface"] },
+  { id: "l22", label: "Sketch state sample in the palette: under-constrained", kind: "line", fg: "sketchUnder", bgs: ["surface"] },
+  { id: "l23", label: "Sketch state sample in the palette: fully constrained", kind: "line", fg: "sketchFull", bgs: ["surface"] },
+  { id: "l24", label: "Sketch state sample in the palette: fully constrained, blue", kind: "line", fg: "sketchFullBlue", bgs: ["surface"] },
+  { id: "l25", label: "Sketch state sample in the palette: over-constrained", kind: "line", fg: "sketchOver", bgs: ["surface"] },
 ];
 
 export interface PairResult {
   pair: ContrastPair;
   ratio: number;
-  worstBg: ColourTokenName;
+  worstBg: ColourTokenName | DerivedColourName;
   target: number;
   pass: boolean;
 }
@@ -124,12 +168,12 @@ export interface PairResult {
 export function evaluatePairs(theme: Theme, mode: Mode): PairResult[] {
   const tokens = theme.tokens[mode];
   return contrastPairs.map((pair) => {
-    const fg = typeof pair.fg === "string" ? tokens[pair.fg] : pair.fg.fixed[mode];
+    const fg = typeof pair.fg === "string" ? resolveColour(tokens, pair.fg) : pair.fg.fixed[mode];
     const first = pair.bgs[0];
     if (!first) throw new Error(`Pair ${pair.id} has no background.`);
     let worst = { ratio: Infinity, bg: first };
     for (const bg of pair.bgs) {
-      const ratio = contrastRatio(fg, tokens[bg]);
+      const ratio = contrastRatio(fg, resolveColour(tokens, bg));
       if (ratio < worst.ratio) worst = { ratio, bg };
     }
     const target = contrastTargets[pair.kind][theme.highContrast ? "high" : "normal"];

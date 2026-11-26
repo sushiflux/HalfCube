@@ -16,6 +16,12 @@ public abstract class WizardPage
 
     public abstract Msg Subtitle { get; }
 
+    /// <summary>
+    /// Design units the subtitle slot is taller than the standard two lines (a long subtitle, like the licence summary); the page starts
+    /// that much lower. Fixed per page in every language and scale, so nothing on the page moves when the language changes.
+    /// </summary>
+    public virtual int ExtraSubtitleHeight => 0;
+
     /// <summary>Creates the controls of the page. Called again after a language or theme switch (the page keeps its own state).</summary>
     public abstract void Build(PageCanvas canvas);
 
@@ -325,6 +331,10 @@ public class WizardWindow : Form
         _kicker.Text = page.Kicker;
         _title.Text = page.Title;
         _subtitle.Text = page.Subtitle;
+        // A page with a long subtitle gets a taller slot and starts lower (fixed per page, see WizardPage.ExtraSubtitleHeight)
+        PlaceInContent(_subtitle, 0, 74, ContentWidth, 46 + page.ExtraSubtitleHeight);
+        _pageHost.Bounds = new Rectangle(0, Px(PageTop + page.ExtraSubtitleHeight), Px(ContentWidth), _content.Height - Px(PageTop + page.ExtraSubtitleHeight));
+        _transition.Bounds = _pageHost.Bounds;
 
         _pageHost.SuspendLayout();
         foreach (Control old in _pageHost.Controls.Cast<Control>().ToList())

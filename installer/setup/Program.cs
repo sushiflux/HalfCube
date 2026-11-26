@@ -69,6 +69,7 @@ internal static class Program
             Info = info,
             InstalledVersion = installed?.Version,
             LicenceText = payload.ReadText(Payload.LicenceEntry),
+            NoticeText = payload.ReadText(Payload.NoticeEntry),
             InstallDir = Arg("--install-dir") ?? installed?.Folder ?? layout.DefaultInstallDir,
             StartMenu = !Has("--no-start-menu"),
             DesktopShortcut = !Has("--no-desktop"),

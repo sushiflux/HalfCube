@@ -2,18 +2,22 @@
   "$comment": "Single source of the Partcraft engine message protocol. protocol/generate.mjs turns it into TypeScript (app/src/engine/generated/protocol.ts), C++ (engine/src/generated/protocol.hpp) and JSON Schema (protocol/engine-protocol.schema.json). Edit only this file, then run: node protocol/generate.mjs",
   "protocol": {
     "name": "partcraft-engine",
-    "version": 1,
+    "version": 3,
     "doc": "A message is a UTF-8 JSON header plus an optional binary payload. Commands go from the client to the engine and carry a client-chosen request id; every engine message that answers a command carries that id as replyTo. Desktop: the engine is a child process, both directions use length-prefixed frames on stdin/stdout. Browser: the engine is a WebAssembly module in a Web Worker; header and payload are passed as (string, ArrayBuffer | null)."
   },
+  "$commentDocument": "documentTypes describe the stored Partcraft document (history.json in a .pcraft file, and the document of model.sync); generate.mjs also writes protocol/document.schema.json from them. Lengths are stored in mm and angles in degrees, as the user means them. Ids are a kind letter plus a number from the document counter nextId (p point, l line, c circle, k constraint, d dimension, f timeline step, b body, s sketch step), unique in the whole document and never reused. Ids starting with @ are fixed references of every sketch: @origin (the origin point), @axisU and @axisV (the sketch axes as fixed lines); they are not stored. Lists are only appended to or shortened, never reordered: the solver creates its parameters in list order.",
   "constants": [
     { "name": "frameMagic", "type": "u32", "value": "0x31454350", "doc": "First four bytes of every stdio frame: 'P' 'C' 'E' '1' (frame format 1), read as a little-endian u32." },
     { "name": "framePrefixBytes", "type": "u32", "value": 16, "doc": "Frame prefix: u32 magic, u32 header bytes, u32 payload bytes, u32 reserved (0); all little-endian. Header and payload follow." },
     { "name": "maxHeaderBytes", "type": "u32", "value": 16777216, "doc": "Largest accepted JSON header (16 MiB)." },
     { "name": "maxPayloadBytes", "type": "u32", "value": 1073741824, "doc": "Largest accepted binary payload (1 GiB)." },
     { "name": "payloadAlignment", "type": "u32", "value": 16, "doc": "Every buffer inside a payload starts at a multiple of this many bytes from the payload start." },
+    { "name": "documentFormat", "type": "u32", "value": 1, "doc": "Format version of the Partcraft document (history.json, the document of model.sync) this engine reads. It changes only when the stored format changes incompatibly; the protocol version changes with every change of the messages." },
+    { "name": "maxRevision", "type": "i64", "value": 9007199254740991, "doc": "Largest model.sync revision (2^53 - 1, exact in JavaScript numbers)." },
     { "name": "maxRequestId", "type": "i64", "value": 2147483647, "doc": "Request ids are integers from 1 to this value (they must fit an Int32Array slot, used by the WebAssembly cancel flag)." },
     { "name": "pingIntervalMs", "type": "u32", "value": 1000, "doc": "Desktop supervisor: interval between pings to the native engine." },
     { "name": "pingTimeoutMs", "type": "u32", "value": 5000, "doc": "Desktop supervisor: the native engine is stopped when a ping stays unanswered this long. The native engine answers pings while it computes." },
+    { "name": "protocolId", "type": "string", "value": "d60beafbc03237e2", "doc": "Identifies this message protocol. hello carries it in both directions and each side refuses a peer that names a different one: the version number alone is the same in unrelated builds, and a program must never talk to an engine whose messages mean something else. It stays the same for the whole protocol line; a breaking change raises the protocol version." },
     { "name": "nativeExecutable", "type": "string", "value": "partcraft-engine", "doc": "File name of the native engine without extension (.exe on Windows)." },
     { "name": "wasmModuleFile", "type": "string", "value": "partcraft-engine.mjs", "doc": "ES module that loads the WebAssembly engine; partcraft-engine.wasm must be served next to it." },
     { "name": "wasmBinaryFile", "type": "string", "value": "partcraft-engine.wasm", "doc": "WebAssembly binary of the engine." },
@@ -29,8 +33,211 @@
     { "code": "test_commands_disabled", "doc": "A test command (diagnostics.crash, diagnostics.hang) was sent to an engine built without test commands." },
     { "code": "cancelled", "doc": "The command was cancelled before or while it ran." },
     { "code": "crash_not_triggered", "doc": "Test only: diagnostics.crash did not end the engine on this platform." },
+    { "code": "stale_revision", "doc": "model.sync named a revision that is not greater than the last one this engine accepted." },
+    { "code": "bad_document", "doc": "The document of model.sync or the sketch of sketch.solve does not match the document format or refers to something that does not exist. The message names the path, e.g. document.timeline[1].distance.value." },
+    { "code": "unsupported_document", "doc": "The document has a format version newer than this engine reads (helloResult.documentFormat)." },
     { "code": "internal", "doc": "An unexpected failure inside the engine; detail holds the raw exception text." }
   ],
+  "problems": [
+    { "code": "sketch_unsolvable", "doc": "planegcs found no solution and named no constraint (for example a dimension that cannot be reached). No refs." },
+    { "code": "sketch_conflicting", "doc": "Constraints contradict each other; refs names them (correct, but not necessarily complete)." },
+    { "code": "sketch_redundant", "doc": "Constraints repeat what others already fix; refs names them (correct, but not necessarily complete)." },
+    { "code": "profile_not_found", "doc": "The extrusion's region key matches no closed region of its sketch (the shape of the region changed). refs: the region key. Never guessed." },
+    { "code": "profile_open", "doc": "The sketch of the extrusion has no closed region at all. refs: the sketch id." },
+    { "code": "profile_intersecting", "doc": "Curves cross or touch without sharing a point; regions are only found among the other curves. refs: the curves involved." },
+    { "code": "extrude_zero_distance", "doc": "The extrusion distance is 0 mm." },
+    { "code": "kernel_failed", "doc": "The geometry kernel did not build the result; message holds the kernel's text." },
+    { "code": "result_invalid", "doc": "BRepCheck_Analyzer reports the result as invalid; message lists the findings per sub-shape." },
+    { "code": "result_implausible", "doc": "The result is valid but its volume, face count or solid count differs from what the operation must produce. values: volume, expectedVolume, faces, expectedFaces, solids." },
+    { "code": "upstream_failed", "doc": "A step this one depends on failed; refs: that step." }
+  ],
+  "documentTypes": {
+    "Quantity": {
+      "doc": "A number with its unit, as the user means it. Lengths in mm, angles in degrees.",
+      "fields": {
+        "value": { "type": "number" },
+        "unit": { "type": "string", "enum": ["mm", "deg"] }
+      }
+    },
+    "Vec2": {
+      "doc": "A position in sketch coordinates (u, v) in mm.",
+      "fields": {
+        "x": { "type": "number" },
+        "y": { "type": "number" }
+      }
+    },
+    "OriginPlaneRef": {
+      "doc": "One of the three origin planes. Sketch axes u, v and normal n = u x v (right-handed, Z up): xy: u +X, v +Y, n +Z (top view); xz: u +X, v +Z, n -Y (front view); yz: u +Y, v +Z, n +X (right view).",
+      "fields": {
+        "kind": { "type": "string", "const": "originPlane" },
+        "plane": { "type": "string", "enum": ["xy", "xz", "yz"] }
+      }
+    },
+    "PlaneRef": {
+      "doc": "The plane a sketch lies on. Only origin planes so far; faces of bodies come later as a further variant.",
+      "union": { "tag": "kind", "variants": ["OriginPlaneRef"] }
+    },
+    "SketchPoint": {
+      "doc": "A point of a sketch at its solved position (mm). Lines and circles that use the same point id are joined there.",
+      "fields": {
+        "id": { "type": "string" },
+        "x": { "type": "number" },
+        "y": { "type": "number" }
+      }
+    },
+    "SketchLine": {
+      "doc": "A straight line between two points of the sketch. Construction lines belong to no profile.",
+      "fields": {
+        "id": { "type": "string" },
+        "p1": { "type": "string" },
+        "p2": { "type": "string" },
+        "construction": { "type": "boolean" }
+      }
+    },
+    "SketchCircle": {
+      "doc": "A full circle around a point of the sketch, radius in mm at its solved size.",
+      "fields": {
+        "id": { "type": "string" },
+        "center": { "type": "string" },
+        "radius": { "type": "number" },
+        "construction": { "type": "boolean" }
+      }
+    },
+    "GeometricConstraint": {
+      "doc": "A constraint without a value. refs: coincident point, point (also @origin); pointOnCurve point, line or circle (the infinite line, the whole circle); horizontal / vertical line (along u / v); parallel / perpendicular line, line (also @axisU, @axisV); equal line, line or circle, circle; fix point, line or circle (holds it where it is). All constraints are equations solved together; none has a direction.",
+      "fields": {
+        "id": { "type": "string" },
+        "kind": { "type": "string", "enum": ["coincident", "pointOnCurve", "horizontal", "vertical", "parallel", "perpendicular", "equal", "fix"] },
+        "refs": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "Dimension": {
+      "doc": "A constraint with a value. refs: distance one line (its length), or two of point, line and circle in any order (what was clicked is what is measured): point, point the distance; point, line the perpendicular distance from the infinite line; line, line the perpendicular distance of the first line's start point from the second line (the distance of two parallel lines); point, circle the shortest distance to its rim (distance to the centre minus the radius, unsigned); circle, line the shortest distance of its rim from the infinite line; circle, circle the gap between the rims (outside each other, or one inside the other; circles that cross have no positive gap) - the centre of a circle is a point of the sketch and is measured as a point; distanceX / distanceY point a, point b with b.u - a.u (b.v - a.v) = value, so the sign carries the direction; angle line l1, line l2 (also @axisU, @axisV): without reverse the counter-clockwise angle from the direction of l1 to the direction of l2 = value (any value); with reverse the angle between two rays, one along each line, 0 to 180 degrees (see reverse); diameter / radius circle. Lengths in mm, angles in deg. driving = false makes a reference dimension: the engine never gives it to the solver and measures it after solving. label: where the number is drawn, stored relative to the measured geometry so it moves with it (see the field); the engine does not read it.",
+      "fields": {
+        "id": { "type": "string" },
+        "kind": { "type": "string", "enum": ["distance", "distanceX", "distanceY", "angle", "diameter", "radius"] },
+        "refs": { "type": "array", "items": { "type": "string" } },
+        "value": { "ref": "Quantity" },
+        "driving": { "type": "boolean" },
+        "number": { "type": "integer", "minimum": 0, "optional": true, "doc": "The automatic name of the dimension is d followed by this number (d3); the pattern d plus a number is reserved for these names, counted over the whole document from 0 in creation order (d0, d1, d2 ...) (see PartcraftDocument.nextParameter). Reference dimensions have one too. Never changed and never reused, not after a deletion, an undo or a reload. Absent in documents from before the names (readers number those dimensions in creation order). Never read by the engine." },
+        "reverse": { "type": "array", "items": { "type": "boolean" }, "optional": true, "doc": "Angle only. Which of the four angles between two lines is meant: the angle between two rays, one along each line, counted counter-clockwise from the ray of refs[0] to the ray of refs[1], value 0 to 180 degrees. Two flags, one per reference: true when that ray runs against the direction of its line (p1 to p2; the axes run along +u and +v). Absent: the old reading (angle between the two directions)." },
+        "label": { "ref": "Vec2", "doc": "Position of the number relative to what the dimension measures (x, y mean different things per kind). distance (a line, or two of point, line and circle; the measured segment runs from the first point to the nearest point of the other, for a circle its rim): x = distance along the measured direction from the midpoint of a and b as a share of the length |b - a|, y = mm perpendicular to it (to the left of the segment from a to b). distanceX / distanceY: x = along u / v from the midpoint as a share of b - a in that direction, y = mm of the dimension line from the midpoint across it. angle: x = direction as a share of the swept angle counted from the first ray (0 on it, 1 on the second ray), y = mm from the vertex. diameter / radius: offset from the circle centre as a multiple of the radius in x (u) and y (v). A share of a length that is 0 is stored as 0." }
+      }
+    },
+    "SketchConstraint": {
+      "doc": "A constraint or a dimension, told apart by kind.",
+      "union": { "tag": "kind", "variants": ["GeometricConstraint", "Dimension"] }
+    },
+    "SketchStep": {
+      "doc": "One step the user took inside a sketch, for the timeline (a rectangle is one step, not four lines and four constraints). members lists every element id the step created (points, lines, circles, constraints, dimensions). The engine does not read steps.",
+      "fields": {
+        "id": { "type": "string" },
+        "kind": { "type": "string", "enum": ["line", "rectangle", "circle", "constraint", "dimension"] },
+        "members": { "type": "array", "items": { "type": "string" } },
+        "number": { "type": "integer", "minimum": 1, "optional": true, "doc": "Running number of the shape this step drew (line, rectangle, circle), counted per kind in the sketch from 1 in creation order: the third line is Line 3 for good. Never changed and never reused, also when shapes are deleted (see SketchData.shapeCounts). The user sees the name as the kind's word and this number (Rectangle 1, Kreis 2). Absent for constraint and dimension steps and in documents from before the numbers (readers number those steps in creation order). Never read by the engine." }
+      }
+    },
+    "SketchForm": {
+      "doc": "A group of connected shapes of a sketch (shapes that share points or are tied together by constraints) with its number: the group is called Form <number> as long as it has more than one shape. A single shape keeps its kind's name (Circle 2). The number is stable: when groups merge the lowest number stays and the others are retired, when a group splits the part with the most elements keeps it and the other part gets a new number, and a retired number is never handed out again (SketchData.shapeCounts.form). Never read by the engine.",
+      "fields": {
+        "number": { "type": "integer", "minimum": 1 },
+        "shapes": { "type": "array", "items": { "type": "string" }, "doc": "The ids of the SketchSteps that drew the shapes of the group, in creation order." }
+      }
+    },
+    "SketchData": {
+      "doc": "Geometry and constraints of one sketch, in list order (lists are appended to or shortened, never reordered).",
+      "fields": {
+        "points": { "type": "array", "items": { "ref": "SketchPoint" } },
+        "lines": { "type": "array", "items": { "ref": "SketchLine" } },
+        "circles": { "type": "array", "items": { "ref": "SketchCircle" } },
+        "constraints": { "type": "array", "items": { "ref": "SketchConstraint" } },
+        "forms": { "type": "array", "items": { "ref": "SketchForm" }, "optional": true, "doc": "The groups of connected shapes that have a Form number (groups of more than one shape), kept in step with the sketch whenever it changes. Absent in documents from before the form names (readers work them out). Never read by the engine." },
+        "shapeCounts": { "type": "map", "values": { "type": "integer", "minimum": 0 }, "optional": true, "doc": "How many shapes of each kind (line, rectangle, circle, arc, spline) were ever drawn in this sketch: the last SketchStep.number handed out per kind; under form the last Form number handed out. The next shape gets this plus one, so a number is never reused after a deletion. Absent in documents from before the numbers. Never read by the engine." },
+        "steps": { "type": "array", "items": { "ref": "SketchStep" }, "optional": true, "doc": "The user steps in creation order. Absent in documents written before the steps existed (they have no record; readers treat absence as an empty list). A dragged point or a changed dimension value adds no step. Never read by the engine." }
+      }
+    },
+    "SketchFeature": {
+      "doc": "A sketch as a step of the timeline.",
+      "fields": {
+        "id": { "type": "string" },
+        "type": { "type": "string", "const": "sketch" },
+        "name": { "type": "string" },
+        "component": { "type": "string", "doc": "Component the step belongs to; only root so far." },
+        "visible": { "type": "boolean" },
+        "plane": { "ref": "PlaneRef" },
+        "sketch": { "ref": "SketchData" }
+      }
+    },
+    "ProfileRef": {
+      "doc": "One closed region of a sketch, named by its region key (sketchSolveResult.profiles[].key).",
+      "fields": {
+        "sketch": { "type": "string", "doc": "Id of an earlier sketch step." },
+        "region": { "type": "string" }
+      }
+    },
+    "ExtrudeFeature": {
+      "doc": "Extrusion of one region into a new body. oneSide: distance along the sketch normal n, a negative distance against it. symmetric: both directions, distance is the total thickness (half of it on each side of the sketch plane). The start face is always on the sketch side (oneSide) or on the -n side (symmetric).",
+      "fields": {
+        "id": { "type": "string" },
+        "type": { "type": "string", "const": "extrude" },
+        "name": { "type": "string" },
+        "component": { "type": "string" },
+        "profile": { "ref": "ProfileRef" },
+        "extent": { "type": "string", "enum": ["oneSide", "symmetric"] },
+        "distance": { "ref": "Quantity", "doc": "mm, not 0." },
+        "operation": { "type": "string", "const": "newBody" },
+        "body": { "type": "string", "doc": "Id of the new body (listed in its component's bodies)." }
+      }
+    },
+    "Feature": {
+      "doc": "A step of the timeline, told apart by type.",
+      "union": { "tag": "type", "variants": ["SketchFeature", "ExtrudeFeature"] }
+    },
+    "Body": {
+      "doc": "A body of a component. Its geometry is computed, never stored.",
+      "fields": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "createdBy": { "type": "string", "doc": "Id of the timeline step that creates the body." },
+        "visible": { "type": "boolean" }
+      }
+    },
+    "Component": {
+      "doc": "A component with its bodies. Only the top component root so far.",
+      "fields": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "bodies": { "type": "array", "items": { "ref": "Body" } }
+      }
+    },
+    "Parameter": {
+      "doc": "A named parameter (formulas come later; the list stays empty so far).",
+      "fields": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "value": { "ref": "Quantity" }
+      }
+    },
+    "DocumentSettings": {
+      "doc": "Settings stored with the document.",
+      "fields": {
+        "lengthUnit": { "type": "string", "const": "mm" }
+      }
+    },
+    "PartcraftDocument": {
+      "doc": "A Partcraft document: the timeline with its sketches and extrusions plus the components with their bodies.",
+      "fields": {
+        "format": { "type": "integer", "minimum": 1, "doc": "Document format version (constant documentFormat)." },
+        "documentId": { "type": "string" },
+        "settings": { "ref": "DocumentSettings" },
+        "nextId": { "type": "integer", "minimum": 1, "doc": "Next free id number; never goes down, also not after undo." },
+        "nextParameter": { "type": "integer", "minimum": 0, "optional": true, "doc": "Next free number of the automatic names d0, d1, d2, ... that dimensions carry (Dimension.number), one counter for the whole document so a name is unique across all sketches and later steps; never goes down, also not after undo. Absent: 0 (documents from before the names; readers number their dimensions in creation order and raise it). Never read by the engine." },
+        "parameters": { "type": "array", "items": { "ref": "Parameter" } },
+        "components": { "type": "array", "items": { "ref": "Component" } },
+        "timeline": { "type": "array", "items": { "ref": "Feature" } }
+      }
+    }
+  },
   "types": {
     "EngineInfo": {
       "doc": "What the engine is and how it was built.",
@@ -91,6 +298,196 @@
         "timeMs": { "type": "number", "minimum": 0 },
         "problem": { "type": "string", "optional": true, "doc": "Why the step failed; missing when it passed." }
       }
+    },
+    "Vec3": {
+      "doc": "A point or direction in model coordinates (mm), right-handed, Z up.",
+      "fields": {
+        "x": { "type": "number" },
+        "y": { "type": "number" },
+        "z": { "type": "number" }
+      }
+    },
+    "PlaneFrame": {
+      "doc": "Placement of a sketch plane in the model: a sketch point (u, v) lies at origin + u * u + v * v. normal = u x v.",
+      "fields": {
+        "origin": { "ref": "Vec3" },
+        "u": { "ref": "Vec3" },
+        "v": { "ref": "Vec3" },
+        "normal": { "ref": "Vec3" }
+      }
+    },
+    "BufferRef": {
+      "doc": "A typed array inside the binary payload. offset is a multiple of payloadAlignment.",
+      "fields": {
+        "offset": { "type": "integer", "minimum": 0 },
+        "byteLength": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "Problem": {
+      "doc": "Why a sketch or a timeline step did not work. The UI builds the translated text from code, refs and values and shows message under technical details.",
+      "fields": {
+        "code": { "type": "string", "enumFrom": "problems" },
+        "message": { "type": "string", "doc": "Complete English text written by the engine." },
+        "refs": { "type": "array", "items": { "type": "string" }, "optional": true, "doc": "Ids the problem is about (constraints, curves, steps, a region key)." },
+        "values": { "type": "map", "values": { "type": "number" }, "optional": true, "doc": "Numbers for the translated text, e.g. volume and expectedVolume." }
+      }
+    },
+    "SolvedPoint": {
+      "doc": "Position of a sketch point after solving (mm).",
+      "fields": {
+        "id": { "type": "string" },
+        "x": { "type": "number" },
+        "y": { "type": "number" }
+      }
+    },
+    "SolvedCircle": {
+      "doc": "Radius of a sketch circle after solving (mm).",
+      "fields": {
+        "id": { "type": "string" },
+        "radius": { "type": "number" }
+      }
+    },
+    "RegionFill": {
+      "doc": "Triangles of a region for display and picking: Float32 (u, v) pairs in sketch coordinates, Uint32 indices, three per triangle, counter-clockwise seen from the normal.",
+      "fields": {
+        "positions": { "ref": "BufferRef" },
+        "indices": { "ref": "BufferRef" },
+        "triangleCount": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "Region": {
+      "doc": "A closed region of a sketch: an outer loop and its holes, built from non-construction lines and circles. Sketch mode highlights every determined region (a translucent fill from fill, or a narrow band along loops); the extrude command picks one.",
+      "fields": {
+        "key": { "type": "string", "doc": "Curve ids of the outer loop, sorted, joined by commas; then per hole \"|\" and its sorted ids, holes sorted. Stays the same while only dimensions change; changes when the shape of the region changes." },
+        "outer": { "type": "array", "items": { "type": "string" }, "doc": "Curve ids of the outer loop in loop order, counter-clockwise seen from the normal." },
+        "holes": { "type": "array", "items": { "type": "array", "items": { "type": "string" } } },
+        "area": { "type": "number", "doc": "mm^2, computed from the sketch geometry (not by the kernel)." },
+        "determined": { "type": "boolean", "doc": "True when every curve of the outer loop and of the holes is fully determined (all its points and radii fixed by the constraints). Needs the element states, so it is false when the request had diagnose false." },
+        "fill": { "ref": "RegionFill" },
+        "loops": { "type": "array", "items": { "ref": "BufferRef" }, "doc": "One closed polyline per loop, outer loop first, then the holes in the order of holes: Float32 (u, v) pairs in sketch coordinates in the payload, the first point not repeated at the end. Outer loops run counter-clockwise, holes clockwise. Circles are cut with the same tolerance as the fill triangles and their points are corner points of those triangles." }
+      }
+    },
+    "DragTarget": {
+      "doc": "A point of the sketch and the position the pointer wants it at (sketch coordinates, mm).",
+      "fields": {
+        "id": { "type": "string" },
+        "x": { "type": "number" },
+        "y": { "type": "number" }
+      }
+    },
+    "SketchDrag": {
+      "doc": "Dragging: the listed points are pulled towards their targets by soft temporary constraints (planegcs tag -1, solved in a second subsystem with SQP, as FreeCAD does), so every real constraint of the sketch still holds and a point that cannot reach its target ends as near as the constraints allow. The sketch of the request holds the positions of the previous step; the engine cuts a long way into short steps and keeps nothing between requests.",
+      "fields": {
+        "points": { "type": "array", "items": { "ref": "DragTarget" } }
+      }
+    },
+    "DragPointResult": {
+      "doc": "How far a dragged point got.",
+      "fields": {
+        "id": { "type": "string" },
+        "error": { "type": "number", "minimum": 0, "doc": "Distance in mm between the solved position and the target; 0 when the point reached it." },
+        "moved": { "type": "boolean", "doc": "The point left the position it had in the request. False for a fully determined point: it does not move, the sketch comes back as sent and status is still solved." }
+      }
+    },
+    "FreedomFact": {
+      "doc": "One thing that is still free in a solved sketch, in words-ready form (what the palette lists). The engine finds the motions the constraints still allow (the null space of the constraint Jacobian at the solved geometry, the same free parameters planegcs reports as dependent) and groups them per connected shape: the rigid motions of the whole shape (kind position and rotation) are named as one fact instead of one per point, what is left of the freedom is told per element (length, direction, radius, a point that moves against the rest). The facts of a fully determined sketch are empty.",
+      "fields": {
+        "kind": { "type": "string", "enum": ["position", "rotation", "length", "direction", "radius", "point"], "doc": "position: the whole shape can still be moved (moves tells in how many directions); rotation: it can still be turned; length: the length of the listed lines can still change (lines whose lengths change together are one fact); direction: the listed lines can still turn against the rest of the shape; radius: the radius of the listed circles can still change; point: the listed point can still move against the rest of the shape and no line or circle fact explains it." },
+        "shape": { "type": "string", "enum": ["point", "line", "circle", "rectangle", "shape"], "doc": "What the connected shape is: one point, one line, one circle, four lines forming a rectangle (all corners 90 degrees), anything else." },
+        "moves": { "type": "integer", "minimum": 0, "maximum": 2, "optional": true, "doc": "position only: 2 = the shape can be moved in every direction, 1 = only along one direction." },
+        "elements": { "type": "array", "items": { "type": "string" }, "doc": "The ids the fact is about, for highlighting: the lines and circles of the shape (position, rotation; a lone point when the shape is one), the lines (length, direction), the circles (radius) or the point (point)." }
+      }
+    },
+    "SketchDragResult": {
+      "doc": "Outcome of the dragging part of a sketch.solve.",
+      "fields": {
+        "points": { "type": "array", "items": { "ref": "DragPointResult" }, "doc": "One entry per dragged point, in the order of the request." },
+        "steps": { "type": "integer", "minimum": 0, "doc": "How many short steps the movement was cut into (1 for a short move)." },
+        "complete": { "type": "boolean", "doc": "False when a step found no solution; the geometry then is the last good step and the error of the points says how far short it stopped." }
+      }
+    },
+    "StepCheck": {
+      "doc": "Result check of a body-building step: BRepCheck_Analyzer plus volume and face count against the values computed from the sketch.",
+      "fields": {
+        "valid": { "type": "boolean" },
+        "volume": { "type": "number" },
+        "expectedVolume": { "type": "number", "optional": true },
+        "faces": { "type": "integer", "minimum": 0 },
+        "expectedFaces": { "type": "integer", "minimum": 0, "optional": true },
+        "solids": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "StepStatus": {
+      "doc": "Outcome of one timeline step. warning: the step worked with a remark (e.g. crossing curves in a sketch). error: the step failed; later steps that need it are skipped or fail with upstream_failed.",
+      "fields": {
+        "featureId": { "type": "string" },
+        "state": { "type": "string", "enum": ["ok", "warning", "error", "skipped"] },
+        "problem": { "ref": "Problem", "optional": true },
+        "cached": { "type": "boolean", "doc": "The result came from the engine's cache of the previous rebuild." },
+        "ms": { "type": "number", "minimum": 0 },
+        "check": { "ref": "StepCheck", "optional": true }
+      }
+    },
+    "BoundingBox": {
+      "doc": "Axis-aligned bounding box in model coordinates (mm).",
+      "fields": {
+        "min": { "ref": "Vec3" },
+        "max": { "ref": "Vec3" }
+      }
+    },
+    "BodyFace": {
+      "doc": "A face of a body with its persistent name (step id : role : origin, e.g. f12:side:l7, f12:start, f12:end) and its triangles.",
+      "fields": {
+        "name": { "type": "string" },
+        "surface": { "type": "string", "enum": ["plane", "cylinder", "cone", "sphere", "torus", "bspline", "other"] },
+        "triangleStart": { "type": "integer", "minimum": 0 },
+        "triangleCount": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "BodyEdge": {
+      "doc": "A visible edge of a body with its persistent name (e.g. f12:start:l7, f12:lateral:p3); a polyline of pointCount points from pointStart in edgePoints. Seams are not listed.",
+      "fields": {
+        "name": { "type": "string" },
+        "pointStart": { "type": "integer", "minimum": 0 },
+        "pointCount": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "BodyMesh": {
+      "doc": "Triangle mesh of a body in the payload. Vertices are not shared between faces (sharp edges). positions, normals, edgePoints: Float32 x, y, z; indices: Uint32, three per triangle, counter-clockwise seen from outside; triangleFace: Uint32 per triangle, index into faces.",
+      "fields": {
+        "vertexCount": { "type": "integer", "minimum": 0 },
+        "triangleCount": { "type": "integer", "minimum": 0 },
+        "edgePointCount": { "type": "integer", "minimum": 0 },
+        "positions": { "ref": "BufferRef" },
+        "normals": { "ref": "BufferRef" },
+        "indices": { "ref": "BufferRef" },
+        "triangleFace": { "ref": "BufferRef" },
+        "edgePoints": { "ref": "BufferRef" }
+      }
+    },
+    "BodyResult": {
+      "doc": "Geometry of one body after the rebuild.",
+      "fields": {
+        "bodyId": { "type": "string" },
+        "featureId": { "type": "string", "doc": "Last step that changed this body successfully." },
+        "meshKey": { "type": "string", "doc": "Changes only when the geometry changed; the UI can keep an unchanged mesh." },
+        "preview": { "type": "boolean", "doc": "Built or changed by a step listed in model.sync previewFeatures." },
+        "volume": { "type": "number" },
+        "area": { "type": "number" },
+        "bbox": { "ref": "BoundingBox" },
+        "faces": { "type": "array", "items": { "ref": "BodyFace" } },
+        "edges": { "type": "array", "items": { "ref": "BodyEdge" } },
+        "mesh": { "ref": "BodyMesh" }
+      }
+    },
+    "ModelTimings": {
+      "doc": "Where the time of a model.sync went (ms).",
+      "fields": {
+        "rebuildMs": { "type": "number", "minimum": 0 },
+        "meshMs": { "type": "number", "minimum": 0 },
+        "encodeMs": { "type": "number", "minimum": 0 },
+        "totalMs": { "type": "number", "minimum": 0 }
+      }
     }
   },
   "commands": {
@@ -99,6 +496,7 @@
       "immediate": true,
       "fields": {
         "protocol": { "type": "integer", "doc": "Protocol version the client speaks." },
+        "protocolId": { "type": "string", "optional": true, "doc": "The protocol id the client speaks (constant protocolId). Optional only so that a client of an older protocol version still gets the version error; the engine refuses a hello without it, or with another one, as protocol_mismatch." },
         "client": { "type": "string", "doc": "Free text naming the client and its version, for diagnostics." }
       },
       "reply": "helloResult"
@@ -132,6 +530,27 @@
       "fields": {},
       "reply": "solverSelftestResult"
     },
+    "sketch.solve": {
+      "doc": "Solves one sketch without keeping anything: sketch in, solved sketch out. Reference dimensions are measured after solving, never given to the solver. A conflicting or redundant sketch is not solved; its geometry comes back unchanged with the constraints named.",
+      "fields": {
+        "sketch": { "ref": "SketchData" },
+        "plane": { "ref": "PlaneRef" },
+        "diagnose": { "type": "boolean", "default": true, "doc": "Determine the states of all elements and constraints (dof, conflicts, redundancies are always reported)." },
+        "profiles": { "type": "boolean", "default": false, "doc": "Find the closed regions of a solved sketch and triangulate them (fill and loop buffers in the payload). The sketch editor asks for them on every solve (sketch mode highlights determined regions), the extrude command for its hover and selection." },
+        "drag": { "ref": "SketchDrag", "optional": true, "doc": "Drag step: pull the listed points towards their targets while all constraints hold. The sketch is the one of the previous step; a conflicting or redundant sketch is not dragged (status conflicting or redundant, geometry as sent)." }
+      },
+      "reply": "sketchSolveResult"
+    },
+    "model.sync": {
+      "doc": "Hands the engine the whole document and rebuilds the timeline in order. Unchanged steps come from the cache of the previous rebuild. preview and commit compute the same; purpose only says what the document is.",
+      "fields": {
+        "revision": { "type": "integer", "minimum": 1, "maximum": 9007199254740991, "doc": "Greater than every revision this engine accepted before (the client keeps counting across engine restarts); otherwise stale_revision." },
+        "document": { "ref": "PartcraftDocument" },
+        "purpose": { "type": "string", "enum": ["commit", "preview"], "doc": "commit: the accepted document. preview: a dialog is open, its values are not accepted yet." },
+        "previewFeatures": { "type": "array", "items": { "type": "string" }, "optional": true, "doc": "Steps that are being previewed; bodies they build or change are marked preview." }
+      },
+      "reply": "modelResult"
+    },
     "diagnostics.crash": {
       "doc": "Test only: ends the engine on purpose (native: the process dies; WebAssembly: a trap). Used to test the desktop supervisor and the worker restart.",
       "testOnly": true,
@@ -155,10 +574,12 @@
       "doc": "Answer to hello.",
       "fields": {
         "protocol": { "type": "integer" },
+        "protocolId": { "type": "string", "doc": "The protocol id the engine speaks (constant protocolId); the client refuses an engine with another one." },
         "engine": { "ref": "EngineInfo" },
         "components": { "ref": "ComponentVersions" },
         "capabilities": { "ref": "Capabilities" },
-        "limits": { "ref": "Limits" }
+        "limits": { "ref": "Limits" },
+        "documentFormat": { "type": "integer", "minimum": 1, "doc": "Newest document format this engine reads." }
       }
     },
     "pong": {
@@ -211,6 +632,39 @@
         "parameterCount": { "type": "integer", "minimum": 0, "doc": "Solver parameters (one contiguous block)." },
         "constraintCount": { "type": "integer", "minimum": 0 },
         "timeMs": { "type": "number", "minimum": 0 }
+      }
+    },
+    "sketchSolveResult": {
+      "doc": "Answer to sketch.solve. A sketch that cannot be solved is a normal answer with status failed, conflicting or redundant and a problem. Region fill buffers are in the payload.",
+      "fields": {
+        "status": { "type": "string", "enum": ["solved", "failed", "conflicting", "redundant"] },
+        "dof": { "type": "integer", "doc": "Remaining degrees of freedom of the whole sketch (planegcs)." },
+        "points": { "type": "array", "items": { "ref": "SolvedPoint" }, "doc": "Solved positions in sketch order; the input positions when not solved." },
+        "circles": { "type": "array", "items": { "ref": "SolvedCircle" } },
+        "entities": { "type": "map", "values": { "type": "string", "enum": ["under", "full", "over"] }, "doc": "State of every point, line and circle: under = can still move, full = fully determined, over = a conflicting constraint refers to it. Empty when diagnose is false." },
+        "constraints": { "type": "map", "values": { "type": "string", "enum": ["ok", "conflicting", "redundant", "partiallyRedundant"] }, "doc": "State of every constraint and dimension. Empty when diagnose is false." },
+        "conflicting": { "type": "array", "items": { "type": "string" }, "doc": "Conflicting constraint ids (correct, not necessarily complete)." },
+        "redundant": { "type": "array", "items": { "type": "string" } },
+        "partiallyRedundant": { "type": "array", "items": { "type": "string" }, "doc": "Reported, but they do not stop solving." },
+        "reference": { "type": "map", "values": { "type": "number" }, "doc": "Reference dimensions (driving = false) by id, measured after solving: mm, angles in deg, a diameter as a diameter." },
+        "profiles": { "type": "array", "items": { "ref": "Region" }, "doc": "Closed regions of the solved sketch (empty when profiles is false or the sketch is not solved)." },
+        "freedom": { "type": "array", "items": { "ref": "FreedomFact" }, "doc": "What is still free, per shape, in the order of the sketch. Present for a solved sketch when diagnose is true and the request has no drag (empty then when everything is determined, and also for sketches with arcs, which are not analysed). A sketch with freedom and no fact is not understood: the palette falls back to the degrees of freedom." },
+        "drag": { "ref": "SketchDragResult", "optional": true, "doc": "Present when the request had drag." },
+        "problem": { "ref": "Problem", "optional": true, "doc": "Why the sketch is not solved, or profile_intersecting for a solved sketch with crossing curves." },
+        "frame": { "ref": "PlaneFrame" },
+        "profilesMs": { "type": "number", "minimum": 0, "optional": true, "doc": "Milliseconds of timeMs spent on finding the regions and cutting them into triangles and outlines; present when the request had profiles and the sketch was solved. A drag skips profiles for the rest of the drag when this gets too large." },
+        "timeMs": { "type": "number", "minimum": 0 }
+      }
+    },
+    "modelResult": {
+      "doc": "Answer to model.sync. Mesh buffers of all bodies are in the payload.",
+      "fields": {
+        "revision": { "type": "integer", "minimum": 1 },
+        "purpose": { "type": "string", "enum": ["commit", "preview"] },
+        "outcome": { "type": "string", "enum": ["ok", "warning", "error"], "doc": "Worst state of all steps." },
+        "steps": { "type": "array", "items": { "ref": "StepStatus" }, "doc": "One per timeline step, in order." },
+        "bodies": { "type": "array", "items": { "ref": "BodyResult" } },
+        "timings": { "ref": "ModelTimings" }
       }
     },
     "hangResult": {

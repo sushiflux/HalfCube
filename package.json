@@ -2,8 +2,8 @@
   "name": "partcraft",
   "version": "0.0.0",
   "private": true,
-  "description": "Open-source parametric 3D CAD program",
-  "license": "GPL-3.0-or-later",
+  "description": "Source-available parametric 3D CAD program",
+  "license": "SEE LICENSE IN LICENSE",
   "author": "SushiFlux",
   "type": "module",
   "engines": {
@@ -17,6 +17,9 @@
     "test:e2e": "node tests/e2e/run.mjs",
     "test:e2e:local": "node tests/e2e/run.mjs --local",
     "check:protocol": "node protocol/generate.mjs --check",
+    "notices": "node scripts/notices/generate.ts",
+    "check:notices": "node scripts/notices/generate.ts --check",
+    "check:notices-bundle": "node scripts/notices/verify-bundle.ts",
     "ci:checks": "npm run typecheck && npm run lint && npm test && npm run check:protocol",
     "dev:web": "vite --config vite.config.ts",
     "build:web": "vite build --config vite.config.ts",
@@ -27,7 +30,8 @@
     "make:theme-css": "node tests/unit/theme/generate-css.ts"
   },
   "dependencies": {
-    "motion": "14.14.0"
+    "motion": "14.14.0",
+    "three": "0.187.0"
   },
   "devDependencies": {
     "@playwright/test": "1.65.1",
@@ -35,6 +39,7 @@
     "@types/node": "^26.6.10",
     "@types/react": "^19.3.2",
     "@types/react-dom": "^19.3.0",
+    "@types/three": "0.187.0",
     "@vitejs/plugin-react": "^6.3.0",
     "electron": "^45.5.0",
     "oxlint": "^1.95.0",

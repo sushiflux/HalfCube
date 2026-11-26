@@ -5,7 +5,7 @@
   "private": true,
   "description": "Test application for the Velopack installer and update test (no product code)",
   "author": "SushiFlux",
-  "license": "GPL-3.0-or-later",
+  "license": "SEE LICENSE IN LICENSE",
   "main": "main.cjs",
   "dependencies": {
     "velopack": "1.2.161"

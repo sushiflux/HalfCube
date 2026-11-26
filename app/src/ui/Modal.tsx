@@ -17,6 +17,8 @@ export interface ModalProps {
   "aria-labelledby"?: string;
   "aria-describedby"?: string;
   initialFocus?: RefObject<HTMLElement | null>;
+  /** How far from the top edge the panel stands: "compact" for a tall panel that has to fit the smallest window (the About view). */
+  top?: "default" | "compact";
   /** Class names of the panel wrapper (width, height). */
   className?: string;
   children: ReactNode;
@@ -32,6 +34,7 @@ export function Modal({
   closeOnBackdrop = true,
   role = "dialog",
   initialFocus,
+  top = "default",
   className,
   children,
   ...aria
@@ -72,7 +75,7 @@ export function Modal({
       {open ? (
         <motion.div
           key="modal"
-          className="fixed inset-0 z-[100] flex items-start justify-center overflow-hidden pt-[min(12vh,120px)]"
+          className={cx("fixed inset-0 z-[100] flex items-start justify-center overflow-hidden", top === "compact" ? "pt-[min(5vh,40px)]" : "pt-[min(12vh,120px)]")}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}

@@ -3,7 +3,7 @@
 // A message is a UTF-8 JSON header plus an optional binary payload. Commands go from the client to the engine and carry a client-chosen request id; every engine message that answers a command carries that id as replyTo. Desktop: the engine is a child process, both directions use length-prefixed frames on stdin/stdout. Browser: the engine is a WebAssembly module in a Web Worker; header and payload are passed as (string, ArrayBuffer | null).
 
 /** Protocol version; hello must name exactly this one. */
-export const PROTOCOL_VERSION = 1;
+export const PROTOCOL_VERSION = 3;
 
 /** First four bytes of every stdio frame: 'P' 'C' 'E' '1' (frame format 1), read as a little-endian u32. */
 export const FRAME_MAGIC = 0x31454350;
@@ -15,12 +15,18 @@ export const MAX_HEADER_BYTES = 16777216;
 export const MAX_PAYLOAD_BYTES = 1073741824;
 /** Every buffer inside a payload starts at a multiple of this many bytes from the payload start. */
 export const PAYLOAD_ALIGNMENT = 16;
+/** Format version of the Partcraft document (history.json, the document of model.sync) this engine reads. It changes only when the stored format changes incompatibly; the protocol version changes with every change of the messages. */
+export const DOCUMENT_FORMAT = 1;
+/** Largest model.sync revision (2^53 - 1, exact in JavaScript numbers). */
+export const MAX_REVISION = 9007199254740991;
 /** Request ids are integers from 1 to this value (they must fit an Int32Array slot, used by the WebAssembly cancel flag). */
 export const MAX_REQUEST_ID = 2147483647;
 /** Desktop supervisor: interval between pings to the native engine. */
 export const PING_INTERVAL_MS = 1000;
 /** Desktop supervisor: the native engine is stopped when a ping stays unanswered this long. The native engine answers pings while it computes. */
 export const PING_TIMEOUT_MS = 5000;
+/** Identifies this message protocol. hello carries it in both directions and each side refuses a peer that names a different one: the version number alone is the same in unrelated builds, and a program must never talk to an engine whose messages mean something else. It stays the same for the whole protocol line; a breaking change raises the protocol version. */
+export const PROTOCOL_ID = "d60beafbc03237e2";
 /** File name of the native engine without extension (.exe on Windows). */
 export const NATIVE_EXECUTABLE = "partcraft-engine";
 /** ES module that loads the WebAssembly engine; partcraft-engine.wasm must be served next to it. */
@@ -43,9 +49,209 @@ export const ERROR_CODES = [
   "test_commands_disabled",
   "cancelled",
   "crash_not_triggered",
+  "stale_revision",
+  "bad_document",
+  "unsupported_document",
   "internal",
 ] as const;
 export type ErrorCode = (typeof ERROR_CODES)[number];
+
+/** Codes of sketch and timeline step problems (Problem.code). */
+export const STEP_PROBLEM_CODES = [
+  "sketch_unsolvable",
+  "sketch_conflicting",
+  "sketch_redundant",
+  "profile_not_found",
+  "profile_open",
+  "profile_intersecting",
+  "extrude_zero_distance",
+  "kernel_failed",
+  "result_invalid",
+  "result_implausible",
+  "upstream_failed",
+] as const;
+export type StepProblemCode = (typeof STEP_PROBLEM_CODES)[number];
+
+// ---------------------------------------------------------------- stored document
+
+/** A number with its unit, as the user means it. Lengths in mm, angles in degrees. */
+export interface Quantity {
+  value: number;
+  unit: "mm" | "deg";
+}
+
+/** A position in sketch coordinates (u, v) in mm. */
+export interface Vec2 {
+  x: number;
+  y: number;
+}
+
+/** One of the three origin planes. Sketch axes u, v and normal n = u x v (right-handed, Z up): xy: u +X, v +Y, n +Z (top view); xz: u +X, v +Z, n -Y (front view); yz: u +Y, v +Z, n +X (right view). */
+export interface OriginPlaneRef {
+  kind: "originPlane";
+  plane: "xy" | "xz" | "yz";
+}
+
+/** The plane a sketch lies on. Only origin planes so far; faces of bodies come later as a further variant. */
+export type PlaneRef = OriginPlaneRef;
+
+/** A point of a sketch at its solved position (mm). Lines and circles that use the same point id are joined there. */
+export interface SketchPoint {
+  id: string;
+  x: number;
+  y: number;
+}
+
+/** A straight line between two points of the sketch. Construction lines belong to no profile. */
+export interface SketchLine {
+  id: string;
+  p1: string;
+  p2: string;
+  construction: boolean;
+}
+
+/** A full circle around a point of the sketch, radius in mm at its solved size. */
+export interface SketchCircle {
+  id: string;
+  center: string;
+  radius: number;
+  construction: boolean;
+}
+
+/** A constraint without a value. refs: coincident point, point (also @origin); pointOnCurve point, line or circle (the infinite line, the whole circle); horizontal / vertical line (along u / v); parallel / perpendicular line, line (also @axisU, @axisV); equal line, line or circle, circle; fix point, line or circle (holds it where it is). All constraints are equations solved together; none has a direction. */
+export interface GeometricConstraint {
+  id: string;
+  kind: "coincident" | "pointOnCurve" | "horizontal" | "vertical" | "parallel" | "perpendicular" | "equal" | "fix";
+  refs: string[];
+}
+
+/** A constraint with a value. refs: distance one line (its length), or two of point, line and circle in any order (what was clicked is what is measured): point, point the distance; point, line the perpendicular distance from the infinite line; line, line the perpendicular distance of the first line's start point from the second line (the distance of two parallel lines); point, circle the shortest distance to its rim (distance to the centre minus the radius, unsigned); circle, line the shortest distance of its rim from the infinite line; circle, circle the gap between the rims (outside each other, or one inside the other; circles that cross have no positive gap) - the centre of a circle is a point of the sketch and is measured as a point; distanceX / distanceY point a, point b with b.u - a.u (b.v - a.v) = value, so the sign carries the direction; angle line l1, line l2 (also @axisU, @axisV): without reverse the counter-clockwise angle from the direction of l1 to the direction of l2 = value (any value); with reverse the angle between two rays, one along each line, 0 to 180 degrees (see reverse); diameter / radius circle. Lengths in mm, angles in deg. driving = false makes a reference dimension: the engine never gives it to the solver and measures it after solving. label: where the number is drawn, stored relative to the measured geometry so it moves with it (see the field); the engine does not read it. */
+export interface Dimension {
+  id: string;
+  kind: "distance" | "distanceX" | "distanceY" | "angle" | "diameter" | "radius";
+  refs: string[];
+  value: Quantity;
+  driving: boolean;
+  /** The automatic name of the dimension is d followed by this number (d3); the pattern d plus a number is reserved for these names, counted over the whole document from 0 in creation order (d0, d1, d2 ...) (see PartcraftDocument.nextParameter). Reference dimensions have one too. Never changed and never reused, not after a deletion, an undo or a reload. Absent in documents from before the names (readers number those dimensions in creation order). Never read by the engine. */
+  number?: number;
+  /** Angle only. Which of the four angles between two lines is meant: the angle between two rays, one along each line, counted counter-clockwise from the ray of refs[0] to the ray of refs[1], value 0 to 180 degrees. Two flags, one per reference: true when that ray runs against the direction of its line (p1 to p2; the axes run along +u and +v). Absent: the old reading (angle between the two directions). */
+  reverse?: boolean[];
+  /** Position of the number relative to what the dimension measures (x, y mean different things per kind). distance (a line, or two of point, line and circle; the measured segment runs from the first point to the nearest point of the other, for a circle its rim): x = distance along the measured direction from the midpoint of a and b as a share of the length |b - a|, y = mm perpendicular to it (to the left of the segment from a to b). distanceX / distanceY: x = along u / v from the midpoint as a share of b - a in that direction, y = mm of the dimension line from the midpoint across it. angle: x = direction as a share of the swept angle counted from the first ray (0 on it, 1 on the second ray), y = mm from the vertex. diameter / radius: offset from the circle centre as a multiple of the radius in x (u) and y (v). A share of a length that is 0 is stored as 0. */
+  label: Vec2;
+}
+
+/** A constraint or a dimension, told apart by kind. */
+export type SketchConstraint = GeometricConstraint | Dimension;
+
+/** One step the user took inside a sketch, for the timeline (a rectangle is one step, not four lines and four constraints). members lists every element id the step created (points, lines, circles, constraints, dimensions). The engine does not read steps. */
+export interface SketchStep {
+  id: string;
+  kind: "line" | "rectangle" | "circle" | "constraint" | "dimension";
+  members: string[];
+  /** Running number of the shape this step drew (line, rectangle, circle), counted per kind in the sketch from 1 in creation order: the third line is Line 3 for good. Never changed and never reused, also when shapes are deleted (see SketchData.shapeCounts). The user sees the name as the kind's word and this number (Rectangle 1, Kreis 2). Absent for constraint and dimension steps and in documents from before the numbers (readers number those steps in creation order). Never read by the engine. */
+  number?: number;
+}
+
+/** A group of connected shapes of a sketch (shapes that share points or are tied together by constraints) with its number: the group is called Form <number> as long as it has more than one shape. A single shape keeps its kind's name (Circle 2). The number is stable: when groups merge the lowest number stays and the others are retired, when a group splits the part with the most elements keeps it and the other part gets a new number, and a retired number is never handed out again (SketchData.shapeCounts.form). Never read by the engine. */
+export interface SketchForm {
+  number: number;
+  /** The ids of the SketchSteps that drew the shapes of the group, in creation order. */
+  shapes: string[];
+}
+
+/** Geometry and constraints of one sketch, in list order (lists are appended to or shortened, never reordered). */
+export interface SketchData {
+  points: SketchPoint[];
+  lines: SketchLine[];
+  circles: SketchCircle[];
+  constraints: SketchConstraint[];
+  /** The groups of connected shapes that have a Form number (groups of more than one shape), kept in step with the sketch whenever it changes. Absent in documents from before the form names (readers work them out). Never read by the engine. */
+  forms?: SketchForm[];
+  /** How many shapes of each kind (line, rectangle, circle, arc, spline) were ever drawn in this sketch: the last SketchStep.number handed out per kind; under form the last Form number handed out. The next shape gets this plus one, so a number is never reused after a deletion. Absent in documents from before the numbers. Never read by the engine. */
+  shapeCounts?: Record<string, number>;
+  /** The user steps in creation order. Absent in documents written before the steps existed (they have no record; readers treat absence as an empty list). A dragged point or a changed dimension value adds no step. Never read by the engine. */
+  steps?: SketchStep[];
+}
+
+/** A sketch as a step of the timeline. */
+export interface SketchFeature {
+  id: string;
+  type: "sketch";
+  name: string;
+  /** Component the step belongs to; only root so far. */
+  component: string;
+  visible: boolean;
+  plane: PlaneRef;
+  sketch: SketchData;
+}
+
+/** One closed region of a sketch, named by its region key (sketchSolveResult.profiles[].key). */
+export interface ProfileRef {
+  /** Id of an earlier sketch step. */
+  sketch: string;
+  region: string;
+}
+
+/** Extrusion of one region into a new body. oneSide: distance along the sketch normal n, a negative distance against it. symmetric: both directions, distance is the total thickness (half of it on each side of the sketch plane). The start face is always on the sketch side (oneSide) or on the -n side (symmetric). */
+export interface ExtrudeFeature {
+  id: string;
+  type: "extrude";
+  name: string;
+  component: string;
+  profile: ProfileRef;
+  extent: "oneSide" | "symmetric";
+  /** mm, not 0. */
+  distance: Quantity;
+  operation: "newBody";
+  /** Id of the new body (listed in its component's bodies). */
+  body: string;
+}
+
+/** A step of the timeline, told apart by type. */
+export type Feature = SketchFeature | ExtrudeFeature;
+
+/** A body of a component. Its geometry is computed, never stored. */
+export interface Body {
+  id: string;
+  name: string;
+  /** Id of the timeline step that creates the body. */
+  createdBy: string;
+  visible: boolean;
+}
+
+/** A component with its bodies. Only the top component root so far. */
+export interface Component {
+  id: string;
+  name: string;
+  bodies: Body[];
+}
+
+/** A named parameter (formulas come later; the list stays empty so far). */
+export interface Parameter {
+  id: string;
+  name: string;
+  value: Quantity;
+}
+
+/** Settings stored with the document. */
+export interface DocumentSettings {
+  lengthUnit: "mm";
+}
+
+/** A Partcraft document: the timeline with its sketches and extrusions plus the components with their bodies. */
+export interface PartcraftDocument {
+  /** Document format version (constant documentFormat). */
+  format: number;
+  documentId: string;
+  settings: DocumentSettings;
+  /** Next free id number; never goes down, also not after undo. */
+  nextId: number;
+  /** Next free number of the automatic names d0, d1, d2, ... that dimensions carry (Dimension.number), one counter for the whole document so a name is unique across all sketches and later steps; never goes down, also not after undo. Absent: 0 (documents from before the names; readers number their dimensions in creation order and raise it). Never read by the engine. */
+  nextParameter?: number;
+  parameters: Parameter[];
+  components: Component[];
+  timeline: Feature[];
+}
 
 // ---------------------------------------------------------------- shared types
 
@@ -120,6 +326,196 @@ export interface KernelSelftestStep {
   problem?: string;
 }
 
+/** A point or direction in model coordinates (mm), right-handed, Z up. */
+export interface Vec3 {
+  x: number;
+  y: number;
+  z: number;
+}
+
+/** Placement of a sketch plane in the model: a sketch point (u, v) lies at origin + u * u + v * v. normal = u x v. */
+export interface PlaneFrame {
+  origin: Vec3;
+  u: Vec3;
+  v: Vec3;
+  normal: Vec3;
+}
+
+/** A typed array inside the binary payload. offset is a multiple of payloadAlignment. */
+export interface BufferRef {
+  offset: number;
+  byteLength: number;
+}
+
+/** Why a sketch or a timeline step did not work. The UI builds the translated text from code, refs and values and shows message under technical details. */
+export interface Problem {
+  code: StepProblemCode;
+  /** Complete English text written by the engine. */
+  message: string;
+  /** Ids the problem is about (constraints, curves, steps, a region key). */
+  refs?: string[];
+  /** Numbers for the translated text, e.g. volume and expectedVolume. */
+  values?: Record<string, number>;
+}
+
+/** Position of a sketch point after solving (mm). */
+export interface SolvedPoint {
+  id: string;
+  x: number;
+  y: number;
+}
+
+/** Radius of a sketch circle after solving (mm). */
+export interface SolvedCircle {
+  id: string;
+  radius: number;
+}
+
+/** Triangles of a region for display and picking: Float32 (u, v) pairs in sketch coordinates, Uint32 indices, three per triangle, counter-clockwise seen from the normal. */
+export interface RegionFill {
+  positions: BufferRef;
+  indices: BufferRef;
+  triangleCount: number;
+}
+
+/** A closed region of a sketch: an outer loop and its holes, built from non-construction lines and circles. Sketch mode highlights every determined region (a translucent fill from fill, or a narrow band along loops); the extrude command picks one. */
+export interface Region {
+  /** Curve ids of the outer loop, sorted, joined by commas; then per hole "|" and its sorted ids, holes sorted. Stays the same while only dimensions change; changes when the shape of the region changes. */
+  key: string;
+  /** Curve ids of the outer loop in loop order, counter-clockwise seen from the normal. */
+  outer: string[];
+  holes: string[][];
+  /** mm^2, computed from the sketch geometry (not by the kernel). */
+  area: number;
+  /** True when every curve of the outer loop and of the holes is fully determined (all its points and radii fixed by the constraints). Needs the element states, so it is false when the request had diagnose false. */
+  determined: boolean;
+  fill: RegionFill;
+  /** One closed polyline per loop, outer loop first, then the holes in the order of holes: Float32 (u, v) pairs in sketch coordinates in the payload, the first point not repeated at the end. Outer loops run counter-clockwise, holes clockwise. Circles are cut with the same tolerance as the fill triangles and their points are corner points of those triangles. */
+  loops: BufferRef[];
+}
+
+/** A point of the sketch and the position the pointer wants it at (sketch coordinates, mm). */
+export interface DragTarget {
+  id: string;
+  x: number;
+  y: number;
+}
+
+/** Dragging: the listed points are pulled towards their targets by soft temporary constraints (planegcs tag -1, solved in a second subsystem with SQP, as FreeCAD does), so every real constraint of the sketch still holds and a point that cannot reach its target ends as near as the constraints allow. The sketch of the request holds the positions of the previous step; the engine cuts a long way into short steps and keeps nothing between requests. */
+export interface SketchDrag {
+  points: DragTarget[];
+}
+
+/** How far a dragged point got. */
+export interface DragPointResult {
+  id: string;
+  /** Distance in mm between the solved position and the target; 0 when the point reached it. */
+  error: number;
+  /** The point left the position it had in the request. False for a fully determined point: it does not move, the sketch comes back as sent and status is still solved. */
+  moved: boolean;
+}
+
+/** One thing that is still free in a solved sketch, in words-ready form (what the palette lists). The engine finds the motions the constraints still allow (the null space of the constraint Jacobian at the solved geometry, the same free parameters planegcs reports as dependent) and groups them per connected shape: the rigid motions of the whole shape (kind position and rotation) are named as one fact instead of one per point, what is left of the freedom is told per element (length, direction, radius, a point that moves against the rest). The facts of a fully determined sketch are empty. */
+export interface FreedomFact {
+  /** position: the whole shape can still be moved (moves tells in how many directions); rotation: it can still be turned; length: the length of the listed lines can still change (lines whose lengths change together are one fact); direction: the listed lines can still turn against the rest of the shape; radius: the radius of the listed circles can still change; point: the listed point can still move against the rest of the shape and no line or circle fact explains it. */
+  kind: "position" | "rotation" | "length" | "direction" | "radius" | "point";
+  /** What the connected shape is: one point, one line, one circle, four lines forming a rectangle (all corners 90 degrees), anything else. */
+  shape: "point" | "line" | "circle" | "rectangle" | "shape";
+  /** position only: 2 = the shape can be moved in every direction, 1 = only along one direction. */
+  moves?: number;
+  /** The ids the fact is about, for highlighting: the lines and circles of the shape (position, rotation; a lone point when the shape is one), the lines (length, direction), the circles (radius) or the point (point). */
+  elements: string[];
+}
+
+/** Outcome of the dragging part of a sketch.solve. */
+export interface SketchDragResult {
+  /** One entry per dragged point, in the order of the request. */
+  points: DragPointResult[];
+  /** How many short steps the movement was cut into (1 for a short move). */
+  steps: number;
+  /** False when a step found no solution; the geometry then is the last good step and the error of the points says how far short it stopped. */
+  complete: boolean;
+}
+
+/** Result check of a body-building step: BRepCheck_Analyzer plus volume and face count against the values computed from the sketch. */
+export interface StepCheck {
+  valid: boolean;
+  volume: number;
+  expectedVolume?: number;
+  faces: number;
+  expectedFaces?: number;
+  solids: number;
+}
+
+/** Outcome of one timeline step. warning: the step worked with a remark (e.g. crossing curves in a sketch). error: the step failed; later steps that need it are skipped or fail with upstream_failed. */
+export interface StepStatus {
+  featureId: string;
+  state: "ok" | "warning" | "error" | "skipped";
+  problem?: Problem;
+  /** The result came from the engine's cache of the previous rebuild. */
+  cached: boolean;
+  ms: number;
+  check?: StepCheck;
+}
+
+/** Axis-aligned bounding box in model coordinates (mm). */
+export interface BoundingBox {
+  min: Vec3;
+  max: Vec3;
+}
+
+/** A face of a body with its persistent name (step id : role : origin, e.g. f12:side:l7, f12:start, f12:end) and its triangles. */
+export interface BodyFace {
+  name: string;
+  surface: "plane" | "cylinder" | "cone" | "sphere" | "torus" | "bspline" | "other";
+  triangleStart: number;
+  triangleCount: number;
+}
+
+/** A visible edge of a body with its persistent name (e.g. f12:start:l7, f12:lateral:p3); a polyline of pointCount points from pointStart in edgePoints. Seams are not listed. */
+export interface BodyEdge {
+  name: string;
+  pointStart: number;
+  pointCount: number;
+}
+
+/** Triangle mesh of a body in the payload. Vertices are not shared between faces (sharp edges). positions, normals, edgePoints: Float32 x, y, z; indices: Uint32, three per triangle, counter-clockwise seen from outside; triangleFace: Uint32 per triangle, index into faces. */
+export interface BodyMesh {
+  vertexCount: number;
+  triangleCount: number;
+  edgePointCount: number;
+  positions: BufferRef;
+  normals: BufferRef;
+  indices: BufferRef;
+  triangleFace: BufferRef;
+  edgePoints: BufferRef;
+}
+
+/** Geometry of one body after the rebuild. */
+export interface BodyResult {
+  bodyId: string;
+  /** Last step that changed this body successfully. */
+  featureId: string;
+  /** Changes only when the geometry changed; the UI can keep an unchanged mesh. */
+  meshKey: string;
+  /** Built or changed by a step listed in model.sync previewFeatures. */
+  preview: boolean;
+  volume: number;
+  area: number;
+  bbox: BoundingBox;
+  faces: BodyFace[];
+  edges: BodyEdge[];
+  mesh: BodyMesh;
+}
+
+/** Where the time of a model.sync went (ms). */
+export interface ModelTimings {
+  rebuildMs: number;
+  meshMs: number;
+  encodeMs: number;
+  totalMs: number;
+}
+
 // ---------------------------------------------------------------- client -> engine
 
 /** First command of every connection. Compares the protocol version; every other command is refused before it. */
@@ -129,6 +525,8 @@ export interface HelloCommand {
   id: number;
   /** Protocol version the client speaks. */
   protocol: number;
+  /** The protocol id the client speaks (constant protocolId). Optional only so that a client of an older protocol version still gets the version error; the engine refuses a hello without it, or with another one, as protocol_mismatch. */
+  protocolId?: string;
   /** Free text naming the client and its version, for diagnostics. */
   client: string;
 }
@@ -170,6 +568,35 @@ export interface DiagnosticsSolverSelftestCommand {
   id: number;
 }
 
+/** Solves one sketch without keeping anything: sketch in, solved sketch out. Reference dimensions are measured after solving, never given to the solver. A conflicting or redundant sketch is not solved; its geometry comes back unchanged with the constraints named. */
+export interface SketchSolveCommand {
+  type: "sketch.solve";
+  /** Client-chosen request id, 1..MAX_REQUEST_ID, unique per connection. */
+  id: number;
+  sketch: SketchData;
+  plane: PlaneRef;
+  /** Determine the states of all elements and constraints (dof, conflicts, redundancies are always reported). Default true. */
+  diagnose?: boolean;
+  /** Find the closed regions of a solved sketch and triangulate them (fill and loop buffers in the payload). The sketch editor asks for them on every solve (sketch mode highlights determined regions), the extrude command for its hover and selection. Default false. */
+  profiles?: boolean;
+  /** Drag step: pull the listed points towards their targets while all constraints hold. The sketch is the one of the previous step; a conflicting or redundant sketch is not dragged (status conflicting or redundant, geometry as sent). */
+  drag?: SketchDrag;
+}
+
+/** Hands the engine the whole document and rebuilds the timeline in order. Unchanged steps come from the cache of the previous rebuild. preview and commit compute the same; purpose only says what the document is. */
+export interface ModelSyncCommand {
+  type: "model.sync";
+  /** Client-chosen request id, 1..MAX_REQUEST_ID, unique per connection. */
+  id: number;
+  /** Greater than every revision this engine accepted before (the client keeps counting across engine restarts); otherwise stale_revision. */
+  revision: number;
+  document: PartcraftDocument;
+  /** commit: the accepted document. preview: a dialog is open, its values are not accepted yet. */
+  purpose: "commit" | "preview";
+  /** Steps that are being previewed; bodies they build or change are marked preview. */
+  previewFeatures?: string[];
+}
+
 /** Test only: ends the engine on purpose (native: the process dies; WebAssembly: a trap). Used to test the desktop supervisor and the worker restart. Only in engines built with test commands. */
 export interface DiagnosticsCrashCommand {
   type: "diagnostics.crash";
@@ -196,6 +623,8 @@ export type Command =
   | ShutdownCommand
   | DiagnosticsKernelSelftestCommand
   | DiagnosticsSolverSelftestCommand
+  | SketchSolveCommand
+  | ModelSyncCommand
   | DiagnosticsCrashCommand
   | DiagnosticsHangCommand;
 export type CommandType = Command["type"];
@@ -207,6 +636,8 @@ export const COMMAND_TYPES = [
   "shutdown",
   "diagnostics.kernelSelftest",
   "diagnostics.solverSelftest",
+  "sketch.solve",
+  "model.sync",
   "diagnostics.crash",
   "diagnostics.hang",
 ] as const;
@@ -230,10 +661,14 @@ export interface HelloResult {
   /** Id of the command this answers; null only for errors about unreadable messages. */
   replyTo: number | null;
   protocol: number;
+  /** The protocol id the engine speaks (constant protocolId); the client refuses an engine with another one. */
+  protocolId: string;
   engine: EngineInfo;
   components: ComponentVersions;
   capabilities: Capabilities;
   limits: Limits;
+  /** Newest document format this engine reads. */
+  documentFormat: number;
 }
 
 /** Answer to ping. */
@@ -315,6 +750,57 @@ export interface SolverSelftestResult {
   timeMs: number;
 }
 
+/** Answer to sketch.solve. A sketch that cannot be solved is a normal answer with status failed, conflicting or redundant and a problem. Region fill buffers are in the payload. */
+export interface SketchSolveResult {
+  type: "sketchSolveResult";
+  /** Id of the command this answers; null only for errors about unreadable messages. */
+  replyTo: number | null;
+  status: "solved" | "failed" | "conflicting" | "redundant";
+  /** Remaining degrees of freedom of the whole sketch (planegcs). */
+  dof: number;
+  /** Solved positions in sketch order; the input positions when not solved. */
+  points: SolvedPoint[];
+  circles: SolvedCircle[];
+  /** State of every point, line and circle: under = can still move, full = fully determined, over = a conflicting constraint refers to it. Empty when diagnose is false. */
+  entities: Record<string, "under" | "full" | "over">;
+  /** State of every constraint and dimension. Empty when diagnose is false. */
+  constraints: Record<string, "ok" | "conflicting" | "redundant" | "partiallyRedundant">;
+  /** Conflicting constraint ids (correct, not necessarily complete). */
+  conflicting: string[];
+  redundant: string[];
+  /** Reported, but they do not stop solving. */
+  partiallyRedundant: string[];
+  /** Reference dimensions (driving = false) by id, measured after solving: mm, angles in deg, a diameter as a diameter. */
+  reference: Record<string, number>;
+  /** Closed regions of the solved sketch (empty when profiles is false or the sketch is not solved). */
+  profiles: Region[];
+  /** What is still free, per shape, in the order of the sketch. Present for a solved sketch when diagnose is true and the request has no drag (empty then when everything is determined, and also for sketches with arcs, which are not analysed). A sketch with freedom and no fact is not understood: the palette falls back to the degrees of freedom. */
+  freedom: FreedomFact[];
+  /** Present when the request had drag. */
+  drag?: SketchDragResult;
+  /** Why the sketch is not solved, or profile_intersecting for a solved sketch with crossing curves. */
+  problem?: Problem;
+  frame: PlaneFrame;
+  /** Milliseconds of timeMs spent on finding the regions and cutting them into triangles and outlines; present when the request had profiles and the sketch was solved. A drag skips profiles for the rest of the drag when this gets too large. */
+  profilesMs?: number;
+  timeMs: number;
+}
+
+/** Answer to model.sync. Mesh buffers of all bodies are in the payload. */
+export interface ModelResult {
+  type: "modelResult";
+  /** Id of the command this answers; null only for errors about unreadable messages. */
+  replyTo: number | null;
+  revision: number;
+  purpose: "commit" | "preview";
+  /** Worst state of all steps. */
+  outcome: "ok" | "warning" | "error";
+  /** One per timeline step, in order. */
+  steps: StepStatus[];
+  bodies: BodyResult[];
+  timings: ModelTimings;
+}
+
 /** Answer to diagnostics.hang in busy mode. */
 export interface HangResult {
   type: "hangResult";
@@ -346,6 +832,8 @@ export type EngineMessage =
   | Bye
   | KernelSelftestResult
   | SolverSelftestResult
+  | SketchSolveResult
+  | ModelResult
   | HangResult
   | ErrorMessage;
 export type EngineMessageType = EngineMessage["type"];
@@ -358,6 +846,22 @@ export interface CommandReplies {
   "shutdown": Bye;
   "diagnostics.kernelSelftest": KernelSelftestResult;
   "diagnostics.solverSelftest": SolverSelftestResult;
+  "sketch.solve": SketchSolveResult;
+  "model.sync": ModelResult;
   "diagnostics.crash": never;
   "diagnostics.hang": HangResult;
 }
+
+/** Message type of the successful answer of each command (null: the command never answers on success). */
+export const REPLY_TYPES = {
+  "hello": "helloResult",
+  "ping": "pong",
+  "cancel": "cancelResult",
+  "shutdown": "bye",
+  "diagnostics.kernelSelftest": "kernelSelftestResult",
+  "diagnostics.solverSelftest": "solverSelftestResult",
+  "sketch.solve": "sketchSolveResult",
+  "model.sync": "modelResult",
+  "diagnostics.crash": null,
+  "diagnostics.hang": "hangResult",
+} as const satisfies Record<CommandType, EngineMessageType | null>;

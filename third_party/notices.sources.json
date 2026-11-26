@@ -1,0 +1,314 @@
+{
+  "$comment": "Hand-maintained facts for the third-party list of the info view (scripts/notices/generate.ts reads this file, third_party/manifest.json, package.json, the lockfiles and the licence files of the real components). Everything that can be read from a real file is read from it; only purposes, groups, display labels and the few facts that no file holds (and that the generator cross-checks where it can) are written here. Change a version of Electron, Velopack or the Visual C++ runtime and the check fails until the matching value here is confirmed.",
+  "formatVersion": 1,
+  "output": {
+    "module": "app/src/about/third-party.generated.ts",
+    "textDir": "app/public/licenses",
+    "textUrlPrefix": "licenses/"
+  },
+  "ownTexts": [
+    { "id": "partcraft-license", "file": "LICENSE" },
+    { "id": "partcraft-notice", "file": "NOTICE" }
+  ],
+  "npm": {
+    "$comment": "Packages of package.json 'dependencies' (and their dependencies) must each belong to an entry below or be listed in notBundled with the reason. extraRoots are devDependencies whose code ends up in the bundle (and whose own dependencies are then shipped too). scripts/notices/verify-bundle.ts proves both against a real production build.",
+    "extraRoots": ["react", "react-dom", "tailwindcss"],
+    "notBundled": {
+      "tslib": "Dependency of motion and framer-motion; no module of it is part of the production bundle (checked against the real build)."
+    }
+  },
+  "entries": [
+    {
+      "id": "occt",
+      "group": "engine",
+      "from": { "kind": "manifest", "id": "occt" },
+      "licenseLabel": { "de": "LGPL-2.1 mit OCCT-Ausnahme", "en": "LGPL-2.1 with OCCT exception" },
+      "purpose": {
+        "de": "Geometriekern: Körper, Schnitte und Verrundungen",
+        "en": "Geometry kernel: solids, cuts and fillets"
+      },
+      "note": {
+        "de": "Partcraft nutzt Open CASCADE Technology (OCCT) für die Geometrie. Der Lizenztext besteht aus der GNU LGPL 2.1 und der „Open CASCADE exception 1.0“. Einige Quelldateien von OCCT enthalten kleine Teile anderer Urheber; deren Hinweise stehen am Ende des Lizenztextes.",
+        "en": "Partcraft uses Open CASCADE Technology (OCCT) for its geometry. The licence text consists of the GNU LGPL 2.1 and the “Open CASCADE exception 1.0”. A few OCCT source files contain small parts by other authors; their notices are at the end of the licence text."
+      },
+      "copyright": {
+        "licenseFiles": { "exclude": ["Free Software Foundation"] },
+        "scan": { "source": "occt-toolkits" },
+        "blocks": [
+          { "file": "engine/_deps/occt-src/src/FoundationClasses/TKernel/FlexLexer/FlexLexer.h", "start": "Copyright \\(c\\) 1993 The Regents", "end": "^//  PURPOSE\\.$" },
+          { "file": "engine/_deps/occt-src/src/FoundationClasses/TKernel/Standard/Standard_Strtod.cxx", "start": "^/\\*{20,}$", "end": "^ \\*{20,}/$" },
+          { "file": "engine/_deps/occt-src/src/FoundationClasses/TKernel/NCollection/NCollection_UtfIterator.lxx", "start": "^// Portions of this file are derived from Unicode", "end": "^// authorization of the copyright holder\\.$" },
+          { "file": "engine/_deps/occt-src/src/ModelingAlgorithms/TKMesh/BRepMesh/delabella.cpp", "start": "^/\\*$", "end": "^\\*/$" }
+        ]
+      }
+    },
+    {
+      "id": "planegcs",
+      "group": "engine",
+      "from": { "kind": "manifest", "id": "planegcs" },
+      "licenseLabel": { "de": "LGPL-2.0 oder neuer", "en": "LGPL-2.0 or later" },
+      "purpose": {
+        "de": "Löser für die Abhängigkeiten der Skizzen",
+        "en": "Solver for sketch constraints"
+      },
+      "note": {
+        "de": "Aus den FreeCAD-Quellen, fest in die Engine gebunden. Die Dateiköpfe nennen LGPL-2.0-or-later (zwei Hilfsdateien LGPL-2.1-or-later); die beiliegende Lizenzdatei enthält den Text der LGPL 2.1.",
+        "en": "Taken from the FreeCAD sources and linked statically into the engine. The file headers name LGPL-2.0-or-later (two helper files LGPL-2.1-or-later); the bundled licence file contains the text of the LGPL 2.1."
+      },
+      "copyright": {
+        "licenseFiles": { "exclude": ["Free Software Foundation"] },
+        "scan": { "source": "manifest-files" }
+      }
+    },
+    {
+      "id": "eigen",
+      "group": "engine",
+      "from": { "kind": "manifest", "id": "eigen" },
+      "licenseLabel": { "de": "MPL-2.0 (Teile Apache-2.0, BSD-3-Clause)", "en": "MPL-2.0 (parts Apache-2.0, BSD-3-Clause)" },
+      "purpose": {
+        "de": "Matrizenrechnung für den Skizzen-Löser",
+        "en": "Matrix maths for the sketch solver"
+      },
+      "note": {
+        "de": "Gebaut mit EIGEN_MPL2_ONLY, also ohne die LGPL-Teile. Wenige Kopfdateien stehen unter Apache-2.0 oder BSD-3-Clause. Die Urheberzeilen stammen aus den Kopfdateien von Eigen.",
+        "en": "Built with EIGEN_MPL2_ONLY, so without the LGPL parts. A few headers are under Apache-2.0 or BSD-3-Clause. The copyright lines are taken from Eigen's headers."
+      },
+      "copyright": {
+        "licenseFiles": { "exclude": ["Free Software Foundation"] },
+        "scan": { "source": "dirs", "dirs": ["engine/_deps/eigen/Eigen"] }
+      }
+    },
+    {
+      "id": "boost",
+      "group": "engine",
+      "from": { "kind": "manifest", "id": "boost" },
+      "purpose": {
+        "de": "Hilfsbibliothek des Skizzen-Lösers (nur Kopfdateien)",
+        "en": "Helper library of the sketch solver (headers only)"
+      },
+      "note": {
+        "de": "Die Lizenzdatei nennt keinen Inhaber; die Urheberzeilen stehen in den einzelnen Kopfdateien. Die Boost Software License verlangt den Hinweis nicht für Kopien, die nur in maschinenlesbarer Objektform vorliegen.",
+        "en": "The licence file names no holder; the copyright lines are in the individual headers. The Boost Software License does not require the notice for copies that exist only as machine-executable object code."
+      },
+      "copyright": { "licenseFiles": false }
+    },
+    {
+      "id": "nlohmann-json",
+      "group": "engine",
+      "from": { "kind": "manifest", "id": "nlohmann-json" },
+      "purpose": {
+        "de": "JSON im Engine-Dienst",
+        "en": "JSON in the engine service"
+      },
+      "note": {
+        "de": "Die Kopfdatei enthält außerdem Hedley-Makros von Evan Nemerson (MIT laut SPDX-Kopf) und, nur für Compiler vor C++14, eine Hilfsvorlage nach Google Abseil (Apache-2.0); Partcraft baut mit C++20 und übersetzt diesen Teil nicht.",
+        "en": "The header also contains Hedley macros by Evan Nemerson (MIT per its SPDX header) and, for compilers before C++14 only, a helper template derived from Google Abseil (Apache-2.0); Partcraft builds with C++20 and does not compile that part."
+      },
+      "copyright": { "licenseFiles": {} }
+    },
+    {
+      "id": "emscripten-runtime",
+      "group": "engine",
+      "from": { "kind": "manifest", "id": "emscripten-runtime" },
+      "licenseLabel": { "de": "MIT oder NCSA (zur Wahl)", "en": "MIT or NCSA (your choice)" },
+      "purpose": {
+        "de": "Laufzeit der Browser-Engine (JavaScript-Lader und Systembibliothek)",
+        "en": "Runtime of the browser engine (JavaScript loader and system library)"
+      },
+      "copyright": { "licenseFiles": {} }
+    },
+    {
+      "id": "llvm-runtimes",
+      "group": "engine",
+      "from": { "kind": "manifest", "id": "llvm-runtimes" },
+      "licenseLabel": { "de": "Apache-2.0 mit LLVM-Ausnahme", "en": "Apache-2.0 with LLVM exception" },
+      "purpose": {
+        "de": "C++-Laufzeit der Browser-Engine (libc++, libc++abi, libunwind, compiler-rt)",
+        "en": "C++ runtime of the browser engine (libc++, libc++abi, libunwind, compiler-rt)"
+      },
+      "copyright": { "licenseFiles": {} }
+    },
+    {
+      "id": "musl",
+      "group": "engine",
+      "from": { "kind": "manifest", "id": "musl" },
+      "purpose": {
+        "de": "C-Bibliothek der Browser-Engine",
+        "en": "C library of the browser engine"
+      },
+      "copyright": { "licenseFiles": {} }
+    },
+    {
+      "id": "dlmalloc",
+      "group": "engine",
+      "from": { "kind": "manifest", "id": "dlmalloc" },
+      "licenseLabel": { "de": "gemeinfrei (CC0-1.0)", "en": "public domain (CC0-1.0)" },
+      "purpose": {
+        "de": "Speicherverwaltung der Browser-Engine",
+        "en": "Memory allocator of the browser engine"
+      },
+      "note": {
+        "de": "Von Doug Lea in die Gemeinfreiheit entlassen (system/lib/dlmalloc.c von Emscripten); es gibt keinen Lizenztext und keine Pflichtangabe.",
+        "en": "Released into the public domain by Doug Lea (system/lib/dlmalloc.c of Emscripten); there is no licence text and no required notice."
+      },
+      "copyright": { "licenseFiles": false }
+    },
+    {
+      "id": "react",
+      "group": "ui",
+      "from": { "kind": "npm", "packages": ["react", "react-dom", "scheduler"], "main": "react" },
+      "name": "React, React DOM, Scheduler",
+      "platforms": ["desktop", "browser"],
+      "purpose": { "de": "Oberfläche", "en": "User interface" }
+    },
+    {
+      "id": "three",
+      "group": "ui",
+      "from": { "kind": "npm", "packages": ["three"], "main": "three" },
+      "name": "three.js",
+      "platforms": ["desktop", "browser"],
+      "purpose": { "de": "3D-Ansicht", "en": "3D view" }
+    },
+    {
+      "id": "motion",
+      "group": "ui",
+      "from": { "kind": "npm", "packages": ["motion", "framer-motion", "motion-dom", "motion-utils"], "main": "motion" },
+      "name": "Motion (Framer Motion)",
+      "platforms": ["desktop", "browser"],
+      "purpose": { "de": "Animationen der Oberfläche", "en": "Animations of the interface" }
+    },
+    {
+      "id": "tailwindcss",
+      "group": "ui",
+      "from": { "kind": "npm", "packages": ["tailwindcss"], "main": "tailwindcss", "cssProof": "--tw-" },
+      "name": "Tailwind CSS",
+      "platforms": ["desktop", "browser"],
+      "purpose": { "de": "Gestaltung der Oberfläche (Stylesheet)", "en": "Styling of the interface (stylesheet)" }
+    },
+    {
+      "id": "vite",
+      "group": "ui",
+      "from": { "kind": "npm", "packages": ["vite"], "main": "vite", "cutTextAt": { "vite": "# Licenses of bundled dependencies" } },
+      "name": "Vite",
+      "platforms": ["desktop", "browser"],
+      "purpose": { "de": "Hilfscode des Bündlers im Programmpaket", "en": "Bundler helper code in the program bundle" },
+      "note": {
+        "de": "Der Lizenztext enthält nur die Lizenz von Vite selbst; die Lizenzen der Pakete, die in Vite eingebaut sind, gehören nicht zum Programmpaket.",
+        "en": "The licence text contains only Vite's own licence; the licences of the packages built into Vite are not part of the program bundle."
+      }
+    },
+    {
+      "id": "rolldown",
+      "group": "ui",
+      "from": { "kind": "npm", "packages": ["rolldown"], "main": "rolldown" },
+      "name": "Rolldown",
+      "platforms": ["desktop", "browser"],
+      "purpose": { "de": "Laufzeithilfen des Bündlers im Programmpaket", "en": "Bundler runtime helpers in the program bundle" }
+    },
+    {
+      "id": "geist",
+      "group": "ui",
+      "from": {
+        "kind": "font",
+        "fonts": ["app/src/assets/fonts/Geist-Variable.woff2", "app/src/assets/fonts/GeistMono-Variable.woff2"],
+        "licenseFile": "app/src/assets/fonts/OFL-LICENSE.txt",
+        "license": "OFL-1.1",
+        "source": "https://github.com/vercel/geist-font"
+      },
+      "name": "Geist, Geist Mono",
+      "platforms": ["desktop", "browser"],
+      "purpose": { "de": "Schrift der Oberfläche", "en": "Typeface of the interface" },
+      "note": {
+        "de": "SIL Open Font License, Version 1.1.",
+        "en": "SIL Open Font License, Version 1.1."
+      }
+    },
+    {
+      "id": "electron",
+      "group": "shell",
+      "from": { "kind": "npm", "packages": ["electron"], "main": "electron" },
+      "name": "Electron",
+      "platforms": ["desktop"],
+      "purpose": { "de": "Programmfenster am Desktop", "en": "Desktop program window" }
+    },
+    {
+      "id": "chromium",
+      "group": "shell",
+      "from": {
+        "kind": "static",
+        "name": "Chromium",
+        "version": "156.0.8078.109",
+        "license": "LicenseRef-Chromium-Third-Party-Notices",
+        "source": "https://chromium.googlesource.com/chromium/src",
+        "requires": [{ "kind": "npm-installed", "package": "electron", "version": "45.5.0", "because": "Chromium 156.0.8078.109 is the Chromium of Electron 45.5.0 (process.versions.chrome); check the value here after every Electron update" }]
+      },
+      "licenseLabel": { "de": "gemischt, je Teilkomponente", "en": "mixed, per component" },
+      "platforms": ["desktop"],
+      "purpose": { "de": "Darstellung der Oberfläche (steckt in Electron)", "en": "Renders the interface (part of Electron)" },
+      "note": {
+        "de": "Chromium und seine Teilkomponenten haben je eigene Lizenzen. Ihre Texte stehen in der mitgelieferten Datei LICENSES.chromium.html neben dem Programm (Desktop).",
+        "en": "Chromium and its components each have their own licence. Their texts are in the bundled file LICENSES.chromium.html next to the program (desktop)."
+      }
+    },
+    {
+      "id": "velopack",
+      "group": "shell",
+      "from": {
+        "kind": "static",
+        "name": "Velopack",
+        "version": "1.2.161",
+        "license": "MIT",
+        "source": "https://github.com/velopack/velopack",
+        "files": [{ "path": "third_party/licenses/velopack-LICENSE", "sha256": "91845db83551c877ebbb1118e0fb92e4e527290d23b995c55dcd438b3293943f" }],
+        "requires": [
+          { "kind": "lockfile", "file": "installer/app/package-lock.json", "package": "velopack", "version": "1.2.161" },
+          { "kind": "json", "file": ".config/dotnet-tools.json", "path": ["tools", "vpk", "version"], "equals": "1.2.161" }
+        ]
+      },
+      "platforms": ["desktop"],
+      "purpose": { "de": "Installation und Updates", "en": "Installation and updates" },
+      "note": {
+        "de": "Lizenztext aus dem Quelltext-Stand 1.2.161 von Velopack. Die nativen Programme von Velopack enthalten außerdem Rust-Bibliotheken; sie stehen in der Cargo.lock von Velopack (https://github.com/velopack/velopack/blob/1.2.161/Cargo.lock).",
+        "en": "Licence text from the 1.2.161 source of Velopack. Velopack's native programs also contain Rust libraries; they are listed in Velopack's Cargo.lock (https://github.com/velopack/velopack/blob/1.2.161/Cargo.lock)."
+      }
+    },
+    {
+      "id": "neon-rs-load",
+      "group": "shell",
+      "from": {
+        "kind": "static",
+        "name": "@neon-rs/load",
+        "version": "0.2.6",
+        "license": "MIT",
+        "source": "https://github.com/neon-bindings/neon-rs",
+        "files": [{ "path": "third_party/licenses/neon-rs-load-LICENSE", "sha256": "dc1649629e747f001580439e048f829be39d4cd3683ac2a85f25f7670d16c220" }],
+        "requires": [{ "kind": "lockfile", "file": "installer/app/package-lock.json", "package": "@neon-rs/load", "version": "0.2.6" }]
+      },
+      "platforms": ["desktop"],
+      "purpose": { "de": "Lädt die native Bibliothek von Velopack", "en": "Loads Velopack's native library" }
+    },
+    {
+      "id": "vcrt",
+      "group": "shell",
+      "from": {
+        "kind": "static",
+        "name": "Microsoft Visual C++ Runtime",
+        "version": "14.44.35211.0",
+        "license": "LicenseRef-Microsoft-VC-Redistributable",
+        "source": "https://learn.microsoft.com/en-us/cpp/windows/redistributing-visual-cpp-files",
+        "files": [{ "path": "third_party/licenses/vcrt-notice.txt" }],
+        "requires": [{ "kind": "contains", "file": "third_party/licenses/vcrt-notice.txt", "text": "14.44.35211.0" }]
+      },
+      "licenseLabel": { "de": "Microsoft-Bedingungen für verteilbaren Code", "en": "Microsoft terms for distributable code" },
+      "platforms": ["desktop"],
+      "purpose": {
+        "de": "Laufzeitdateien der Engine (vcruntime140, msvcp140)",
+        "en": "Runtime files of the engine (vcruntime140, msvcp140)"
+      },
+      "note": {
+        "de": "Microsoft-Dateien, unverändert neben der Engine ausgeliefert; sie stehen unter den Bedingungen von Microsoft, nicht unter Partcrafts Lizenz.",
+        "en": "Microsoft files, shipped unmodified next to the engine; they stay under Microsoft's terms, not under Partcraft's licence."
+      }
+    }
+  ]
+}

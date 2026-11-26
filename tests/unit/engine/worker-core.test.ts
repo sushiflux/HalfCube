@@ -8,6 +8,7 @@ import {
   type ModuleOverrides,
 } from "../../../app/src/engine/worker/engine-worker-core.ts";
 import type { FromWorker } from "../../../app/src/engine/worker/worker-protocol.ts";
+import { PROTOCOL_VERSION } from "../../../app/src/engine/generated/protocol.ts";
 
 interface FakeModule extends EngineModule {
   calls: string[];
@@ -27,7 +28,7 @@ function fakeModule(overrides: ModuleOverrides, behaviour: { version?: number; t
     HEAPU8: heap,
     _pc_init(flags) {
       m.calls.push(`init(${flags})`);
-      return behaviour.version ?? 1;
+      return behaviour.version ?? PROTOCOL_VERSION;
     },
     _malloc(n) {
       m.calls.push(`malloc(${n})`);
@@ -117,12 +118,12 @@ describe("engine worker core", () => {
   });
 
   it("refuses a module of another protocol version", async () => {
-    const { core, posted } = setup({ version: 2 });
+    const { core, posted } = setup({ version: PROTOCOL_VERSION + 1 });
     core.handle({ kind: "init", moduleUrl: "u", cancelFlags: null });
     await tick();
     expect(posted[0]!.message).toEqual({
       kind: "fatal",
-      message: expect.stringMatching(/speaks protocol version 2, this program expects 1/),
+      message: expect.stringMatching(new RegExp(`speaks protocol version ${PROTOCOL_VERSION + 1}, this program expects ${PROTOCOL_VERSION}`)),
     });
   });
 

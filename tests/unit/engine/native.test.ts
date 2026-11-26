@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { EngineCommandError } from "../../../app/src/engine/errors.ts";
 import { describeUnless, skipUnlessNativeRelease, skipUnlessNativeTesting, nativeReleaseExe, nativeTestingExe } from "./helpers/builds.ts";
 import { defineContract } from "./helpers/contract.ts";
+import { defineModelContract } from "./helpers/model-contract.ts";
 import { delay, processAlive, startEngine } from "./helpers/harness.ts";
 import { NativeTransport, describeExit } from "../../../desktop/src/native-transport.ts";
 
@@ -130,3 +131,5 @@ describe("describeExit", () => {
     expect(describeExit(null, null)).toBe("The engine process ended without an exit code.");
   });
 });
+
+defineModelContract("native", native, skipUnlessNativeTesting);

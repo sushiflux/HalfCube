@@ -13,7 +13,8 @@ export type ButtonVariant = "primary" | "create" | "destructive" | "neutral" | "
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: ButtonVariant;
-  size?: "md" | "lg";
+  /** sm: the compact buttons of floating windows (32 px high). */
+  size?: "sm" | "md" | "lg";
   icon?: ReactNode;
   /** The spinner goes over the invisible label, so the button never changes size. */
   loading?: boolean;
@@ -50,7 +51,7 @@ export function Button({
       className={cx(
         "relative inline-flex cursor-pointer items-center justify-center gap-2 rounded-ctl border whitespace-nowrap select-none",
         "disabled:cursor-not-allowed disabled:opacity-45",
-        size === "lg" ? "h-[38px] px-4 text-sm" : "h-9 px-3.5 text-[13.5px]",
+        size === "lg" ? "h-[38px] px-4 text-sm" : size === "sm" ? "h-8 px-3 text-[13px]" : "h-9 px-3.5 text-[13.5px]",
         variants[variant],
         filled.has(variant) && "hover:brightness-95 dark:hover:brightness-110",
         className,

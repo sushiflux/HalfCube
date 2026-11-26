@@ -390,6 +390,20 @@ public static class Draw
         (int)Math.Round(a.G + (b.G - a.G) * t),
         (int)Math.Round(a.B + (b.B - a.B) * t));
 
+    /// <summary>WCAG 2.x contrast ratio (1..21) of two opaque colours.</summary>
+    public static double Contrast(Color a, Color b)
+    {
+        static double Channel(byte value)
+        {
+            var c = value / 255.0;
+            return c <= 0.03928 ? c / 12.92 : Math.Pow((c + 0.055) / 1.055, 2.4);
+        }
+        static double Luminance(Color c) => 0.2126 * Channel(c.R) + 0.7152 * Channel(c.G) + 0.0722 * Channel(c.B);
+        var (hi, lo) = (Luminance(a), Luminance(b));
+        if (hi < lo) (hi, lo) = (lo, hi);
+        return (hi + 0.05) / (lo + 0.05);
+    }
+
     /// <summary>Wrapped text, top-left aligned, never with an ellipsis (a text that does not fit is a layout bug the layout check reports).</summary>
     public static void Text(Graphics g, string text, Font font, Color color, Rectangle bounds, TextFormatFlags extra = 0) =>
         TextRenderer.DrawText(g, text, font, bounds, color,

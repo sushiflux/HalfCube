@@ -26,6 +26,7 @@ const std::string& ref(const Constraint& c, std::size_t i) {
 }
 
 Vec pointAt(const Sketch& s, const std::string& id, const Constraint& c) {
+    if (id == kOrigin) return {0.0, 0.0};
     const Point* p = s.point(id);
     if (!p) throw SketchError("Constraint \"" + c.id + "\" refers to \"" + id + "\", which is no point of the sketch.");
     return {p->x, p->y};
@@ -36,6 +37,8 @@ struct Segment {
 };
 
 Segment lineAt(const Sketch& s, const std::string& id, const Constraint& c) {
+    if (id == kAxisU) return {{0.0, 0.0}, {1.0, 0.0}};
+    if (id == kAxisV) return {{0.0, 0.0}, {0.0, 1.0}};
     const Line* l = s.line(id);
     if (!l) throw SketchError("Constraint \"" + c.id + "\" refers to \"" + id + "\", which is no line of the sketch.");
     return {pointAt(s, l->p1, c), pointAt(s, l->p2, c)};
@@ -72,11 +75,54 @@ double directionResidual(const Segment& l1, const Segment& l2, bool parallel) {
     return parallel ? std::abs(cross(u, v)) / n : std::abs(dot(u, v)) / n;
 }
 
+// Counter-clockwise angle from the direction of l1 to the direction of l2, in (-pi, pi].
+double angleBetween(const Segment& l1, const Segment& l2) {
+    const Vec u = l1.b - l1.a, v = l2.b - l2.a;
+    return std::atan2(cross(u, v), dot(u, v));
+}
+
+// Gap between the rims of two circles as planegcs measures it: circles outside each other (every centre outside the other circle)
+// give the distance between the rims, which is negative when they cross; with a centre inside the other circle it is the room
+// between the smaller circle and the bigger one's rim.
+double rimGap(const Round& a, const Round& b) {
+    const double d = length(a.center - b.center);
+    if (d >= a.radius && d >= b.radius) return d - (a.radius + b.radius);
+    const Round& big = a.radius >= b.radius ? a : b;
+    const Round& small = a.radius >= b.radius ? b : a;
+    return big.radius - (small.radius + d);
+}
+
 } // namespace
 
 double measure(const Sketch& s, const Constraint& c) {
     switch (c.type) {
-    case ConstraintType::Distance: return length(pointAt(s, ref(c, 1), c) - pointAt(s, ref(c, 0), c));
+    case ConstraintType::Distance:
+        if (c.refs.size() == 1) {
+            const Segment l = lineAt(s, ref(c, 0), c);
+            return length(l.b - l.a);
+        }
+        return length(pointAt(s, ref(c, 1), c) - pointAt(s, ref(c, 0), c));
+    case ConstraintType::DistanceX: return pointAt(s, ref(c, 1), c).x - pointAt(s, ref(c, 0), c).x;
+    case ConstraintType::DistanceY: return pointAt(s, ref(c, 1), c).y - pointAt(s, ref(c, 0), c).y;
+    case ConstraintType::LineLineAngle: {
+        // Between rays: undo the half turn a reversed ray adds to the angle of the directions.
+        const double directions = angleBetween(lineAt(s, ref(c, 0), c), lineAt(s, ref(c, 1), c));
+        return c.rays && c.reverse1 != c.reverse2 ? wrapAngle(directions - std::numbers::pi) : directions;
+    }
+    case ConstraintType::DistancePointLine: return distanceToLine(pointAt(s, ref(c, 0), c), lineAt(s, ref(c, 1), c));
+    case ConstraintType::DistanceLineLine: {
+        const Segment first = lineAt(s, ref(c, 0), c);
+        return distanceToLine(first.a, lineAt(s, ref(c, 1), c));
+    }
+    case ConstraintType::DistancePointCircle: {
+        const Round round = roundAt(s, ref(c, 1), c);
+        return std::abs(length(pointAt(s, ref(c, 0), c) - round.center) - round.radius);
+    }
+    case ConstraintType::DistanceCircleLine: {
+        const Round round = roundAt(s, ref(c, 0), c);
+        return std::abs(distanceToLine(round.center, lineAt(s, ref(c, 1), c)) - round.radius);
+    }
+    case ConstraintType::DistanceCircleCircle: return rimGap(roundAt(s, ref(c, 0), c), roundAt(s, ref(c, 1), c));
     case ConstraintType::LineAngle: {
         const Segment l = lineAt(s, ref(c, 0), c);
         return std::atan2(l.b.y - l.a.y, l.b.x - l.a.x);
@@ -85,8 +131,8 @@ double measure(const Sketch& s, const Constraint& c) {
     // A diameter is twice the radius parameter (FreeCAD reports it the same way).
     case ConstraintType::Diameter: return 2.0 * roundAt(s, ref(c, 0), c).radius;
     default:
-        throw SketchError("Constraint \"" + c.id + "\" (" + nameOf(c.type) + ") has no value to measure; only distance, "
-                          "lineAngle, radius and diameter can be reference dimensions.");
+        throw SketchError("Constraint \"" + c.id + "\" (" + nameOf(c.type) + ") has no value to measure; only dimensions can be "
+                          "reference dimensions.");
     }
 }
 
@@ -124,8 +170,29 @@ ResidualReport checkConstraints(const Sketch& s) {
             break;
         }
         case ConstraintType::PointOnLine: r = distanceToLine(pointAt(s, ref(c, 0), c), lineAt(s, ref(c, 1), c)); break;
-        case ConstraintType::LineAngle: r = std::abs(wrapAngle(measure(s, c) - c.value)); break;
+        case ConstraintType::PointOnCircle: {
+            const Round round = roundAt(s, ref(c, 1), c);
+            r = std::abs(length(pointAt(s, ref(c, 0), c) - round.center) - round.radius);
+            break;
+        }
+        case ConstraintType::EqualLength: {
+            const Segment a = lineAt(s, ref(c, 0), c), b = lineAt(s, ref(c, 1), c);
+            r = std::abs(length(a.b - a.a) - length(b.b - b.a));
+            break;
+        }
+        case ConstraintType::EqualRadius: r = std::abs(roundAt(s, ref(c, 0), c).radius - roundAt(s, ref(c, 1), c).radius); break;
+        // A fixing holds the position the sketch had before solving; the solved sketch alone cannot tell it.
+        case ConstraintType::Fix: continue;
+        case ConstraintType::LineAngle:
+        case ConstraintType::LineLineAngle: r = std::abs(wrapAngle(measure(s, c) - c.value)); break;
+        case ConstraintType::DistanceX:
+        case ConstraintType::DistanceY:
         case ConstraintType::Distance:
+        case ConstraintType::DistancePointLine:
+        case ConstraintType::DistanceLineLine:
+        case ConstraintType::DistancePointCircle:
+        case ConstraintType::DistanceCircleLine:
+        case ConstraintType::DistanceCircleCircle:
         case ConstraintType::Radius:
         case ConstraintType::Diameter: r = std::abs(measure(s, c) - c.value); break;
         }

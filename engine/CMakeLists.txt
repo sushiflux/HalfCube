@@ -108,9 +108,14 @@ add_library(partcraft_engine_core STATIC
     src/core/frame.cpp
     src/kernel/shape_check.cpp
     src/kernel/kernel_selftest.cpp
+    src/model/document.cpp
+    src/model/profiles.cpp
+    src/model/geometry.cpp
+    src/model/model.cpp
     src/sketch/sketch.cpp
     src/sketch/sketch_solver.cpp
     src/sketch/sketch_check.cpp
+    src/sketch/sketch_freedom.cpp
     src/sketch/solver_selftest.cpp
     src/diagnostics/test_commands.cpp)
 target_include_directories(partcraft_engine_core PUBLIC
@@ -148,8 +153,9 @@ if(EMSCRIPTEN)
         -sALLOW_MEMORY_GROWTH=1
         -sINITIAL_MEMORY=32MB
         -sMAXIMUM_MEMORY=4GB
-        # Explicit stack: the solver needs more than Emscripten's default of 64 KB for interactive sketch solving.
-        -sSTACK_SIZE=1MB
+        # Explicit stack: the solver needs more than Emscripten's default of 64 KB for interactive sketch solving;
+        # 4 MB leaves room for large sketches and the kernel's recursion on bodies.
+        -sSTACK_SIZE=4MB
         -sEXIT_RUNTIME=0
         -sINVOKE_RUN=0
         -sEXPORTED_FUNCTIONS=_pc_init,_pc_handle,_malloc,_free
@@ -176,7 +182,8 @@ if(PARTCRAFT_BUILD_TESTS AND NOT EMSCRIPTEN)
         tests/unit/frame_test.cpp
         tests/unit/engine_test.cpp
         tests/unit/kernel_test.cpp
-        tests/unit/sketch_solver_test.cpp)
+        tests/unit/sketch_solver_test.cpp
+        tests/unit/model_test.cpp)
     target_link_libraries(partcraft-engine-tests PRIVATE partcraft_engine_core pc::doctest)
     target_compile_options(partcraft-engine-tests PRIVATE ${PC_WARNING_FLAGS})
     if(WIN32)

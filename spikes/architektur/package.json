@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "description": "Architecture spike: engine message contract, native and WebAssembly transports, shared UI for the Electron window and the browser page",
-  "license": "GPL-3.0-or-later",
+  "license": "SEE LICENSE IN LICENSE",
   "type": "module",
   "engines": {
     "node": ">=24"

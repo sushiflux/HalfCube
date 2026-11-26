@@ -10,7 +10,7 @@
 // diagnostics.hang (busy, cancelled while running, frozen) and diagnostics.crash (abort, nullcall, intdiv), each
 // crash and the freeze in a fresh engine. Exit code 0 when every check passed.
 import { spawn } from "node:child_process";
-import { readFileSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { Worker } from "node:worker_threads";
@@ -19,6 +19,7 @@ const here = dirname(fileURLToPath(import.meta.url));
 const repo = resolve(here, "..", "..");
 const schema = JSON.parse(readFileSync(join(repo, "protocol", "engine-protocol.schema.json"), "utf8"));
 const PROTOCOL_VERSION = Number(schema.$id.split(":").pop());
+const PROTOCOL_ID = JSON.parse(readFileSync(join(repo, "protocol", "engine-protocol.json"), "utf8")).constants.find((c) => c.name === "protocolId").value;
 const FRAME_MAGIC = 0x31454350;
 
 // ------------------------------------------------------------------------------------ minimal JSON Schema check
@@ -196,7 +197,7 @@ async function startEngine(kind, target) {
   const t0 = performance.now();
   if (kind === "wasm") await engine.ready;
   const s = new Session(engine);
-  const hello = await s.call("hello", { protocol: PROTOCOL_VERSION, client: "drive-engine.mjs" }, 20000);
+  const hello = await s.call("hello", { protocol: PROTOCOL_VERSION, protocolId: PROTOCOL_ID, client: "drive-engine.mjs" }, 20000);
   return { engine, s, hello, startMs: performance.now() - t0 };
 }
 
@@ -210,6 +211,7 @@ async function run(kind, target) {
   if (hello?.type !== "helloResult") return finish(result, engine);
   result.hello = stripTimes(hello);
   const expectPlatform = kind === "native" ? "native" : "wasm";
+  check("hello names the protocol version and id", hello.protocol === PROTOCOL_VERSION && hello.protocolId === PROTOCOL_ID, `${hello.protocol} / ${hello.protocolId}`);
   check("hello names the platform", hello.engine.platform === expectPlatform, hello.engine.platform);
   check("hello names OCCT 8.0.2", hello.components.occt === "8.0.2", hello.components.occt);
   check("hello names planegcs FreeCAD 1.1.4 4fd3bf32", hello.components.planegcs.source === "FreeCAD 1.1.4" && hello.components.planegcs.commit.startsWith("4fd3bf32"));
@@ -233,6 +235,70 @@ async function run(kind, target) {
   check("solver self-test passes", solver?.passed === true,
     solver?.problem ?? `dof ${solver?.dof}, residual ${solver?.maxResidual}, deviation ${solver?.maxDeviation}, ${solver?.timeMs?.toFixed(2)} ms`);
   result.solverSelftest = solver;
+
+  // sketch.solve with regions and a drag step (B7): a 60 x 40 rectangle with a circle of diameter 10 in it.
+  const pt = (id, x, y) => ({ id, x, y });
+  const ln = (id, p1, p2) => ({ id, p1, p2, construction: false });
+  const gc = (id, kind, refs) => ({ id, kind, refs });
+  const dm = (id, kind, refs, value) => ({ id, kind, refs, value: { value, unit: "mm" }, driving: true, label: { x: 0, y: 0 } });
+  const frame = {
+    points: [pt("p1", 0.2, -0.1), pt("p2", 59.5, 0.3), pt("p3", 60.4, 40.2), pt("p4", -0.3, 39.6), pt("pc", 20, 20)],
+    lines: [ln("l1", "p1", "p2"), ln("l2", "p2", "p3"), ln("l3", "p3", "p4"), ln("l4", "p4", "p1")],
+    circles: [{ id: "c1", center: "pc", radius: 5, construction: false }],
+    constraints: [
+      gc("k1", "horizontal", ["l1"]), gc("k2", "horizontal", ["l3"]), gc("k3", "vertical", ["l2"]), gc("k4", "vertical", ["l4"]),
+      dm("d1", "distance", ["l1"], 60), dm("d2", "distance", ["l2"], 40), gc("k5", "fix", ["pc"]), dm("d3", "diameter", ["c1"], 10),
+    ],
+  };
+  const plane = { kind: "originPlane", plane: "xy" };
+  const pinned = { ...frame, constraints: [...frame.constraints, gc("k6", "coincident", ["p1", "@origin"])] };
+  const regions = await s.call("sketch.solve", { sketch: pinned, plane, profiles: true });
+  check("sketch.solve with regions answers sketchSolveResult", regions?.type === "sketchSolveResult" && regions.status === "solved", regions?.message ?? regions?.status);
+  check("a determined rectangle with a circle gives two determined regions with outlines",
+    regions?.profiles?.length === 2 && regions.profiles.every((r) => r.determined) && regions.profiles.map((r) => r.loops.length).sort().join() === "1,2",
+    JSON.stringify(regions?.profiles?.map((r) => [r.key, r.determined, r.loops?.length])));
+  const free = await s.call("sketch.solve", { sketch: frame, plane, profiles: true });
+  check("without the corner on the origin the frame region is not determined, the circle's is",
+    free?.profiles?.find((r) => r.key === "c1")?.determined === true && free.profiles.find((r) => r.key !== "c1")?.determined === false,
+    JSON.stringify(free?.profiles?.map((r) => [r.key, r.determined])));
+  check("what is still free: the dimensioned rectangle off the origin can only be moved, one fact; pinned, nothing",
+    regions?.freedom?.length === 0 && free?.freedom?.length === 1 && free.freedom[0].kind === "position" && free.freedom[0].shape === "rectangle" &&
+      free.freedom[0].moves === 2 && free.freedom[0].elements.join() === "l1,l2,l3,l4",
+    JSON.stringify([regions?.freedom, free?.freedom]));
+  const dragged = await s.call("sketch.solve", { sketch: frame, plane, profiles: true, drag: { points: [{ id: "p3", x: 70, y: 52 }] } });
+  const p3 = dragged?.points?.find((p) => p.id === "p3");
+  check("a drag step moves a corner of the rectangle to the target and keeps its size",
+    dragged?.status === "solved" && dragged.drag?.complete === true && dragged.drag.points[0].moved === true && dragged.drag.points[0].error < 1e-6 &&
+      Math.abs(p3.x - 70) < 1e-6 && Math.abs(p3.y - 52) < 1e-6 && dragged.profiles?.length === 2,
+    JSON.stringify(dragged?.drag));
+  // The editor sends the sketch as the last solve left it; a point "moved" relative to that.
+  const pinnedSolved = { ...pinned, points: pinned.points.map((p) => ({ ...p, ...regions.points.find((q) => q.id === p.id) })) };
+  const stuck = await s.call("sketch.solve", { sketch: pinnedSolved, plane, profiles: true, drag: { points: [{ id: "p3", x: 90, y: 90 }] } });
+  check("a drag of a fully determined corner does not move it and says so",
+    stuck?.status === "solved" && stuck.drag?.points[0].moved === false && stuck.drag.points[0].error > 40 && stuck.dof === 0,
+    JSON.stringify(stuck?.drag));
+  // Distances to what was clicked (reference dimensions measure them) and the angle between two rays.
+  const ref = (id, kind, refs, extra = {}) => ({ id, kind, refs, value: { value: 1, unit: kind === "angle" ? "deg" : "mm" }, driving: false, label: { x: 0, y: 0 }, ...extra });
+  const clicked = await s.call("sketch.solve", {
+    sketch: {
+      ...pinned,
+      constraints: [...pinned.constraints,
+        ref("e1", "distance", ["pc", "l1"]), ref("e2", "distance", ["c1", "l1"]), ref("e3", "distance", ["p3", "c1"]),
+        ref("e4", "distance", ["l1", "l3"]), ref("e5", "angle", ["l1", "l4"], { reverse: [false, true] }), ref("e6", "angle", ["l1", "l4"])],
+    },
+    plane,
+  });
+  const near = (a, b) => typeof a === "number" && Math.abs(a - b) < 1e-9;
+  check("distances measure what was clicked: centre to line, rim to line, point to rim, parallel lines",
+    clicked?.status === "solved" && near(clicked.reference?.e1, 20) && near(clicked.reference?.e2, 15) && near(clicked.reference?.e3, Math.hypot(40, 20) - 5) && near(clicked.reference?.e4, 40),
+    JSON.stringify(clicked?.reference));
+  check("the angle between two rays at a rectangle corner is 90, the one between the directions is -90",
+    near(clicked?.reference?.e5, 90) && near(clicked?.reference?.e6, -90), JSON.stringify([clicked?.reference?.e5, clicked?.reference?.e6]));
+  result.clickedDistances = clicked?.reference;
+  const badReverse = await s.call("sketch.solve", { sketch: { ...pinned, constraints: [ref("e7", "angle", ["l1", "l4"], { reverse: [true] })] }, plane });
+  check("reverse with one flag is refused with bad_document naming the field", badReverse?.code === "bad_document" && /reverse/.test(badReverse.message), badReverse?.message);
+  const badDrag = await s.call("sketch.solve", { sketch: frame, plane, drag: { points: [{ id: "nope", x: 1, y: 1 }] } });
+  check("a drag of an unknown point is refused with bad_message naming the field", badDrag?.code === "bad_message" && /drag\.points\[0\]\.id/.test(badDrag.message), badDrag?.message);
 
   if (!testCommands) {
     const crash = await s.call("diagnostics.crash", { mode: "abort" });
@@ -339,7 +405,11 @@ else {
   const target = resolve(opt(`--${kind}`));
   const result = await run(kind, target);
   const out = opt("--out");
-  if (out) writeFileSync(out, JSON.stringify(result, null, 2) + "\n");
+  if (out) {
+    // CI starts from a clean checkout, so the result folder may not exist yet.
+    mkdirSync(dirname(resolve(out)), { recursive: true });
+    writeFileSync(out, JSON.stringify(result, null, 2) + "\n");
+  }
   const failed = checks.filter((c) => !c.ok).length;
   console.log(`${checks.length - failed} of ${checks.length} checks passed`);
   process.exit(failed ? 1 : 0);

@@ -8,12 +8,13 @@ import {
 import {
   IMMEDIATE_COMMAND_TYPES,
   PING_TIMEOUT_MS,
+  PROTOCOL_ID,
   PROTOCOL_VERSION,
+  REPLY_TYPES,
   type Command,
   type CommandReplies,
   type CommandType,
   type EngineMessage,
-  type EngineMessageType,
   type HelloResult,
 } from "./generated/protocol.ts";
 import {
@@ -31,16 +32,7 @@ type DistributiveOmit<T, K extends PropertyKey> = T extends unknown ? Omit<T, K>
 export type CommandInput = DistributiveOmit<Command, "id">;
 
 /** Message type of the successful answer of each command (null: the command never answers on success). */
-export const REPLY_TYPE = {
-  "hello": "helloResult",
-  "ping": "pong",
-  "cancel": "cancelResult",
-  "shutdown": "bye",
-  "diagnostics.kernelSelftest": "kernelSelftestResult",
-  "diagnostics.solverSelftest": "solverSelftestResult",
-  "diagnostics.crash": null,
-  "diagnostics.hang": "hangResult",
-} as const satisfies Record<CommandType, EngineMessageType | null>;
+export const REPLY_TYPE = REPLY_TYPES;
 
 export interface Reply<T extends CommandType = CommandType> {
   message: CommandReplies[T];
@@ -125,6 +117,19 @@ const QUICK_TIMEOUT_MS: Partial<Record<CommandType, number>> = {
 
 const DEFAULT_WASM_TIMEOUT_MS = 60_000;
 
+/**
+ * The complete reason when the engine's hello answer names another protocol than this program speaks, otherwise
+ * undefined. Names both the expected and the received protocol id and version.
+ */
+export function protocolRefusal(hello: Pick<HelloResult, "protocol" | "protocolId">): string | undefined {
+  if (hello.protocolId === PROTOCOL_ID && hello.protocol === PROTOCOL_VERSION) return undefined;
+  const received = typeof hello.protocolId === "string" ? `"${hello.protocolId}"` : "nothing (no protocolId in the answer)";
+  return (
+    `This program speaks protocol "${PROTOCOL_ID}" (version ${PROTOCOL_VERSION}), the engine answered with protocol ${received} ` +
+    `(version ${String(hello.protocol)}). User interface and engine come from different builds; reinstall Partcraft.`
+  );
+}
+
 export class EngineClient {
   /** Result of the last successful handshake; null while no engine is running. */
   hello: HelloResult | null = null;
@@ -184,8 +189,13 @@ export class EngineClient {
     };
     try {
       await transport.start();
-      const reply = await this.request({ type: "hello", protocol: PROTOCOL_VERSION, client: this.opts.clientName ?? "partcraft" }).reply;
+      const handshake = this.request({ type: "hello", protocol: PROTOCOL_VERSION, protocolId: PROTOCOL_ID, client: this.opts.clientName ?? "partcraft" });
+      const reply = await handshake.reply;
       if (this.transport !== transport) throw new EngineNotRunningError("The engine was stopped during the handshake.");
+      // The engine checks our protocol id; this is the same check the other way round, so that neither side talks to
+      // a peer whose messages mean something else.
+      const refusal = protocolRefusal(reply.message);
+      if (refusal) throw new EngineCommandError({ type: "error", replyTo: handshake.id, code: "protocol_mismatch", message: refusal, command: "hello" }, handshake.id);
       this.hello = reply.message;
       this._state = "running";
       return reply.message;

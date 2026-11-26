@@ -19,6 +19,8 @@ export interface WelcomeProps {
   onNewProject: () => void;
   onOpenProject: () => void;
   onTour: () => void;
+  /** The licence hint line: opens "About Partcraft" on the Lizenzen tab with the Partcraft licence. */
+  onShowLicence: () => void;
   /** The checkbox "Don't show this at the next start". */
   dontShowAgain: boolean;
   onDontShowAgainChange: (value: boolean) => void;
@@ -36,9 +38,9 @@ const points: readonly { icon: ReactNode; key: MessageKey }[] = [
 /**
  * Welcome at program start, two pages: "Sketch first, then build" with the early-access note, then "How do you want
  * to start?". It appears at every start until the user ticks "Don't show this at the next start". The language page
- * of the mockup is not here: the setup chooses the language.
+ * is not here: the setup chooses the language.
  */
-export function Welcome({ open, onClose, onNewProject, onOpenProject, onTour, dontShowAgain, onDontShowAgainChange }: WelcomeProps) {
+export function Welcome({ open, onClose, onNewProject, onOpenProject, onTour, onShowLicence, dontShowAgain, onDontShowAgainChange }: WelcomeProps) {
   const t = useT();
   const [page, setPage] = useState<Page>(1);
   const titleId = useId();
@@ -187,13 +189,17 @@ export function Welcome({ open, onClose, onNewProject, onOpenProject, onTour, do
           )}
         </ScrollArea>
 
+        {/* The licence hint is on both pages and in both versions; the link opens the licence text in "About Partcraft". It has a row
+            of its own, as wide as the dialog's content, so it never wraps and nothing moves between the pages. */}
+        <p className="m-0 flex h-8 flex-none items-center px-10 text-[12px] whitespace-nowrap text-muted" data-testid="welcome-licence-hint">
+          {t("welcome.licenceHint")}&nbsp;<span aria-hidden="true">·</span>&nbsp;
+          <button type="button" onClick={onShowLicence} data-testid="welcome-licence-link" className="cursor-pointer rounded-sm font-medium text-primary hover:underline">
+            {t("welcome.licenceLink")}
+          </button>
+        </p>
+
         <div className="flex h-[76px] flex-none items-center gap-3.5 border-t border-line px-10">
-          <Checkbox
-            checked={dontShowAgain}
-            onChange={onDontShowAgainChange}
-            label={t("welcome.dontShowAgain")}
-            className="min-w-0 flex-1"
-          />
+          <Checkbox checked={dontShowAgain} onChange={onDontShowAgainChange} label={t("welcome.dontShowAgain")} className="min-w-0 flex-1" />
           {page === 1 ? (
             <>
               <Button variant="quiet" size="lg" onClick={onClose}>

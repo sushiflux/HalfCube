@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "description": "Renders Markdown documents with front matter into designed A4 PDFs (Partcraft concept, manuals).",
-  "license": "GPL-3.0-or-later",
+  "license": "SEE LICENSE IN LICENSE",
   "type": "module",
   "engines": {
     "node": ">=24"

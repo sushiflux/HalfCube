@@ -4,12 +4,11 @@
 import { expect, test } from "../support/fixtures.ts";
 import { expectedVersionDisplay } from "../support/version.ts";
 
-test("the app starts and shows its version and platform", async ({ app }) => {
+test("the app starts and shows its version and platform in the status bar", async ({ app }) => {
   const { page } = app;
   await app.open("?lang=en");
-  await expect(page.getByTestId("version")).toHaveText(`Version ${expectedVersionDisplay()}`);
-  await expect(page.getByTestId("platform")).toHaveAttribute("data-platform", app.target === "electron" ? "desktop" : "browser");
-  await expect(page.getByTestId("platform")).toHaveText(app.target === "electron" ? "Desktop program" : "Browser version");
+  await expect(page.getByTestId("version")).toHaveText(`Partcraft ${expectedVersionDisplay()}`);
+  await expect(page.getByTestId("status-bar")).toHaveAttribute("data-platform", app.target === "electron" ? "desktop" : "browser");
   await expect(page).toHaveTitle("Partcraft");
 });
 

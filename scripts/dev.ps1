@@ -2,7 +2,7 @@
 # the Electron window, which loads the dev server. Builds what is missing first.
 #
 # Usage: powershell -ExecutionPolicy Bypass -File scripts\dev.ps1 [start|stop|restart|status|logs]
-#          [-Neubau] [-NurBrowser] [-NurDesktop] [-Ausweichport] [-ImHintergrund]
+#          [-Neubau] [-NurBrowser] [-NurDesktop] [-Ausweichport] [-ImHintergrund] [-Zweitmonitor]
 #   start (default)  start everything that is not running yet; own leftovers on the ports are restarted
 #   stop             stop dev server and Electron window including their child processes
 #   restart          stop, then start
@@ -12,11 +12,13 @@
 #   -NurBrowser      dev server only, no Electron window
 #   -NurDesktop      Electron window only; it loads the built bundle (app://), no dev server is started
 #   -Ausweichport    take the next free port for this run if the registered one is held by a foreign program
-#   -ImHintergrund   the Electron window starts minimized and without taking the focus (after a commit, tests)
+#   -ImHintergrund   the Electron window starts minimized and without taking the focus (after a commit, tests); implies -Zweitmonitor
+#   -Zweitmonitor    the Electron window opens on the secondary monitor (PARTCRAFT_WINDOW_DISPLAY=secondary): the landscape
+#                    one that is not the primary, else the largest; with a single monitor it stays on the primary one
 # The ports come from config\dev-ports.json.
 param(
     [ValidateSet('start', 'stop', 'restart', 'status', 'logs')][string]$Befehl = 'start',
-    [switch]$Neubau, [switch]$NurBrowser, [switch]$NurDesktop, [switch]$Ausweichport, [switch]$ImHintergrund
+    [switch]$Neubau, [switch]$NurBrowser, [switch]$NurDesktop, [switch]$Ausweichport, [switch]$ImHintergrund, [switch]$Zweitmonitor
 )
 $ErrorActionPreference = 'Stop'
 if ($NurBrowser -and $NurDesktop) { throw 'NurBrowser und NurDesktop schliessen sich aus.' }
@@ -201,10 +203,11 @@ function Start-Desktop {
     Stop-Tree 'electron'
     $log = Join-Path $run 'electron.log'
     $saved = @{}
-    foreach ($n in 'PARTCRAFT_WINDOW', 'PARTCRAFT_DEV_URL', 'PARTCRAFT_USER_DATA') { $saved[$n] = [Environment]::GetEnvironmentVariable($n) }
+    foreach ($n in 'PARTCRAFT_WINDOW', 'PARTCRAFT_WINDOW_DISPLAY', 'PARTCRAFT_DEV_URL', 'PARTCRAFT_USER_DATA') { $saved[$n] = [Environment]::GetEnvironmentVariable($n) }
     try {
         $env:PARTCRAFT_USER_DATA = Join-Path $build 'dev-data'
         if ($ImHintergrund) { $env:PARTCRAFT_WINDOW = 'minimized' } else { Remove-Item Env:\PARTCRAFT_WINDOW -ErrorAction SilentlyContinue }
+        if ($Zweitmonitor -or $ImHintergrund) { $env:PARTCRAFT_WINDOW_DISPLAY = 'secondary' } else { Remove-Item Env:PARTCRAFT_WINDOW_DISPLAY -ErrorAction SilentlyContinue }
         if ($script:url) { $env:PARTCRAFT_DEV_URL = $script:url } else { Remove-Item Env:\PARTCRAFT_DEV_URL -ErrorAction SilentlyContinue }
         $p = Start-Detached "`"$electronExe`" ." $log
     } finally {
@@ -214,6 +217,7 @@ function Start-Desktop {
     Start-Sleep -Seconds 3
     if ($p.HasExited) { throw "Das Electron-Fenster hat sich sofort beendet (Code $($p.ExitCode)). Log: $run\electron.log" }
     $mode = if ($ImHintergrund) { 'minimiert, ohne Fokus' } else { 'normal' }
+    if ($Zweitmonitor -or $ImHintergrund) { $mode += ', Zweitmonitor' }
     $source = if ($script:url) { 'laedt den Dev-Server' } else { 'laedt die gebaute Browser-Version (app://)' }
     Say "Electron-Fenster gestartet (PID $($p.Id), $mode, $source)"
 }

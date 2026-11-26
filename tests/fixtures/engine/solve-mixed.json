@@ -1,0 +1,238 @@
+{
+  "name": "solve-mixed",
+  "recordedWith": {
+    "engine": "v2026.11.6.12.24867",
+    "platform": "native",
+    "os": "windows-x64"
+  },
+  "command": {
+    "type": "sketch.solve",
+    "sketch": {
+      "points": [
+        {
+          "id": "o",
+          "x": 1,
+          "y": 1
+        },
+        {
+          "id": "q",
+          "x": 10,
+          "y": 3
+        },
+        {
+          "id": "e",
+          "x": 30,
+          "y": 5
+        }
+      ],
+      "lines": [
+        {
+          "id": "n1",
+          "p1": "q",
+          "p2": "e",
+          "construction": false
+        }
+      ],
+      "circles": [
+        {
+          "id": "c1",
+          "center": "o",
+          "radius": 4,
+          "construction": false
+        },
+        {
+          "id": "c2",
+          "center": "q",
+          "radius": 7,
+          "construction": false
+        }
+      ],
+      "constraints": [
+        {
+          "id": "k1",
+          "kind": "fix",
+          "refs": [
+            "o"
+          ]
+        },
+        {
+          "id": "d1",
+          "kind": "diameter",
+          "refs": [
+            "c1"
+          ],
+          "value": {
+            "value": 10,
+            "unit": "mm"
+          },
+          "driving": true,
+          "label": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "k2",
+          "kind": "equal",
+          "refs": [
+            "c1",
+            "c2"
+          ]
+        },
+        {
+          "id": "d2",
+          "kind": "distanceX",
+          "refs": [
+            "o",
+            "q"
+          ],
+          "value": {
+            "value": 3,
+            "unit": "mm"
+          },
+          "driving": true,
+          "label": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "k3",
+          "kind": "pointOnCurve",
+          "refs": [
+            "q",
+            "c1"
+          ]
+        },
+        {
+          "id": "d3",
+          "kind": "angle",
+          "refs": [
+            "@axisU",
+            "n1"
+          ],
+          "value": {
+            "value": 30,
+            "unit": "deg"
+          },
+          "driving": true,
+          "label": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "d4",
+          "kind": "distance",
+          "refs": [
+            "n1"
+          ],
+          "value": {
+            "value": 25,
+            "unit": "mm"
+          },
+          "driving": true,
+          "label": {
+            "x": 0,
+            "y": 0
+          }
+        }
+      ]
+    },
+    "plane": {
+      "kind": "originPlane",
+      "plane": "xy"
+    },
+    "profiles": true
+  },
+  "reply": {
+    "type": "sketchSolveResult",
+    "replyTo": null,
+    "status": "solved",
+    "dof": 0,
+    "points": [
+      {
+        "id": "o",
+        "x": 1,
+        "y": 1
+      },
+      {
+        "id": "q",
+        "x": 4,
+        "y": 5
+      },
+      {
+        "id": "e",
+        "x": 25.650635094610966,
+        "y": 17.499999999999996
+      }
+    ],
+    "circles": [
+      {
+        "id": "c1",
+        "radius": 5
+      },
+      {
+        "id": "c2",
+        "radius": 5
+      }
+    ],
+    "entities": {
+      "c1": "full",
+      "c2": "full",
+      "e": "full",
+      "n1": "full",
+      "o": "full",
+      "q": "full"
+    },
+    "constraints": {
+      "d1": "ok",
+      "d2": "ok",
+      "d3": "ok",
+      "d4": "ok",
+      "k1": "ok",
+      "k2": "ok",
+      "k3": "ok"
+    },
+    "conflicting": [],
+    "redundant": [],
+    "partiallyRedundant": [],
+    "reference": {},
+    "profiles": [],
+    "freedom": [],
+    "problem": {
+      "code": "profile_intersecting",
+      "message": "Curves of the sketch cross or touch without sharing a point (n1 / c1, n1 / c2, c1 / c2); closed regions are only found among the other curves.",
+      "refs": [
+        "c1",
+        "c2",
+        "n1"
+      ]
+    },
+    "frame": {
+      "origin": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "u": {
+        "x": 1,
+        "y": 0,
+        "z": 0
+      },
+      "v": {
+        "x": 0,
+        "y": 1,
+        "z": 0
+      },
+      "normal": {
+        "x": 0,
+        "y": 0,
+        "z": 1
+      }
+    },
+    "profilesMs": 0.0129,
+    "timeMs": 0.2161
+  },
+  "payload": null
+}

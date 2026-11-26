@@ -1,0 +1,21 @@
+Microsoft Visual C++ Runtime (application-local files)
+
+Copyright © Microsoft Corporation. All rights reserved.
+
+The desktop program ships these Microsoft files unmodified, in the folder of the engine program (partcraft-engine.exe),
+because the engine and the Open CASCADE libraries use the Visual C++ runtime:
+
+  vcruntime140.dll
+  vcruntime140_1.dll
+  msvcp140.dll
+  msvcp140_2.dll
+
+Version of these files: 14.44.35211.0 (Visual Studio 2022, toolset v143).
+
+They are Distributable Code of Visual Studio 2022. Microsoft allows distributing them unmodified with an application under
+the "Distributable Code" section of the Microsoft Software License Terms for Visual Studio 2022; the list of files is the
+"REDIST list" at https://aka.ms/vs/17/redistribution. Microsoft's description:
+https://learn.microsoft.com/en-us/cpp/windows/redistributing-visual-cpp-files
+
+These files are Microsoft's property and stay under Microsoft's terms. They are not part of Partcraft's own license and are
+not covered by it.

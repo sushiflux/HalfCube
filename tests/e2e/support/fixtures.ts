@@ -6,8 +6,8 @@
 // `app` is the page under test plus the few things that differ between the targets.
 import { existsSync, mkdirSync, rmSync } from "node:fs";
 import { join } from "node:path";
-import { chromium, expect, test as base, type Browser, type Page } from "@playwright/test";
-import { launchElectron, type LaunchedElectron } from "./electron-app.ts";
+import { chromium, expect, test as base, type Browser, type ElectronApplication, type Page } from "@playwright/test";
+import { engineChildren, launchElectron, type LaunchedElectron } from "./electron-app.ts";
 import { browserMode, e2eBuild, serverPort, type BrowserMode, type Target } from "./paths.ts";
 
 export type { Target };
@@ -15,6 +15,8 @@ export type { Target };
 export interface AppUnderTest {
   target: Target;
   page: Page;
+  /** The Electron program itself (main process), for tests that stub what it opens outside the window; only on the electron target. */
+  electron?: ElectronApplication;
   /** What the target is, for the report: "chromium 142.0.x (official Playwright Docker image)", "electron 45.x (chrome 140.x)". */
   description: string;
   /** Console errors and uncaught page errors since the test began. */
@@ -26,6 +28,12 @@ export interface AppUnderTest {
   /** Sets the width of the page (window) in CSS pixels; returns the width the page really has. */
   setWidth(width: number): Promise<number>;
   readClipboard(): Promise<string>;
+  /**
+   * Ends the engine on purpose, the way a crash does (the session then restarts it): the browser's test engine gets
+   * diagnostics.crash (open the page with `engine=testing`), the native engine process is ended from outside. Resolves with
+   * whether an engine was found and ended.
+   */
+  crashEngine(): Promise<boolean>;
 }
 
 interface BrowserHandle {
@@ -156,6 +164,13 @@ export const test = base.extend<{ app: AppUnderTest }, { target: Target; browser
           return page.evaluate(() => window.innerWidth);
         },
         readClipboard: () => page.evaluate(() => navigator.clipboard.readText()),
+        crashEngine: () =>
+          page.evaluate(async () => {
+            const session = (window as unknown as { __partcraftSession?: { client: { request(c: unknown): { reply: Promise<unknown> } } } }).__partcraftSession;
+            if (!session) return false;
+            await session.client.request({ type: "diagnostics.crash", mode: "intdiv" }).reply.catch(() => undefined);
+            return true;
+          }),
       };
       await provide(handle);
       await attachScreenshot(page);
@@ -181,6 +196,7 @@ export const test = base.extend<{ app: AppUnderTest }, { target: Target; browser
     const handle: AppUnderTest = {
       target,
       page,
+      electron,
       description,
       errors,
       open: async (search = "") => {
@@ -195,10 +211,20 @@ export const test = base.extend<{ app: AppUnderTest }, { target: Target; browser
       url: (path) => `${origin}${path}`,
       setWidth: async (width) => {
         await resize(width, 900);
-        await expect.poll(() => page.evaluate(() => window.outerWidth)).toBe(width);
+        // The window is sized in device-independent pixels but lives on physical ones: on a display with a fractional scale
+        // factor (175 % here) the operating system rounds the window outwards, so it is up to two CSS pixels wider than asked
+        // (960 -> 962, 1440 -> 1441) and never narrower (the program's minimum width is honoured exactly).
+        const excess = () => page.evaluate((asked) => window.outerWidth - asked, width);
+        await expect.poll(excess).toBeGreaterThanOrEqual(0);
+        await expect.poll(excess).toBeLessThanOrEqual(2);
         return page.evaluate(() => window.innerWidth);
       },
       readClipboard: () => electron.evaluate(({ clipboard }) => clipboard.readText()),
+      crashEngine: async () => {
+        const engines = engineChildren(electronHandle.pid);
+        for (const pid of engines) process.kill(pid);
+        return engines.length > 0;
+      },
     };
     await withClipboardLock(testInfo, target, async () => {
       await provide(handle);

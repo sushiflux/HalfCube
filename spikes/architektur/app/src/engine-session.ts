@@ -92,7 +92,7 @@ export class EngineSession {
       lastTiming: null, lastRecoveryMs: null,
     };
     this.client = new EngineClient({
-      clientName: "partcraft-architecture-spike-ui",
+      clientName: "halfcube-architecture-spike-ui",
       createTransport: () => {
         this.transportRef = this.createTransport();
         return this.transportRef;
@@ -123,13 +123,13 @@ export class EngineSession {
 
   private createTransport(): EngineTransport {
     if (this.kind === "native") {
-      const bridge = window.partcraftDesktop;
+      const bridge = window.halfCubeDesktop;
       if (!bridge) throw new Error("The native engine is only available in the desktop program.");
       return new ElectronTransport(bridge);
     }
     return new WorkerTransport({
       createPort: () => browserWorkerPort(new URL("engine/engine-worker.mjs", document.baseURI)),
-      moduleUrl: new URL("engine/partcraft-engine.mjs", document.baseURI).href,
+      moduleUrl: new URL("engine/halfcube-engine.mjs", document.baseURI).href,
       debugCommands: true,
       sharedCancel: true,
     });

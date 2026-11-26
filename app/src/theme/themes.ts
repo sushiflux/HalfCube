@@ -37,9 +37,9 @@ export interface Theme {
 }
 
 /** Fixed brand colours of the wordmark: independent of the theme, they only follow light or dark. */
-export const wordmarkColours: Record<Mode, { part: string; craft: string }> = {
-  light: { part: "#16476e", craft: "#1f75ae" },
-  dark: { part: "#ffffff", craft: "#4cd1e0" },
+export const wordmarkColours: Record<Mode, { half: string; cube: string }> = {
+  light: { half: "#16476e", cube: "#1f75ae" },
+  dark: { half: "#ffffff", cube: "#4cd1e0" },
 };
 
 export const defaultThemeKey: ThemeKey = "praezision";

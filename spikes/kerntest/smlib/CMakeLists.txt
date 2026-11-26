@@ -2,7 +2,7 @@
 # OpenUSD, Python, Hydra or TBB, plus the test program. One CMake build for MSVC, GCC
 # and Emscripten. The upstream premake build is not used here.
 cmake_minimum_required(VERSION 3.24)
-project(partcraft_kerntest_smlib LANGUAGES CXX)
+project(halfcube_kerntest_smlib LANGUAGES CXX)
 
 set(SMLIB_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../_deps/usd-brep" CACHE PATH "usd-brep source checkout")
 if(NOT EXISTS "${SMLIB_ROOT}/source/SMLib/inc/SmBrep.h")

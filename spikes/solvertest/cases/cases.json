@@ -1,6 +1,6 @@
 {
  "format": 1,
- "title": "Partcraft solver test: solver-neutral case catalogue",
+ "title": "HalfCube solver test: solver-neutral case catalogue",
  "units": "millimetres and radians; right-handed, y up; arcs run counter-clockwise from start to end",
  "tolerances": {
   "length": 0.000001,

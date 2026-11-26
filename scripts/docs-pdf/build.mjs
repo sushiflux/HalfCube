@@ -6,13 +6,13 @@
 //
 //   --version-file <path>   file whose second line is the five-segment version (default: version.txt of the repository)
 //   --channel <name>        dev | nightly | beta | release: adds the channel symbol to the version, like the program
-//                           does ("v2026.11.5.13.12369 (</>)"); also read from PARTCRAFT_CHANNEL. Default: none.
+//                           does ("v2026.11.5.13.12369 (</>)"); also read from HALFCUBE_CHANNEL. Default: none.
 //   --html <path>           also keep the generated HTML (for looking at the layout)
 //
 // "version" and "date" of the front matter are optional. When they are missing, the version is the second line of
 // version.txt and the date is the commit date of that file (its modification date when git is not available).
 // Run "npm ci" in scripts/docs-pdf once (Markdown and diagram libraries); the Electron runtime comes from the
-// repository's own node_modules (or PARTCRAFT_ELECTRON_EXE).
+// repository's own node_modules (or HALFCUBE_ELECTRON_EXE).
 import { execFileSync } from "node:child_process";
 import { existsSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync, copyFileSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -70,7 +70,7 @@ export async function buildPdf({ input, output, versionFile, channel, htmlOut })
     throw new Error('Die Markdown-Bibliothek fehlt. Einmal "npm ci" im Ordner scripts/docs-pdf ausführen.');
   }
 
-  const defaults = readVersionInfo(versionFile ?? join(repoRoot, "version.txt"), channel ?? process.env.PARTCRAFT_CHANNEL);
+  const defaults = readVersionInfo(versionFile ?? join(repoRoot, "version.txt"), channel ?? process.env.HALFCUBE_CHANNEL);
   const html = buildHtml({
     markdown,
     sourceDir: dirname(resolve(input)),
@@ -82,7 +82,7 @@ export async function buildPdf({ input, output, versionFile, channel, htmlOut })
     mermaidScript: needsMermaid ? mermaidScript : null,
   });
 
-  const work = mkdtempSync(join(tmpdir(), "partcraft-docs-html-"));
+  const work = mkdtempSync(join(tmpdir(), "halfcube-docs-html-"));
   try {
     const htmlFile = join(work, "document.html");
     writeFileSync(htmlFile, html);

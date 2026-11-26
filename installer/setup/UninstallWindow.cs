@@ -1,7 +1,7 @@
-using Partcraft.Setup.Localization;
-using Partcraft.Setup.Ui;
+using HalfCube.Setup.Localization;
+using HalfCube.Setup.Ui;
 
-namespace Partcraft.Setup;
+namespace HalfCube.Setup;
 
 /// <summary>
 /// The designed uninstaller (mockup variant B, last three pages): says what is removed and what stays (cancel is preselected),
@@ -43,7 +43,7 @@ internal sealed class UninstallWindow : WizardWindow
         var cancel = false;
         Hint.Text = string.Empty;
         Next.Glyph = null;
-        Cancel.Kind = PcButtonKind.Secondary;
+        Cancel.Kind = HcButtonKind.Secondary;
         Failed = StepIndex == 2 && _state.Failed;
         switch (StepIndex)
         {
@@ -51,19 +51,19 @@ internal sealed class UninstallWindow : WizardWindow
                 cancel = true;
                 Cancel.Text = CommonTexts.Cancel;
                 Next.Text = UninstallTexts.ButtonUninstall;
-                Next.Kind = PcButtonKind.Danger;
+                Next.Kind = HcButtonKind.Danger;
                 Next.Glyph = Glyphs.Trash;
                 Next.Enabled = true;
                 ActiveControl = Cancel;
                 break;
             case 1:
                 Next.Text = CommonTexts.Close;
-                Next.Kind = PcButtonKind.Secondary;
+                Next.Kind = HcButtonKind.Secondary;
                 Next.Enabled = false;
                 break;
             default:
                 Next.Text = CommonTexts.Close;
-                Next.Kind = PcButtonKind.Primary;
+                Next.Kind = HcButtonKind.Primary;
                 Next.Enabled = true;
                 break;
         }
@@ -140,13 +140,13 @@ internal sealed class UninstallWindow : WizardWindow
         yield return ("failed", () =>
         {
             _state.Failed = true;
-            _state.Error = UninstallTexts.ErrFailed(1, @"C:\Users\Name\AppData\Local\Partcraft", @"C:\Users\Name\AppData\Local\Temp\Partcraft-Uninstall-0f3a.log",
-                string.Join('\n', Enumerable.Repeat("[12:04:11] [ERROR] Unable to remove directory C:\\Users\\Name\\AppData\\Local\\Partcraft\\current: access denied", 4)));
+            _state.Error = UninstallTexts.ErrFailed(1, @"C:\Users\Name\AppData\Local\HalfCube", @"C:\Users\Name\AppData\Local\Temp\HalfCube-Uninstall-0f3a.log",
+                string.Join('\n', Enumerable.Repeat("[12:04:11] [ERROR] Unable to remove directory C:\\Users\\Name\\AppData\\Local\\HalfCube\\current: access denied", 4)));
             GoTo(2);
             UpdateButtons();
         });
         // The same page after a click on "Copy" (the layout check compares it with "failed")
-        yield return ("failed-copied", () => Controls.Find("btnCopyUninstallError", true).OfType<PcButton>().Single().PerformClick());
+        yield return ("failed-copied", () => Controls.Find("btnCopyUninstallError", true).OfType<HcButton>().Single().PerformClick());
     }
 
     // ---- pages -------------------------------------------------------------------------------------------------------------------
@@ -167,9 +167,9 @@ internal sealed class UninstallWindow : WizardWindow
 
     private sealed class RemovePage : WizardPage
     {
-        private PcProgress? _bar;
-        private PcText? _percent;
-        private PcText? _amount;
+        private HcProgress? _bar;
+        private HcText? _percent;
+        private HcText? _amount;
         private readonly Dictionary<int, UninstallRow> _rows = [];
         private Msg? _detail;
         private RemoveProgress _last = new(0f, 0);
@@ -217,7 +217,7 @@ internal sealed class UninstallWindow : WizardWindow
             _amount = c.Text(string.Empty, PageCanvas.Width - 260, 12, 260, 24, 9.8f, color: p => p.Muted, name: "lblAmount");
             _amount.Mono = true;
             _amount.Align = TextFormatFlags.Right;
-            _bar = c.Add(new PcProgress { Value = _last.Value, Running = true }, 0, 46, PageCanvas.Width, 8, "progress");
+            _bar = c.Add(new HcProgress { Value = _last.Value, Running = true }, 0, 46, PageCanvas.Width, 8, "progress");
             var y = 70;
             for (var step = 0; step < 3; step++)
             {
@@ -248,7 +248,7 @@ internal sealed class UninstallWindow : WizardWindow
 
     private enum RowState { Pending, Active, Done }
 
-    private sealed class UninstallRow : PcControl
+    private sealed class UninstallRow : HcControl
     {
         public RowState State { get; set; }
 
@@ -283,7 +283,7 @@ internal sealed class UninstallWindow : WizardWindow
     }
 
     /// <summary>A card with a coloured bar on its left edge: red for what goes, green for what stays (the mockup's "krow").</summary>
-    private sealed class KeepCard : PcControl
+    private sealed class KeepCard : HcControl
     {
         public string Description { get; set; } = string.Empty;
 

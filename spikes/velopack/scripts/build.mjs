@@ -24,7 +24,7 @@ const vpk = resolve(opt("vpk", join(root, "_build", "tools", "vpk.exe")));
 const extra = opt("extra", "").split(" ").filter(Boolean);
 const velopackVersion = opt("velopack", undefined); // other npm version than the pinned one: installed without lock file
 const stageName = opt("stage", version);
-const packId = "PartcraftVelopackTest";
+const packId = "HalfCubeVelopackTest";
 
 function run(cmd, cmdArgs, cwd) {
   console.log(`> ${cmd} ${cmdArgs.join(" ")}`);
@@ -38,7 +38,7 @@ rmSync(stage, { recursive: true, force: true });
 mkdirSync(join(stage, "assets"), { recursive: true });
 for (const f of ["main.cjs", "window.html"]) cpSync(join(root, "app", f), join(stage, f));
 if (!velopackVersion) cpSync(join(root, "app", "package-lock.json"), join(stage, "package-lock.json"));
-cpSync(join(root, "assets", "partcraft-icon-512.png"), join(stage, "assets", "partcraft-icon-512.png"));
+cpSync(join(root, "assets", "halfcube-icon-512.png"), join(stage, "assets", "halfcube-icon-512.png"));
 const pkg = JSON.parse(readFileSync(join(root, "app", "package.json"), "utf8"));
 pkg.version = version;
 if (velopackVersion) pkg.dependencies.velopack = velopackVersion;
@@ -54,12 +54,12 @@ const outDirs = await packager({
   name: packId,
   platform: "win32",
   arch: "x64",
-  icon: join(root, "assets", "partcraft.ico"),
+  icon: join(root, "assets", "halfcube.ico"),
   asar: { unpack: "**/*.node" },
   prune: true,
   overwrite: true,
   appCopyright: "SushiFlux",
-  win32metadata: { CompanyName: "SushiFlux", FileDescription: "Partcraft Velopack test application", ProductName: packId },
+  win32metadata: { CompanyName: "SushiFlux", FileDescription: "HalfCube Velopack test application", ProductName: packId },
 });
 const packDir = outDirs[0];
 console.log(`packaged: ${packDir}`);
@@ -72,10 +72,10 @@ run(vpk, [
   "--packVersion", version,
   "--packDir", packDir,
   "--mainExe", `${packId}.exe`,
-  "--packTitle", "Partcraft Velopack Test",
+  "--packTitle", "HalfCube Velopack Test",
   "--packAuthors", "SushiFlux",
-  "--icon", join(root, "assets", "partcraft.ico"),
-  "--splashImage", join(root, "assets", "partcraft-icon-512.png"),
+  "--icon", join(root, "assets", "halfcube.ico"),
+  "--splashImage", join(root, "assets", "halfcube-icon-512.png"),
   "--runtime", "win-x64",
   "--outputDir", feedDir,
   ...extra,

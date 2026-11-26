@@ -5,11 +5,11 @@
 //                                 and removed afterwards; the Electron project runs natively. Docker must already be running:
 //                                 this script never starts Docker Desktop (a starting window could take the focus).
 //   npm run test:e2e:local        MARKED FALLBACK: the browser project runs in an installed Chrome, Brave or Edge, headless
-//                                 (PARTCRAFT_E2E_CHROME names another executable). Not the Docker browser; every report
+//                                 (HALFCUBE_E2E_CHROME names another executable). Not the Docker browser; every report
 //                                 line of the browser project says so.
 //
 // Further arguments go to `playwright test`:  npm run test:e2e -- welcome --project=electron
-// Environment: PARTCRAFT_E2E_CONTAINER (name of the browser container, default partcraft-e2e-browser-<pid>), PARTCRAFT_E2E_PORT_WS (default 3100) for the Docker browser server, PARTCRAFT_E2E_HOST (default 127.0.0.1)
+// Environment: HALFCUBE_E2E_CONTAINER (name of the browser container, default halfcube-e2e-browser-<pid>), HALFCUBE_E2E_PORT_WS (default 3100) for the Docker browser server, HALFCUBE_E2E_HOST (default 127.0.0.1)
 // for the address the test web server listens on. Docker Desktop on Windows reaches the loopback-only server through
 // host.docker.internal, so the default needs no change there; another address can make Windows show a firewall prompt.
 import { spawn, spawnSync } from "node:child_process";
@@ -27,9 +27,9 @@ const projectIndex = playwrightArgs.indexOf("--project");
 const needsBrowser = !(playwrightArgs.includes("--project=electron") || (projectIndex >= 0 && playwrightArgs[projectIndex + 1] === "electron"));
 const cli = join(root, "node_modules", "@playwright", "test", "cli.js");
 const version = JSON.parse(readFileSync(join(root, "node_modules", "@playwright", "test", "package.json"), "utf8")).version;
-const wsPort = Number(process.env.PARTCRAFT_E2E_PORT_WS ?? 3100);
+const wsPort = Number(process.env.HALFCUBE_E2E_PORT_WS ?? 3100);
 const image = `mcr.microsoft.com/playwright:v${version}-noble`;
-const container = process.env.PARTCRAFT_E2E_CONTAINER ?? `partcraft-e2e-browser-${process.pid}`;
+const container = process.env.HALFCUBE_E2E_CONTAINER ?? `halfcube-e2e-browser-${process.pid}`;
 
 // http://host.docker.internal is not a trustworthy origin (no clipboard, no cross-origin isolation for the engine worker),
 // http://localhost is. So the container forwards its own 127.0.0.1:<server port> to the host's loopback server.
@@ -103,13 +103,13 @@ function stopDockerBrowser() {
 
 const env = { ...process.env };
 if (!needsBrowser) {
-  env.PARTCRAFT_E2E_BROWSER = "local"; // never used: no browser project runs
+  env.HALFCUBE_E2E_BROWSER = "local"; // never used: no browser project runs
 } else if (local) {
-  env.PARTCRAFT_E2E_BROWSER = "local";
+  env.HALFCUBE_E2E_BROWSER = "local";
   console.error("LOKALER FALLBACK: Der Browser-Teil laeuft in einem installierten Chrome/Brave/Edge (headless), NICHT im Docker-Image.");
 } else {
-  env.PARTCRAFT_E2E_BROWSER = "docker";
-  env.PARTCRAFT_E2E_WS = `ws://127.0.0.1:${wsPort}/`;
+  env.HALFCUBE_E2E_BROWSER = "docker";
+  env.HALFCUBE_E2E_WS = `ws://127.0.0.1:${wsPort}/`;
   await startDockerBrowser();
   process.on("SIGINT", () => {
     stopDockerBrowser();

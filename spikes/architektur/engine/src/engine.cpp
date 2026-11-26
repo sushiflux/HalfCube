@@ -14,11 +14,11 @@
 #include <emscripten/version.h>
 #endif
 
-#ifndef PC_ENGINE_VERSION
-#define PC_ENGINE_VERSION "0.0.0-spike"
+#ifndef HC_ENGINE_VERSION
+#define HC_ENGINE_VERSION "0.0.0-spike"
 #endif
 
-namespace pc {
+namespace hc {
 
 namespace err = protocol::err;
 
@@ -67,8 +67,8 @@ std::string buildInfo() {
 #elif defined(__GNUC__)
     s = std::string("gcc ") + __VERSION__;
 #endif
-#ifdef PC_BUILD_FLAGS
-    s += std::string(", ") + PC_BUILD_FLAGS;
+#ifdef HC_BUILD_FLAGS
+    s += std::string(", ") + HC_BUILD_FLAGS;
 #endif
     return s;
 }
@@ -196,8 +196,8 @@ void Engine::handleHello(int64_t id, const Json& msg) {
     Json j = base("helloResult", id, version_);
     j["protocol"] = protocol::kVersion;
     Json e = Json::object();
-    e["name"] = "partcraft-engine";
-    e["version"] = PC_ENGINE_VERSION;
+    e["name"] = "halfcube-engine";
+    e["version"] = HC_ENGINE_VERSION;
     e["kernel"] = std::string("OCCT ") + OCC_VERSION_COMPLETE;
     e["platform"] = opt_.platform;
     e["build"] = buildInfo();
@@ -385,7 +385,7 @@ void Engine::execute(Pending& p) {
     if (p.type == "debugCrash") {
         const Json* mode = m.find("mode");
         const std::string md = mode && mode->isString() ? mode->str() : "";
-        std::fprintf(stderr, "partcraft-engine: debugCrash \"%s\" requested by command %lld\n", md.c_str(), static_cast<long long>(p.id));
+        std::fprintf(stderr, "halfcube-engine: debugCrash \"%s\" requested by command %lld\n", md.c_str(), static_cast<long long>(p.id));
         std::fflush(stderr);
         if (md == "abort") std::abort();
         if (md == "nullcall") { const int r = gNullFn(1); std::fprintf(stderr, "nullcall returned %d\n", r); }
@@ -479,4 +479,4 @@ void Engine::rebuildAndReply(const Pending& p) {
     }
 }
 
-} // namespace pc
+} // namespace hc

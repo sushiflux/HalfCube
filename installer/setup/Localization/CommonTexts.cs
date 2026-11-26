@@ -1,4 +1,4 @@
-namespace Partcraft.Setup.Localization;
+namespace HalfCube.Setup.Localization;
 
 /// <summary>Texts used by every window of the setup.</summary>
 public static class CommonTexts

@@ -2,7 +2,7 @@
 
 Throwaway spike for phase 0. It checks that [Velopack](https://velopack.io) (MIT) packs, installs, updates and
 uninstalls an Electron application cleanly on Windows, without admin rights and without any window in front of the
-user. The test app (`PartcraftVelopackTest`) has no product code: it logs what it sees (its version, install location,
+user. The test app (`HalfCubeVelopackTest`) has no product code: it logs what it sees (its version, install location,
 update check result) to a file in its user-data folder and exits on its own. It creates no window unless
 `--window=inactive` is given (then a never-focusable window with the logo is shown for two seconds).
 
@@ -15,7 +15,7 @@ update check result) to a file in its user-data folder and exits on its own. It 
 | `scripts/run-test.ps1` | The whole test: pack 1.0.0, silent install, update to 1.0.1 from a local feed, user-data check, silent uninstall, clean up |
 | `scripts/lib.ps1`, `scripts/watch-windows.ps1` | Helpers that run a program hidden and record every window it opens |
 | `scripts/serve.mjs` | Static file server on 127.0.0.1 for the update feed (`-Feed http`) |
-| `scripts/make-icon.ps1` | Builds `assets/partcraft.ico` from the logo (scaled only) |
+| `scripts/make-icon.ps1` | Builds `assets/halfcube.ico` from the logo (scaled only) |
 | `_build/` | Tools, staged sources, packages, feeds and evidence (git-ignored) |
 
 ## Run it

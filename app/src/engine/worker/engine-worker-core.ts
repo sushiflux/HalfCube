@@ -3,8 +3,8 @@
 // tests/unit/engine/helpers/node-worker-entry.ts.
 //
 // Module contract (protocol/engine-protocol.json): the ES module's default export is an async factory that takes
-// overrides { onEngineMessage, cancelFlags, print, printErr } and returns the module with _pc_init, _pc_handle,
-// _malloc, _free and HEAPU8. Replies of one _pc_handle call arrive synchronously through onEngineMessage.
+// overrides { onEngineMessage, cancelFlags, print, printErr } and returns the module with _hc_init, _hc_handle,
+// _malloc, _free and HEAPU8. Replies of one _hc_handle call arrive synchronously through onEngineMessage.
 //
 // One trap (integer division by zero, a call through a null pointer, abort) leaves the module in an undefined state.
 // The worker then reports "fatal" once and refuses everything after it; the page throws it away and starts a new one.
@@ -12,8 +12,8 @@ import { PROTOCOL_VERSION } from "../generated/protocol.ts";
 import type { FromWorker, ToWorker } from "./worker-protocol.ts";
 
 export interface EngineModule {
-  _pc_init(hasCancelFlags: number): number;
-  _pc_handle(headerPtr: number, headerBytes: number, payloadPtr: number, payloadBytes: number): void;
+  _hc_init(hasCancelFlags: number): number;
+  _hc_handle(headerPtr: number, headerBytes: number, payloadPtr: number, payloadBytes: number): void;
   _malloc(bytes: number): number;
   _free(pointer: number): void;
   /** Read it again after every allocation: Emscripten replaces the view when the memory grows. */
@@ -29,7 +29,7 @@ export interface ModuleOverrides {
 
 export type ModuleLoader = (moduleUrl: string, overrides: ModuleOverrides) => Promise<EngineModule>;
 
-/** Loads partcraft-engine.mjs from a URL and creates the module. */
+/** Loads halfcube-engine.mjs from a URL and creates the module. */
 export const loadEngineModule: ModuleLoader = async (moduleUrl, overrides) => {
   const imported = (await import(/* @vite-ignore */ moduleUrl)) as { default?: unknown };
   if (typeof imported.default !== "function") {
@@ -81,11 +81,11 @@ export function createEngineWorkerCore(
         print: (text) => io.post({ kind: "log", stream: "stdout", text }),
         printErr: (text) => io.post({ kind: "log", stream: "stderr", text }),
       });
-      const version = loaded._pc_init(message.cancelFlags ? 1 : 0);
+      const version = loaded._hc_init(message.cancelFlags ? 1 : 0);
       if (version !== PROTOCOL_VERSION) {
         fatal(
           `The engine module speaks protocol version ${version}, this program expects ${PROTOCOL_VERSION}. ` +
-            `The program files come from different builds; reinstall Partcraft.`,
+            `The program files come from different builds; reinstall HalfCube.`,
         );
         return;
       }
@@ -116,7 +116,7 @@ export function createEngineWorkerCore(
         if (payloadPtr === 0) throw new Error(`Out of memory: ${payloadBytes} bytes for a message payload.`);
         module.HEAPU8.set(new Uint8Array(message.payload), payloadPtr);
       }
-      module._pc_handle(headerPtr, header.byteLength, payloadPtr, payloadBytes);
+      module._hc_handle(headerPtr, header.byteLength, payloadPtr, payloadBytes);
     } catch (e) {
       // A trap or an abort escapes every C++ catch and ends up here; the module's state is undefined from now on.
       fatal(`The WebAssembly engine crashed: ${describe(e)}`);

@@ -1,6 +1,6 @@
 # Builds the native engine (Release) against the OCCT 8.0.2 Windows installation of the kernel test.
 # Usage: powershell -ExecutionPolicy Bypass -File build-windows.ps1 [-OcctDir <OCCT install>] [-Clean]
-# Output: spikes\architektur\_build\engine-win\partcraft-engine.exe plus the OCCT DLLs it needs.
+# Output: spikes\architektur\_build\engine-win\halfcube-engine.exe plus the OCCT DLLs it needs.
 param([string]$OcctDir, [switch]$Clean)
 $ErrorActionPreference = 'Stop'
 
@@ -19,4 +19,4 @@ cmake -S (Join-Path $spike 'engine') -B $build -G Ninja -DCMAKE_BUILD_TYPE=Relea
 if ($LASTEXITCODE -ne 0) { throw "CMake configure failed ($LASTEXITCODE)" }
 cmake --build $build --parallel 8
 if ($LASTEXITCODE -ne 0) { throw "Build failed ($LASTEXITCODE)" }
-Write-Host "built $build\partcraft-engine.exe"
+Write-Host "built $build\halfcube-engine.exe"

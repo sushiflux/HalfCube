@@ -2,7 +2,7 @@
 // names (shape-name.ts), dimensions their automatic name d<number>; an internal element id (l4, k5, d12) is never part of a text.
 // The describer works on the small structural shape both the live view (SketchView) and a stored sketch (describeSketchData) have.
 import { formsOf, isDimension, parameterName, shapesOf, type Form, type Shape } from "../../document/index.ts";
-import type { DimensionKind, PartcraftDocument, Quantity, SketchData } from "../../document/types.ts";
+import type { DimensionKind, HalfCubeDocument, Quantity, SketchData } from "../../document/types.ts";
 import type { Translate } from "../../i18n/core.ts";
 import { formatNumber } from "./geometry.ts";
 import { refsText } from "./shape-name.ts";
@@ -84,7 +84,7 @@ export function describeElement(t: Translate, sketch: DescribedSketch, id: strin
  * sketch by the same names the sketch uses (ids are unique in the whole document). An id the document does not know is named by
  * its kind, never shown.
  */
-export function describeDocumentId(t: Translate, doc: PartcraftDocument, id: string, decimalComma: boolean): string {
+export function describeDocumentId(t: Translate, doc: HalfCubeDocument, id: string, decimalComma: boolean): string {
   const feature = doc.timeline.find((f) => f.id === id);
   if (feature) return feature.name;
   for (const f of doc.timeline) {

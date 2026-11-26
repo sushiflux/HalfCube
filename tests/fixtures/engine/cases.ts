@@ -4,7 +4,7 @@
 import type {
   Dimension,
   GeometricConstraint,
-  PartcraftDocument,
+  HalfCubeDocument,
   Quantity,
   SketchCircle,
   SketchData,
@@ -137,7 +137,7 @@ export function chain(links = 40, length = 5): SketchData {
 export function document(
   sketch: SketchData,
   extrude: { extent?: "oneSide" | "symmetric"; distance?: number; region?: string; plane?: "xy" | "xz" | "yz" } = {},
-): PartcraftDocument {
+): HalfCubeDocument {
   return {
     format: 1,
     documentId: "doc-fixture",
@@ -172,7 +172,7 @@ const solve = (sketch: SketchData, extra: Partial<SolveCommand> = {}): SolveComm
   ...extra,
 });
 
-const sync = (document: PartcraftDocument, extra: Partial<SyncCommand> = {}): SyncCommand => ({
+const sync = (document: HalfCubeDocument, extra: Partial<SyncCommand> = {}): SyncCommand => ({
   type: "model.sync",
   revision: 1,
   document,

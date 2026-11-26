@@ -23,7 +23,7 @@ foreach ($p in @((Join-Path $deps 'FreeCAD\src\Mod\Sketcher\App\planegcs\GCS.cpp
 . (Join-Path $PSScriptRoot '..\..\..\kerntest\occt\scripts\vsenv.ps1')
 
 if ($Clean -and (Test-Path $build)) { Remove-Item -Recurse -Force $build }
-cmake -S $native -B $build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=cl "-DPCST_EIGEN_DIR=$eigenDir" -DPCST_TRACK=native-msvc
+cmake -S $native -B $build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=cl "-DHCST_EIGEN_DIR=$eigenDir" -DHCST_TRACK=native-msvc
 if ($LASTEXITCODE -ne 0) { throw "CMake configure failed ($LASTEXITCODE)" }
 cmake --build $build --parallel 4
 if ($LASTEXITCODE -ne 0) { throw "build failed ($LASTEXITCODE)" }

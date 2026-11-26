@@ -11,9 +11,9 @@ import { desktopDir, harnessDir, repoRoot, webDir } from "./paths.ts";
 
 export async function prepare(): Promise<void> {
   // Read when the web config is loaded: the testing engine variant joins the build (never in product builds).
-  process.env.PARTCRAFT_WASM_TESTING = "1";
+  process.env.HALFCUBE_WASM_TESTING = "1";
   // The suite tests the dev channel: the demo scenes (?demo=...) only exist there.
-  process.env.PARTCRAFT_CHANNEL = "dev";
+  process.env.HALFCUBE_CHANNEL = "dev";
 
   await build({ configFile: join(repoRoot, "vite.config.ts"), logLevel: "warn", build: { outDir: webDir, emptyOutDir: true } });
   await build({ configFile: join(repoRoot, "vite.desktop.config.ts"), logLevel: "warn", build: { outDir: desktopDir, emptyOutDir: true } });

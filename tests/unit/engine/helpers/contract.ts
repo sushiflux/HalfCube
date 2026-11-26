@@ -34,7 +34,7 @@ export function defineContract(label: string, where: EngineLocation, crash: Cras
       expect(h.protocol).toBe(3);
       expect(h.protocolId).toBe(PROTOCOL_ID);
       expect(h.documentFormat).toBe(DOCUMENT_FORMAT);
-      expect(h.engine.name).toBe("partcraft-engine");
+      expect(h.engine.name).toBe("halfcube-engine");
       expect(h.engine.platform).toBe(where.kind);
       expect(h.engine.testCommands).toBe(true);
       expect(h.components.occt).toBe("8.0.2");

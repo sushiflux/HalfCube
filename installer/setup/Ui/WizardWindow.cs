@@ -1,9 +1,9 @@
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
 using System.Runtime.InteropServices;
-using Partcraft.Setup.Localization;
+using HalfCube.Setup.Localization;
 
-namespace Partcraft.Setup.Ui;
+namespace HalfCube.Setup.Ui;
 
 /// <summary>One step of a <see cref="WizardWindow"/>: builds its controls into the content area (design units, origin = top left of the area).</summary>
 public abstract class WizardPage
@@ -49,11 +49,11 @@ public sealed class PageCanvas(Control host, float scale, Palette palette)
     {
         control.Bounds = R(x, y, width, height);
         if (name is not null) control.Name = name;
-        if (control is PcControl pc)
+        if (control is HcControl hc)
         {
-            pc.S = S;
-            pc.P = P;
-            pc.Surface = P.Page;
+            hc.S = S;
+            hc.P = P;
+            hc.Surface = P.Page;
         }
         Host.Controls.Add(control);
         // Later controls lie on top of earlier ones (a card first, then its label and button). WinForms does the opposite: the
@@ -68,10 +68,10 @@ public sealed class PageCanvas(Control host, float scale, Palette palette)
     /// An error message with its "Copy" bar: the selectable, scrolling text box and, below it, the button with its status slot (rule
     /// "error messages are always copyable"). The bar copies the complete message plus app version and time. Returns the text box.
     /// </summary>
-    public PcScrollText AddErrorBox(Func<string> message, Func<Palette, Color> color, int x, int y, int width, int boxHeight, string name)
+    public HcScrollText AddErrorBox(Func<string> message, Func<Palette, Color> color, int x, int y, int width, int boxHeight, string name)
     {
         var text = message();
-        var box = Add(new PcScrollText { Framed = true, Points = 9.5f }, x, y, width, boxHeight, name);
+        var box = Add(new HcScrollText { Framed = true, Points = 9.5f }, x, y, width, boxHeight, name);
         box.SetText(text, color);
         var bar = new CopyBar(message, S, P, P.Page, name.Replace("txt", string.Empty, StringComparison.Ordinal));
         bar.Place(R(x, y + boxHeight + 10, width, 36), (int)Math.Round(12 * S));
@@ -83,10 +83,10 @@ public sealed class PageCanvas(Control host, float scale, Palette palette)
         return box;
     }
 
-    public PcText Text(string text, int x, int y, int width, int height, float points = 10f, FontStyle style = FontStyle.Regular,
+    public HcText Text(string text, int x, int y, int width, int height, float points = 10f, FontStyle style = FontStyle.Regular,
         Func<Palette, Color>? color = null, string? name = null)
     {
-        var label = new PcText { Text = text, Points = points, Style = style };
+        var label = new HcText { Text = text, Points = points, Style = style };
         if (color is not null) label.Color = color;
         return Add(label, x, y, width, height, name);
     }
@@ -116,14 +116,14 @@ public class WizardWindow : Form
 
     private readonly List<WizardPage> _steps;
     private readonly Panel _content;
-    private readonly PcText _kicker;
-    private readonly PcText _title;
-    private readonly PcText _subtitle;
+    private readonly HcText _kicker;
+    private readonly HcText _title;
+    private readonly HcText _subtitle;
     private readonly Panel _pageHost;
     private readonly TransitionLayer _transition;
-    private readonly PcButton _themeButton;
-    private readonly PcButton _minimizeButton;
-    private readonly PcButton _closeButton;
+    private readonly HcButton _themeButton;
+    private readonly HcButton _minimizeButton;
+    private readonly HcButton _closeButton;
     private readonly Msg _sideSubtitle;
     private readonly string _version;
     private int _index = -1;
@@ -152,9 +152,9 @@ public class WizardWindow : Form
         BackColor = P.Page;
 
         _content = new Panel { Bounds = new Rectangle(Px(ContentLeft), Px(ContentTop), Px(ContentWidth), Px(WindowHeight - ContentTop - FooterHeight)), BackColor = P.Page, Name = "content" };
-        _kicker = new PcText { Kicker = true, Points = 8.6f, Style = FontStyle.Bold, Color = p => p.Accent, Name = "kicker" };
-        _title = new PcText { Points = 20.25f, Style = FontStyle.Bold, Display = true, Name = "title" };
-        _subtitle = new PcText { Points = 10.5f, Color = p => p.Muted, Name = "subtitle" };
+        _kicker = new HcText { Kicker = true, Points = 8.6f, Style = FontStyle.Bold, Color = p => p.Accent, Name = "kicker" };
+        _title = new HcText { Points = 20.25f, Style = FontStyle.Bold, Display = true, Name = "title" };
+        _subtitle = new HcText { Points = 10.5f, Color = p => p.Muted, Name = "subtitle" };
         _pageHost = new Panel { BackColor = P.Page, Name = "page" };
         _transition = new TransitionLayer { Visible = false, Name = "transition" };
         PlaceInContent(_kicker, 0, 8, ContentWidth, 18);
@@ -166,9 +166,9 @@ public class WizardWindow : Form
         _content.Controls.AddRange([_transition, _kicker, _title, _subtitle, _pageHost]);
 
         // The glyphs and the hover/close-red of the Windows caption buttons (CaptionGlyphs, CaptionColors)
-        _themeButton = ChromeButton("btnTheme", PcButtonKind.WindowButton, (g, r, c) => (P.IsDark ? (Action<Graphics, RectangleF, Color>)CaptionGlyphs.Sun : CaptionGlyphs.Moon)(g, r, c));
-        _minimizeButton = ChromeButton("btnMinimize", PcButtonKind.WindowButton, CaptionGlyphs.Minimize);
-        _closeButton = ChromeButton("btnClose", PcButtonKind.WindowClose, CaptionGlyphs.Close);
+        _themeButton = ChromeButton("btnTheme", HcButtonKind.WindowButton, (g, r, c) => (P.IsDark ? (Action<Graphics, RectangleF, Color>)CaptionGlyphs.Sun : CaptionGlyphs.Moon)(g, r, c));
+        _minimizeButton = ChromeButton("btnMinimize", HcButtonKind.WindowButton, CaptionGlyphs.Minimize);
+        _closeButton = ChromeButton("btnClose", HcButtonKind.WindowClose, CaptionGlyphs.Close);
         _themeButton.Bounds = new Rectangle(Px(WindowWidth - 140), Px(6), Px(44), Px(32));
         _minimizeButton.Bounds = new Rectangle(Px(WindowWidth - 94), Px(6), Px(44), Px(32));
         _closeButton.Bounds = new Rectangle(Px(WindowWidth - 48), Px(6), Px(44), Px(32));
@@ -177,10 +177,10 @@ public class WizardWindow : Form
         _closeButton.Click += (_, _) => OnCloseRequested();
         UpdateChromeNames();
 
-        Back = new PcButton { Kind = PcButtonKind.Secondary, Name = "btnBack" };
-        Next = new PcButton { Kind = PcButtonKind.Primary, Name = "btnNext" };
-        Cancel = new PcButton { Kind = PcButtonKind.Ghost, Name = "btnCancel" };
-        Hint = new PcText { Points = 9.5f, Color = p => p.Muted, Name = "lblHint", Align = TextFormatFlags.Left | TextFormatFlags.VerticalCenter };
+        Back = new HcButton { Kind = HcButtonKind.Secondary, Name = "btnBack" };
+        Next = new HcButton { Kind = HcButtonKind.Primary, Name = "btnNext" };
+        Cancel = new HcButton { Kind = HcButtonKind.Ghost, Name = "btnCancel" };
+        Hint = new HcText { Points = 9.5f, Color = p => p.Muted, Name = "lblHint", Align = TextFormatFlags.Left | TextFormatFlags.VerticalCenter };
         // The primary button never changes size between states; Back and Cancel sit to its left in the order of the mockup
         // (Back, Cancel, Next) and only the visible ones are laid out, so the primary action always keeps its place.
         ShowFooterButtons(back: false, cancel: true);
@@ -215,14 +215,14 @@ public class WizardWindow : Form
 
     public Palette P { get; private set; }
 
-    public PcButton Back { get; }
+    public HcButton Back { get; }
 
-    public PcButton Next { get; }
+    public HcButton Next { get; }
 
-    public PcButton Cancel { get; }
+    public HcButton Cancel { get; }
 
     /// <summary>A short note at the left of the action bar (for example "Progress is measured on the target folder").</summary>
-    public PcText Hint { get; }
+    public HcText Hint { get; }
 
     public int StepIndex => _index;
 
@@ -233,7 +233,7 @@ public class WizardWindow : Form
     private void PlaceInContent(Control control, int x, int y, int width, int height)
     {
         control.Bounds = new Rectangle(Px(x), Px(y), Px(width), Px(height));
-        if (control is PcControl pc) pc.S = S;
+        if (control is HcControl hc) hc.S = S;
     }
 
     private bool _backShown;
@@ -264,15 +264,15 @@ public class WizardWindow : Form
         PlaceButton(Back, x, 128, top);
     }
 
-    private void PlaceButton(PcButton button, int x, int width, int top)
+    private void PlaceButton(HcButton button, int x, int width, int top)
     {
         button.Bounds = new Rectangle(Px(x), Px(top), Px(width), Px(38));
         button.S = S;
     }
 
-    private PcButton ChromeButton(string name, PcButtonKind kind, Action<Graphics, RectangleF, Color> glyph)
+    private HcButton ChromeButton(string name, HcButtonKind kind, Action<Graphics, RectangleF, Color> glyph)
     {
-        var button = new PcButton { Kind = kind, Name = name, Glyph = glyph, TabStop = false, S = S };
+        var button = new HcButton { Kind = kind, Name = name, Glyph = glyph, TabStop = false, S = S };
         return button;
     }
 
@@ -293,7 +293,7 @@ public class WizardWindow : Form
             e.Handled = true;
             Cancel.PerformClick();
         }
-        else if (e.KeyCode == Keys.Enter && Next.Visible && Next.Enabled && ActiveControl is not PcButton && ActiveControl is not PcScrollText)
+        else if (e.KeyCode == Keys.Enter && Next.Visible && Next.Enabled && ActiveControl is not HcButton && ActiveControl is not HcScrollText)
         {
             e.Handled = true;
             Next.PerformClick();
@@ -384,12 +384,12 @@ public class WizardWindow : Form
         {
             foreach (Control child in parent.Controls)
             {
-                if (child is PcControl pc)
+                if (child is HcControl hc)
                 {
-                    pc.P = P;
-                    if (pc.Surface == Palette.Light.Page || pc.Surface == Palette.Dark.Page || pc.Surface.IsEmpty) pc.Surface = P.Page;
-                    if (pc is PcScrollText scroll) scroll.Relayout();
-                    pc.Invalidate();
+                    hc.P = P;
+                    if (hc.Surface == Palette.Light.Page || hc.Surface == Palette.Dark.Page || hc.Surface.IsEmpty) hc.Surface = P.Page;
+                    if (hc is HcScrollText scroll) scroll.Relayout();
+                    hc.Invalidate();
                 }
                 Apply(child);
             }

@@ -20,7 +20,7 @@ export function getEngineSession(): EngineSession {
       params.engine === "testing" ? { wasmModuleUrl: defaultWasmModuleUrl(WASM_TESTING_FOLDER) } : {},
     );
     // Dev channel only: lets a test crash the engine on purpose (needs ?engine=testing for the test commands).
-    if (currentVersion().channel === "dev") (window as unknown as { __partcraftSession?: EngineSession }).__partcraftSession = session;
+    if (currentVersion().channel === "dev") (window as unknown as { __halfcubeSession?: EngineSession }).__halfcubeSession = session;
   }
   return session;
 }

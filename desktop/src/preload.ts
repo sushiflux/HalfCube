@@ -33,7 +33,7 @@ const bridge: DesktopBridge = {
 contextBridge.exposeInMainWorld("desktopBridge", bridge);
 
 ipcRenderer.on(IPC_ENGINE_PORT, (event, generation: number) => {
-  const envelope: EnginePortEnvelope = { partcraft: "engine-port", generation };
+  const envelope: EnginePortEnvelope = { halfcube: "engine-port", generation };
   // Same-window hand-over from the isolated world to the page; the port is transferred, not copied.
   window.postMessage(envelope, window.location.origin, event.ports);
 });

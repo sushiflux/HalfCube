@@ -8,7 +8,7 @@
 
 #include <string>
 
-namespace pc::model {
+namespace hc::model {
 
 struct Vec3d {
     double x = 0.0, y = 0.0, z = 0.0;
@@ -36,6 +36,6 @@ sketch::Sketch toSketch(const protocol::SketchData& data, const std::string& pat
 
 // Structural checks of a whole document (format, unique ids, the bodies the extrusions create, references to
 // earlier sketches). The sketches themselves are checked when they are read. Throws EngineError(bad_document).
-void checkDocument(const protocol::PartcraftDocument& doc);
+void checkDocument(const protocol::HalfCubeDocument& doc);
 
-} // namespace pc::model
+} // namespace hc::model

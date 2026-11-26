@@ -3,16 +3,16 @@
 #   powershell -NoProfile -ExecutionPolicy Bypass -File engine/scripts/build-windows.ps1 [options]
 #
 #   -OcctDir <dir>   use an existing OCCT 8.0.2 installation (shared, Release, C++20, built with the flags below);
-#                    also read from the environment variable PARTCRAFT_OCCT_DIR. Without it, OCCT is built from
+#                    also read from the environment variable HALFCUBE_OCCT_DIR. Without it, OCCT is built from
 #                    engine/_deps/occt-src into engine/_build/occt-windows-install once and reused afterwards.
 #   -TestCommands    build with the test commands diagnostics.crash and diagnostics.hang (separate build folder)
 #   -Clean           delete the engine build folder first
 #   -NoTests         do not run the unit tests
 #   -Jobs <n>        parallel compile jobs (default: number of logical processors)
 #
-# Output: engine/_build/windows-release[-testing]/bin/partcraft-engine.exe with the OCCT DLLs next to it.
+# Output: engine/_build/windows-release[-testing]/bin/halfcube-engine.exe with the OCCT DLLs next to it.
 # Needs Visual Studio 2022 or its Build Tools with the C++ workload; vswhere finds them, nothing has to be on PATH.
-param([string]$OcctDir = $env:PARTCRAFT_OCCT_DIR, [switch]$TestCommands, [switch]$Clean, [switch]$NoTests, [int]$Jobs = 0)
+param([string]$OcctDir = $env:HALFCUBE_OCCT_DIR, [switch]$TestCommands, [switch]$Clean, [switch]$NoTests, [int]$Jobs = 0)
 $ErrorActionPreference = 'Stop'
 
 $engine = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
@@ -46,8 +46,8 @@ if ($OcctDir) {
     $src = Join-Path $engine '_deps\occt-src'
     $occtBuild = Join-Path $buildRoot 'occt-windows'
     $occtInstall = Join-Path $buildRoot 'occt-windows-install'
-    $stampFile = Join-Path $occtInstall '.partcraft-occt'
-    $srcPin = Join-Path $src '.partcraft-pin'
+    $stampFile = Join-Path $occtInstall '.halfcube-occt'
+    $srcPin = Join-Path $src '.halfcube-pin'
     if (-not (Test-Path $srcPin)) { throw "OCCT sources missing in $src. Run engine/scripts/fetch-deps.ps1 first (or pass -OcctDir)." }
     $stamp = ((Get-Content -Raw $srcPin).Trim()) + ' | msvc | ' + ($occtOptions -join ' ')
     if ((Test-Path $stampFile) -and ((Get-Content -Raw $stampFile).Trim() -eq $stamp)) {
@@ -72,18 +72,18 @@ $build = Join-Path $buildRoot $name
 if ($Clean -and (Test-Path $build)) { Remove-Item -Recurse -Force $build }
 $t0 = $sw.Elapsed.TotalSeconds
 cmake -S $engine -B $build -G Ninja -DCMAKE_BUILD_TYPE=Release "-DOpenCASCADE_DIR=$occtConfig" `
-    "-DPARTCRAFT_TEST_COMMANDS=$(if ($TestCommands) { 'ON' } else { 'OFF' })"
+    "-DHALFCUBE_TEST_COMMANDS=$(if ($TestCommands) { 'ON' } else { 'OFF' })"
 if ($LASTEXITCODE -ne 0) { throw "Engine configure failed ($LASTEXITCODE)." }
 cmake --build $build --parallel $Jobs
 if ($LASTEXITCODE -ne 0) { throw "Engine build failed ($LASTEXITCODE)." }
 $engineSeconds = $sw.Elapsed.TotalSeconds - $t0
 
 if (-not $NoTests) {
-    & (Join-Path $build 'bin\partcraft-engine-tests.exe')
+    & (Join-Path $build 'bin\halfcube-engine-tests.exe')
     if ($LASTEXITCODE -ne 0) { throw "Unit tests failed ($LASTEXITCODE)." }
 }
 
-$exe = Join-Path $build 'bin\partcraft-engine.exe'
+$exe = Join-Path $build 'bin\halfcube-engine.exe'
 $dlls = Get-ChildItem (Join-Path $build 'bin') -Filter 'TK*.dll'
 "built {0} ({1:N0} bytes) with {2} OCCT DLLs ({3:N0} bytes)" -f $exe, (Get-Item $exe).Length, $dlls.Count, ($dlls | Measure-Object Length -Sum).Sum
 "times: occt_build_s={0:N1} engine_build_s={1:N1} total_s={2:N1}" -f $occtSeconds, $engineSeconds, $sw.Elapsed.TotalSeconds

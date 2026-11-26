@@ -21,9 +21,9 @@ describe("the generated third-party data", () => {
   });
 
   it("ships the project's own two texts and every text file the data names", () => {
-    expect(existsSync(join(publicRoot, "licenses/partcraft-license.txt"))).toBe(true);
-    expect(existsSync(join(publicRoot, "licenses/partcraft-notice.txt"))).toBe(true);
-    expect(readFileSync(join(publicRoot, "licenses/partcraft-license.txt"), "utf8")).toContain("PolyForm Shield License 1.0.0");
+    expect(existsSync(join(publicRoot, "licenses/halfcube-license.txt"))).toBe(true);
+    expect(existsSync(join(publicRoot, "licenses/halfcube-notice.txt"))).toBe(true);
+    expect(readFileSync(join(publicRoot, "licenses/halfcube-license.txt"), "utf8")).toContain("PolyForm Shield License 1.0.0");
     const missing = thirdParty.filter((e) => e.textFile !== null && !existsSync(join(publicRoot, e.textFile))).map((e) => `${e.id}: ${e.textFile}`);
     expect(missing).toEqual([]);
   });

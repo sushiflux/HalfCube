@@ -1,5 +1,5 @@
 // Shared helper: starts the Electron runtime of the repository with a hidden window and waits for it.
-// The runtime comes from PARTCRAFT_ELECTRON_EXE or from the repository's own node_modules. The child gets its own
+// The runtime comes from HALFCUBE_ELECTRON_EXE or from the repository's own node_modules. The child gets its own
 // temporary user data folder, never shows a window and is ended (with its child processes) when it hangs.
 import { spawn, spawnSync } from "node:child_process";
 import { existsSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
@@ -9,11 +9,11 @@ import { fileURLToPath } from "node:url";
 
 const here = dirname(fileURLToPath(import.meta.url));
 
-/** Finds the Electron binary of the repository (or the one named in PARTCRAFT_ELECTRON_EXE). */
+/** Finds the Electron binary of the repository (or the one named in HALFCUBE_ELECTRON_EXE). */
 export function findElectron() {
-  const fromEnv = process.env.PARTCRAFT_ELECTRON_EXE;
+  const fromEnv = process.env.HALFCUBE_ELECTRON_EXE;
   if (fromEnv) {
-    if (!existsSync(fromEnv)) throw new Error(`PARTCRAFT_ELECTRON_EXE zeigt auf keine Datei: ${fromEnv}`);
+    if (!existsSync(fromEnv)) throw new Error(`HALFCUBE_ELECTRON_EXE zeigt auf keine Datei: ${fromEnv}`);
     return resolve(fromEnv);
   }
   let name = "electron";
@@ -22,7 +22,7 @@ export function findElectron() {
   const candidate = resolve(here, "..", "..", "node_modules", "electron", "dist", name);
   if (!existsSync(candidate)) {
     throw new Error(
-      `Die Electron-Laufzeit fehlt (${candidate}). Im Hauptordner "npm install" ausführen oder PARTCRAFT_ELECTRON_EXE setzen.`,
+      `Die Electron-Laufzeit fehlt (${candidate}). Im Hauptordner "npm install" ausführen oder HALFCUBE_ELECTRON_EXE setzen.`,
     );
   }
   return candidate;
@@ -39,7 +39,7 @@ function killTree(pid) {
  * Resolves with the stdout text; rejects with the error output when the exit code is not 0.
  */
 export async function runElectronJob(script, job, timeoutMs = 300_000) {
-  const work = mkdtempSync(join(tmpdir(), "partcraft-docs-"));
+  const work = mkdtempSync(join(tmpdir(), "halfcube-docs-"));
   const jobFile = join(work, "job.json");
   writeFileSync(jobFile, JSON.stringify({ ...job, userData: join(work, "user-data") }));
   try {
@@ -47,8 +47,8 @@ export async function runElectronJob(script, job, timeoutMs = 300_000) {
       const env = {
         ...process.env,
         ELECTRON_ENABLE_LOGGING: "0",
-        PARTCRAFT_JOB_SCRIPT: resolve(script),
-        PARTCRAFT_JOB_FILE: jobFile,
+        HALFCUBE_JOB_SCRIPT: resolve(script),
+        HALFCUBE_JOB_FILE: jobFile,
       };
       delete env.ELECTRON_RUN_AS_NODE;
       const child = spawn(findElectron(), ["--disable-gpu", join(here, "bootstrap.cjs")], {

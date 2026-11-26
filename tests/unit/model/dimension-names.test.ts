@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 import { numberNamesInDocument } from "../../../app/src/document/migrate.ts";
 import { dimensionName, highestParameterNumber, numberDimensions } from "../../../app/src/document/parameter-names.ts";
 import { DocumentStore } from "../../../app/src/document/store.ts";
-import type { Dimension, PartcraftDocument, SketchFeature } from "../../../app/src/document/types.ts";
+import type { Dimension, HalfCubeDocument, SketchFeature } from "../../../app/src/document/types.ts";
 import { documentProblems, serializeDocument } from "../../../app/src/document/validate.ts";
 import { sketchFeature } from "../../../app/src/model/doc-edit.ts";
 import { SketchEditorImpl } from "../../../app/src/model/sketch-editor.ts";
@@ -16,7 +16,7 @@ const mm = (value: number) => ({ value, unit: "mm" as const });
 const empty = { points: [], lines: [], circles: [], constraints: [] };
 
 /** A document with two sketches, f1 and f9. */
-function twoSketches(): PartcraftDocument {
+function twoSketches(): HalfCubeDocument {
   const doc = document(empty);
   const first = doc.timeline[0] as SketchFeature;
   return { ...doc, timeline: [first, { ...first, id: "f9", name: "Skizze2" }] };
@@ -98,7 +98,7 @@ describe("d names of dimensions", () => {
 });
 
 describe("documents from before the d names", () => {
-  const legacy = (): PartcraftDocument => {
+  const legacy = (): HalfCubeDocument => {
     const doc = twoSketches();
     const dim = (id: string, number?: number): Dimension => ({ id, kind: "radius", refs: ["c1"], value: mm(5), driving: true, label: { x: 0, y: 0 }, ...(number !== undefined ? { number } : {}) });
     const [one, two] = doc.timeline as SketchFeature[];
@@ -110,7 +110,7 @@ describe("documents from before the d names", () => {
       ],
     };
   };
-  const numbers = (doc: PartcraftDocument) => (doc.timeline as SketchFeature[]).flatMap((f) => f.sketch.constraints.filter((c): c is Dimension => "driving" in c).map(dimensionName));
+  const numbers = (doc: HalfCubeDocument) => (doc.timeline as SketchFeature[]).flatMap((f) => f.sketch.constraints.filter((c): c is Dimension => "driving" in c).map(dimensionName));
 
   it("are numbered in creation order (timeline, then the sketch's list) and the counter is set", () => {
     const migrated = numberDimensions(legacy());
@@ -123,7 +123,7 @@ describe("documents from before the d names", () => {
   it("numbers already in the document are kept, the rest continue after the highest one", () => {
     const doc = legacy();
     const f = doc.timeline[0] as SketchFeature;
-    const partly: PartcraftDocument = { ...doc, timeline: [{ ...f, sketch: { ...f.sketch, constraints: [{ ...(f.sketch.constraints[0] as Dimension), number: 7 }, f.sketch.constraints[1]!] } }, doc.timeline[1]!] };
+    const partly: HalfCubeDocument = { ...doc, timeline: [{ ...f, sketch: { ...f.sketch, constraints: [{ ...(f.sketch.constraints[0] as Dimension), number: 7 }, f.sketch.constraints[1]!] } }, doc.timeline[1]!] };
     expect(highestParameterNumber(partly)).toBe(7);
     expect(numbers(numberDimensions(partly))).toEqual(["d7", "d8", "d9", "d10"]);
   });

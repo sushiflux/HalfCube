@@ -12,7 +12,7 @@
 // (newParameterNumber). Works with React's useSyncExternalStore: getSnapshot returns the same object until the next change.
 import { nextParameterOf } from "./parameter-names.ts";
 import { documentProblems } from "./validate.ts";
-import type { IdKind, PartcraftDocument } from "./types.ts";
+import type { IdKind, HalfCubeDocument } from "./types.ts";
 
 export interface DocumentStoreOptions {
   /** Undo depth. Default 200. */
@@ -36,7 +36,7 @@ export interface UndoGroup {
 
 /** One undo step: the document as it was before the step. The object's identity is how a group finds its step again. */
 interface UndoEntry {
-  readonly before: PartcraftDocument;
+  readonly before: HalfCubeDocument;
 }
 
 interface GroupState {
@@ -45,9 +45,9 @@ interface GroupState {
 }
 
 export class DocumentStore {
-  private doc: PartcraftDocument;
+  private doc: HalfCubeDocument;
   private readonly undoStack: UndoEntry[] = [];
-  private readonly redoStack: PartcraftDocument[] = [];
+  private readonly redoStack: HalfCubeDocument[] = [];
   private counter: number;
   private parameterCounter: number;
   private readonly listeners = new Set<DocumentListener>();
@@ -57,7 +57,7 @@ export class DocumentStore {
   private last: ChangeKind = "load";
   private openGroup: GroupState | null = null;
 
-  constructor(initial: PartcraftDocument, options: DocumentStoreOptions = {}) {
+  constructor(initial: HalfCubeDocument, options: DocumentStoreOptions = {}) {
     this.maxUndo = options.maxUndo ?? 200;
     this.validate = options.validate ?? true;
     this.check(initial);
@@ -66,7 +66,7 @@ export class DocumentStore {
     this.parameterCounter = nextParameterOf(initial);
   }
 
-  getSnapshot = (): PartcraftDocument => this.doc;
+  getSnapshot = (): HalfCubeDocument => this.doc;
 
   subscribe = (listener: DocumentListener): (() => void) => {
     this.listeners.add(listener);
@@ -129,7 +129,7 @@ export class DocumentStore {
    * If the group's step is no longer the newest one (it fell out of the undo depth), the commit starts a new step and
    * the group continues with that.
    */
-  commit(next: PartcraftDocument | ((current: PartcraftDocument) => PartcraftDocument)): PartcraftDocument {
+  commit(next: HalfCubeDocument | ((current: HalfCubeDocument) => HalfCubeDocument)): HalfCubeDocument {
     const proposed = typeof next === "function" ? next(this.doc) : next;
     if (proposed === this.doc) return this.doc;
     this.counter = Math.max(this.counter, proposed.nextId);
@@ -210,7 +210,7 @@ export class DocumentStore {
   }
 
   /** Replaces the document without undo history (new or opened document). */
-  load(doc: PartcraftDocument): void {
+  load(doc: HalfCubeDocument): void {
     this.check(doc);
     this.undoStack.length = 0;
     this.redoStack.length = 0;
@@ -220,13 +220,13 @@ export class DocumentStore {
     this.set(doc, "load");
   }
 
-  private check(doc: PartcraftDocument): void {
+  private check(doc: HalfCubeDocument): void {
     if (!this.validate) return;
     const problems = documentProblems(doc);
     if (problems.length) throw new Error(`The document store refused an invalid document: ${problems.join(" ")}`);
   }
 
-  private set(doc: PartcraftDocument, kind: ChangeKind): void {
+  private set(doc: HalfCubeDocument, kind: ChangeKind): void {
     this.doc = doc;
     this.last = kind;
     this.changes++;

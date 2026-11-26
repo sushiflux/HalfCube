@@ -1,10 +1,10 @@
 # Foreground watcher: logs every change of the foreground window (process, PID, window title, extended style) while
-# tests or background starts run, and counts the moments a Partcraft/Electron window was in front ("Treffer").
+# tests or background starts run, and counts the moments a HalfCube/Electron window was in front ("Treffer").
 #
 #   powershell -NoProfile -ExecutionPolicy Bypass -File scripts\foreground-watch.ps1 -Log <file> [-StopFile <file>] [-Seconds <n>]
 #
 # It creates no window and never activates anything: an out-of-context WinEvent hook (EVENT_SYSTEM_FOREGROUND) plus a
-# 50 ms poll of GetForegroundWindow as a second source. It also logs every top-level window of an electron/Partcraft
+# 50 ms poll of GetForegroundWindow as a second source. It also logs every top-level window of an electron/HalfCube
 # process when it is shown, with its extended style (WS_EX_NOACTIVATE, WS_EX_APPWINDOW, WS_EX_TOOLWINDOW), so a test run
 # shows whether the windows can be activated at all. Ends when -StopFile exists or after -Seconds; prints a summary.
 param(
@@ -12,7 +12,7 @@ param(
     [string]$StopFile = '',
     [int]$Seconds = 3600,
     # Process names counted as hits (regular expression, case-insensitive).
-    [string]$Match = '^(electron|partcraft)$'
+    [string]$Match = '^(electron|halfcube)$'
 )
 $ErrorActionPreference = 'Stop'
 

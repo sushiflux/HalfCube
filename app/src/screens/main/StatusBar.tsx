@@ -1,6 +1,6 @@
 // The status bar: what is selected, how many steps failed, the unit and the version. The version carries the channel
 // symbol; the platform is a data attribute for tests, not text. The early-access label next to it is a button that opens
-// "About Partcraft".
+// "About HalfCube".
 import { EARLY_ACCESS } from "../../about/catalogue.ts";
 import { aboutStore } from "../../about/state.ts";
 import { branding } from "../../branding.ts";

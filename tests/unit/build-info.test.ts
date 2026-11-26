@@ -16,12 +16,12 @@ describe("readBuildInfo", () => {
   it("reads line 2 of version.txt and the channel from the environment", () => {
     writeFileSync(join(dir, "version.txt"), "v2026.11.4\nv2026.11.4.58.26093\n");
     expect(readBuildInfo(dir, {})).toEqual({ id: "v2026.11.4.58.26093", channel: "dev" });
-    expect(readBuildInfo(dir, { PARTCRAFT_CHANNEL: "nightly" })).toEqual({ id: "v2026.11.4.58.26093", channel: "nightly" });
+    expect(readBuildInfo(dir, { HALFCUBE_CHANNEL: "nightly" })).toEqual({ id: "v2026.11.4.58.26093", channel: "nightly" });
   });
 
   it("fails on an invalid channel", () => {
     writeFileSync(join(dir, "version.txt"), "v2026.11.4\nv2026.11.4.58.26093\n");
-    expect(() => readBuildInfo(dir, { PARTCRAFT_CHANNEL: "foo" })).toThrow(/Invalid channel/);
+    expect(() => readBuildInfo(dir, { HALFCUBE_CHANNEL: "foo" })).toThrow(/Invalid channel/);
   });
 
   it("fails on a missing or malformed version.txt", () => {

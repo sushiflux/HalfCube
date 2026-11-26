@@ -130,7 +130,7 @@ jobs:
         if: always() && steps.occt.outputs.cache-hit != 'true'
         shell: pwsh
         run: |
-          "ready=$((Test-Path engine/_build/occt-windows-install/.partcraft-occt).ToString().ToLower())" | Out-File -Append -Encoding utf8 $env:GITHUB_OUTPUT
+          "ready=$((Test-Path engine/_build/occt-windows-install/.halfcube-occt).ToString().ToLower())" | Out-File -Append -Encoding utf8 $env:GITHUB_OUTPUT
 
       - name: Save OCCT
         if: always() && steps.occt.outputs.cache-hit != 'true' && steps.occt-ready.outputs.ready == 'true'
@@ -141,7 +141,7 @@ jobs:
 
       - name: Drive the engine through its message interface
         shell: bash
-        run: node engine/tests/drive-engine.mjs --native engine/_build/windows-release/bin/partcraft-engine.exe --out engine/_build/results/native.json
+        run: node engine/tests/drive-engine.mjs --native engine/_build/windows-release/bin/halfcube-engine.exe --out engine/_build/results/native.json
 
   web:
     name: Browser UI build
@@ -203,7 +203,7 @@ jobs:
         run: bash scripts/ci/build-wasm-linux.sh
 
       - name: Save OCCT
-        if: always() && steps.occt.outputs.cache-hit != 'true' && hashFiles('engine/_build/occt-wasm-install/.partcraft-occt') != ''
+        if: always() && steps.occt.outputs.cache-hit != 'true' && hashFiles('engine/_build/occt-wasm-install/.halfcube-occt') != ''
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: engine/_build/occt-wasm-install
@@ -278,7 +278,7 @@ jobs:
           fi
 
       - name: Save OCCT
-        if: always() && steps.occt.outputs.cache-hit != 'true' && hashFiles('engine/_build/occt-linux-install/.partcraft-occt') != ''
+        if: always() && steps.occt.outputs.cache-hit != 'true' && hashFiles('engine/_build/occt-linux-install/.halfcube-occt') != ''
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: engine/_build/occt-linux-install

@@ -17,7 +17,7 @@
 #include <string_view>
 #include <vector>
 
-namespace pc {
+namespace hc {
 
 using Json = protocol::Json;
 
@@ -95,4 +95,4 @@ private:
     std::int64_t lastRevision_ = 0;  // highest model.sync revision accepted
 };
 
-} // namespace pc
+} // namespace hc

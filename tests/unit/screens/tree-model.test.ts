@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { createEmptyDocument } from "../../../app/src/document/index.ts";
-import type { PartcraftDocument, SketchFeature } from "../../../app/src/document/types.ts";
+import type { HalfCubeDocument, SketchFeature } from "../../../app/src/document/types.ts";
 import { buildTree, initiallyExpanded, type TreeText } from "../../../app/src/screens/main/tree-model.ts";
 
 const text: TreeText = {
@@ -21,7 +21,7 @@ const sketch = (id: string, plane: "xy" | "xz" | "yz" = "xy"): SketchFeature => 
   sketch: { points: [], lines: [], circles: [], constraints: [] },
 });
 
-function docWith(features: SketchFeature[]): PartcraftDocument {
+function docWith(features: SketchFeature[]): HalfCubeDocument {
   return { ...createEmptyDocument({ rootName: "Teil" }), timeline: features };
 }
 
@@ -63,7 +63,7 @@ describe("buildTree", () => {
 
   it("lists the bodies of the component with the step that made them", () => {
     const base = docWith([sketch("f1")]);
-    const doc: PartcraftDocument = { ...base, components: [{ id: "root", name: "Teil", bodies: [{ id: "b3", name: "Körper1", createdBy: "f2", visible: true }] }] };
+    const doc: HalfCubeDocument = { ...base, components: [{ id: "root", name: "Teil", bodies: [{ id: "b3", name: "Körper1", createdBy: "f2", visible: true }] }] };
     const rows = buildTree({ doc, steps: [{ featureId: "f2", state: "warning", cached: false, ms: 1 }], expanded: open, text });
     expect(rows.find((r) => r.id === "body:b3")).toMatchObject({ kind: "body", label: "Körper1", featureId: "f2", state: "warning", depth: 2 });
   });

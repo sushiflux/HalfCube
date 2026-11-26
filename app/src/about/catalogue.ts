@@ -1,4 +1,4 @@
-// The licence list of "About Partcraft": the project's own texts plus the generated third-party data, filtered for the
+// The licence list of "About HalfCube": the project's own texts plus the generated third-party data, filtered for the
 // platform, grouped, searched. Pure functions; the generated data and the platform come in as arguments, so tests can use
 // a fixture.
 import { catalogues } from "../i18n/core.ts";
@@ -7,13 +7,13 @@ import type { Platform } from "../platform.ts";
 import { licenceGroups, type LicenceGroup, type LicenceItem, type LocalizedText, type ThirdPartyEntry } from "./types.ts";
 
 /** The public repository (the "Source code on GitHub" link and the source of the project's own entries). */
-export const REPOSITORY_URL = "https://github.com/sushiflux/Partcraft";
+export const REPOSITORY_URL = "https://github.com/sushiflux/HalfCube";
 
-/** Partcraft is in early access until the first real release (ROADMAP); the label goes away by turning this off. */
+/** HalfCube is in early access until the first real release (ROADMAP); the label goes away by turning this off. */
 export const EARLY_ACCESS = true;
 
-/** Id of the entry that holds the Partcraft licence text; "Lizenztext anzeigen" opens it. */
-export const LICENCE_ITEM = "partcraft";
+/** Id of the entry that holds the HalfCube licence text; "Lizenztext anzeigen" opens it. */
+export const LICENCE_ITEM = "halfcube";
 /** Id of the entry that holds the NOTICE file; "NOTICE-Datei ansehen" opens it. */
 export const NOTICE_ITEM = "notice";
 
@@ -25,13 +25,13 @@ export function selfItems(version: string): LicenceItem[] {
     {
       id: LICENCE_ITEM,
       group: "self",
-      name: "Partcraft",
+      name: "HalfCube",
       version,
       license: "PolyForm-Shield-1.0.0",
       copyright: [catalogues.de.about.copyright],
       source: REPOSITORY_URL,
-      purpose: both((m) => m.about.self.partcraftUse),
-      textFile: "licenses/partcraft-license.txt",
+      purpose: both((m) => m.about.self.halfCubeUse),
+      textFile: "licenses/halfcube-license.txt",
     },
     {
       id: NOTICE_ITEM,
@@ -40,10 +40,10 @@ export function selfItems(version: string): LicenceItem[] {
       version: both((m) => m.about.self.noticeVersion),
       license: both((m) => m.about.self.noticeLicence),
       licenseLabel: both((m) => m.about.self.noticeList),
-      copyright: ["Required Notice: Copyright 2026 SushiFlux (https://github.com/sushiflux/Partcraft)"],
+      copyright: ["Required Notice: Copyright 2026 SushiFlux (https://github.com/sushiflux/HalfCube)"],
       source: `${REPOSITORY_URL}/blob/main/NOTICE`,
       purpose: both((m) => m.about.self.noticeUse),
-      textFile: "licenses/partcraft-notice.txt",
+      textFile: "licenses/halfcube-notice.txt",
     },
   ];
 }

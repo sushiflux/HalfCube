@@ -1,4 +1,4 @@
-// Types of the licence list of "About Partcraft", built from the generated third-party data (app/src/about/third-party.generated.ts).
+// Types of the licence list of "About HalfCube", built from the generated third-party data (app/src/about/third-party.generated.ts).
 import type { Language } from "../i18n/types.ts";
 
 export type LocalizedText = Readonly<Record<Language, string>>;

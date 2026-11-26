@@ -1295,7 +1295,7 @@ std::string eigenVersion()
 std::string compilerVersion()
 {
     std::ostringstream s;
-    s << PCST_COMPILER_ID;
+    s << HCST_COMPILER_ID;
 #if defined(__EMSCRIPTEN__)
     s << " (Emscripten " << __EMSCRIPTEN_MAJOR__ << "." << __EMSCRIPTEN_MINOR__ << "." << __EMSCRIPTEN_TINY__ << ")";
 #elif defined(_MSC_FULL_VER)
@@ -1335,7 +1335,7 @@ int main(int argc, char** argv)
 {
     try {
         std::vector<std::string> pos;
-        std::string track = PCST_TRACK_NAME, runtime = "not given", runDate = "not given";
+        std::string track = HCST_TRACK_NAME, runtime = "not given", runDate = "not given";
         std::set<std::string> only;
         int reps = 5;
         double slowMs = 3000;
@@ -1388,11 +1388,11 @@ int main(int argc, char** argv)
 
         json res;
         res["track"] = track;
-        res["solver"] = std::string("planegcs from FreeCAD ") + PCST_FREECAD_TAG + " (commit " + PCST_FREECAD_COMMIT +
+        res["solver"] = std::string("planegcs from FreeCAD ") + HCST_FREECAD_TAG + " (commit " + HCST_FREECAD_COMMIT +
             "), src/Mod/Sketcher/App/planegcs/{GCS,Constraints,Geo,SubSystem,qp_eq}.cpp built from source, unchanged";
         res["build"] = {
             {"compiler", compilerVersion()},
-            {"flags", PCST_BUILD_FLAGS},
+            {"flags", HCST_BUILD_FLAGS},
             {"eigen", eigenVersion()},
             {"boost", std::string("headers only, ") + BOOST_LIB_VERSION + " (BOOST_VERSION " + std::to_string(BOOST_VERSION) + ")"},
             {"other", "nlohmann/json " + std::to_string(NLOHMANN_JSON_VERSION_MAJOR) + "." +

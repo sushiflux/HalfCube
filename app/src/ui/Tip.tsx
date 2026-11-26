@@ -21,7 +21,7 @@ export function Tip({
   className?: string;
 }) {
   return (
-    <span className={cx("pc-tip", className)} data-tip={label} data-align={align} data-side={side}>
+    <span className={cx("hc-tip", className)} data-tip={label} data-align={align} data-side={side}>
       {children}
     </span>
   );

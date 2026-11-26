@@ -8,7 +8,7 @@
 #include <type_traits>
 #include <variant>
 
-namespace pc::model {
+namespace hc::model {
 
 namespace err = protocol::err;
 
@@ -181,11 +181,11 @@ sketch::Sketch toSketch(const protocol::SketchData& data, const std::string& pat
     return s;
 }
 
-void checkDocument(const protocol::PartcraftDocument& doc) {
+void checkDocument(const protocol::HalfCubeDocument& doc) {
     if (doc.format > protocol::kDocumentFormat)
         throw EngineError(err::kUnsupportedDocument, "The document has the format version " + std::to_string(doc.format) +
                                                          "; this engine reads format " + std::to_string(protocol::kDocumentFormat) +
-                                                         " and older. Update Partcraft to open it.");
+                                                         " and older. Update HalfCube to open it.");
     std::set<std::string> ids;
     const auto claim = [&ids](const std::string& id, const std::string& where) {
         if (id.empty()) bad(where + " has an empty id.");
@@ -241,4 +241,4 @@ void checkDocument(const protocol::PartcraftDocument& doc) {
             bad("document.components lists the body \"" + body + "\" as created by \"" + creator + "\", but no extrusion in the timeline creates it.");
 }
 
-} // namespace pc::model
+} // namespace hc::model

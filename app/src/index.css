@@ -101,8 +101,8 @@
   --color-brand-blue: var(--brand-blue);
   --color-brand-cyan: var(--brand-cyan);
   /* Wordmark: fixed per mode, independent of the theme. */
-  --color-wm-part: var(--wm-part);
-  --color-wm-craft: var(--wm-craft);
+  --color-wm-half: var(--wm-half);
+  --color-wm-cube: var(--wm-cube);
 
   --font-sans: "Geist", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "Geist Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
@@ -185,12 +185,12 @@
   }
 }
 
-@keyframes pc-spin {
+@keyframes hc-spin {
   to {
     transform: rotate(360deg);
   }
 }
-@keyframes pc-fade-in {
+@keyframes hc-fade-in {
   from {
     opacity: 0;
     transform: translateY(2px);

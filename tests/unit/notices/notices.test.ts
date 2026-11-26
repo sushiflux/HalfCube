@@ -65,7 +65,7 @@ describe("productionClosure", () => {
 
 /** A tiny repository with one engine component, one npm package and one pinned vendored text. */
 function makeRepo(): { root: string; sources: Sources } {
-  const root = mkdtempSync(join(tmpdir(), "partcraft-notices-test-"));
+  const root = mkdtempSync(join(tmpdir(), "halfcube-notices-test-"));
   const write = (rel: string, content: string): void => {
     const file = join(root, ...rel.split("/"));
     mkdirSync(dirname(file), { recursive: true });
@@ -102,8 +102,8 @@ function makeRepo(): { root: string; sources: Sources } {
     formatVersion: 1,
     output: { module: "app/src/about/third-party.generated.ts", textDir: "app/public/licenses", textUrlPrefix: "licenses/" },
     ownTexts: [
-      { id: "partcraft-license", file: "LICENSE" },
-      { id: "partcraft-notice", file: "NOTICE" },
+      { id: "halfcube-license", file: "LICENSE" },
+      { id: "halfcube-notice", file: "NOTICE" },
     ],
     npm: { extraRoots: [], notBundled: {} },
     entries: [
@@ -169,7 +169,7 @@ describe("buildNotices", () => {
     expect(lib?.textFile).toBe("licenses/lib.txt");
     expect(result.files.get("app/public/licenses/lib.txt")).toBe("MIT License\n\nCopyright (c) 2020 Example Author\n\nPermission is hereby granted.\n");
     expect(result.entries[1]?.source).toBe("https://example.test/foo");
-    expect(result.files.get("app/public/licenses/partcraft-license.txt")).toBe("own licence\n");
+    expect(result.files.get("app/public/licenses/halfcube-license.txt")).toBe("own licence\n");
     expect(result.files.get("app/src/about/third-party.generated.ts")).toContain('"id": "vendored"');
   });
 

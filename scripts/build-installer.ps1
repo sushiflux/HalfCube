@@ -1,24 +1,24 @@
-# Local installer build: builds the Windows installer of Partcraft on this PC, in the dev channel, into _build\installer\.
+# Local installer build: builds the Windows installer of HalfCube on this PC, in the dev channel, into _build\installer\.
 # No push, no tag, no CI run. Official Nightly, Beta and Release packages are built by CI.
 #
 # Usage: powershell -ExecutionPolicy Bypass -File scripts\build-installer.ps1 [-Channel dev] [-Neubau] [-OhneEngine]
-#          [-AlleSprachen] [-LayoutPruefung] [-PackId Partcraft] [-Title Partcraft] [-OutDir <folder>]
+#          [-AlleSprachen] [-LayoutPruefung] [-PackId HalfCube] [-Title HalfCube] [-OutDir <folder>]
 #   -Neubau         rebuild every step even if its inputs did not change
 #   -OhneEngine     build without the engine (only for tests of the installer itself; the program then has no geometry)
 #   -AlleSprachen   keep all Chromium locale files (by default only en-US and de stay: the program speaks German and English)
 #   -LayoutPruefung renders every page of the setup (light/dark, DE/EN, 100/150/200 %) offscreen into <OutDir>/layout-check and fails on a layout problem
-#   -PackId/-Title  Velopack app id and display name (default Partcraft); tests use another id so a real installation is never touched
+#   -PackId/-Title  Velopack app id and display name (default HalfCube); tests use another id so a real installation is never touched
 #   -OutDir         where the result goes (default _build\installer)
 #
 # What it does, in this order (each step is skipped when nothing it depends on changed):
-#   1. bundles      npm run build:web and build:desktop (PARTCRAFT_CHANNEL is baked into both)
-#   2. engine       partcraft-engine.exe and its DLLs from engine\_build\windows-release\bin plus the app-local VC++ runtime
+#   1. bundles      npm run build:web and build:desktop (HALFCUBE_CHANNEL is baked into both)
+#   2. engine       halfcube-engine.exe and its DLLs from engine\_build\windows-release\bin plus the app-local VC++ runtime
 #   3. app folder   installer\app\entry.cjs (Velopack hooks first, then the built main process) + velopack from npm, packaged with
 #                   @electron/packager into an Electron application folder with the engine in resources\engine
 #   4. vpk pack     Velopack 1.2.161 from the local tool manifest (.config\dotnet-tools.json, never a global install) creates the
 #                   Velopack Setup.exe and the package
 #   5. setup        installer\setup (.NET 11 WinForms, the designed window) is published as one self-contained exe
-#   6. payload      Velopack's Setup.exe + payload.json + LICENSE + NOTICE become a ZIP appended to that exe: one file, Partcraft-Setup-<id>-<channel>.exe
+#   6. payload      Velopack's Setup.exe + payload.json + LICENSE + NOTICE become a ZIP appended to that exe: one file, HalfCube-Setup-<id>-<channel>.exe
 #                   (LGPL-2.1 section 6 wants the notice and the licence text with every copy; the setup shows both on its licence page)
 # The path of the result is printed at the end.
 #
@@ -32,8 +32,8 @@
 # dev environment uses; run scripts\dev.ps1 -Neubau afterwards.
 param(
     [ValidateSet('dev', 'nightly', 'beta', 'release')][string]$Channel = 'dev',
-    [string]$PackId = 'Partcraft',
-    [string]$Title = 'Partcraft',
+    [string]$PackId = 'HalfCube',
+    [string]$Title = 'HalfCube',
     [string]$OutDir,
     [switch]$Neubau, [switch]$OhneEngine, [switch]$AlleSprachen, [switch]$LayoutPruefung
 )
@@ -103,7 +103,7 @@ $display = if ($symbols[$Channel] -eq '') { $id } else { "$id ($($symbols[$Chann
 $packVersion = Get-PackVersion $Channel
 $fileSuffix = if ($Channel -eq 'release') { '' } else { "-$Channel" }
 $fileId = if ($Channel -eq 'release') { "v$vYear.$vMonth.$vCommit" } else { $id }
-$finalName = "Partcraft-Setup-$fileId$fileSuffix.exe"
+$finalName = "HalfCube-Setup-$fileId$fileSuffix.exe"
 Say "Version $display, Velopack-Version $packVersion, Kanal $Channel"
 if ($Channel -ne 'dev') { Say 'Hinweis: ein lokaler Bau eines anderen Kanals ueberschreibt die Bundles in _build, die die lokale Dev-Umgebung nutzt (danach dev.ps1 -Neubau).' }
 
@@ -121,7 +121,7 @@ try {
     if (-not $electronVersion) { throw 'Electron ist nicht installiert (npm install).' }
 
     # ---------------------------------------------------------------- 1. bundles
-    $env:PARTCRAFT_CHANNEL = $Channel
+    $env:HALFCUBE_CHANNEL = $Channel
     $channelFile = Join-Path $work 'bundle-channel.txt'
     $channelChanged = (-not (Test-Path $channelFile)) -or ((Get-Content $channelFile -Raw).Trim() -ne $Channel)
     $webBundle = Join-Path $root '_build\web\index.html'
@@ -138,7 +138,7 @@ try {
 
     # ---------------------------------------------------------------- 2. engine
     $engineBin = Join-Path $root 'engine\_build\windows-release\bin'
-    $engineExe = Join-Path $engineBin 'partcraft-engine.exe'
+    $engineExe = Join-Path $engineBin 'halfcube-engine.exe'
     $engineFiles = @()
     if (Test-Path $engineExe) {
         # Everything the build folder holds except the unit-test program goes flat into resourcesengine (contract in desktopsrcengine-path.ts)
@@ -208,20 +208,20 @@ try {
         }
         Step 'Electron verpacken' {
             Remove-Item $pkgOut -Recurse -Force -ErrorAction SilentlyContinue
-            $packagerArgs = @('--yes', '@electron/packager@20.3.0', $stageApp, 'Partcraft',
+            $packagerArgs = @('--yes', '@electron/packager@20.3.0', $stageApp, 'HalfCube',
                 '--platform=win32', '--arch=x64', "--out=$pkgOut", '--overwrite', "--electron-version=$electronVersion",
                 "--icon=$(Join-Path $root 'branding\icons\icon.ico')",
                 # The Windows file version has four numeric parts (year, month, commit of the year, prompts)
                 '--asar.unpack=**/*.node',
                 "--app-version=$vYear.$vMonth.$vCommit.$vPrompts", "--app-copyright=(c) $((Get-Date).Year) SushiFlux",
-                '--win32metadata.CompanyName=SushiFlux', '--win32metadata.ProductName=Partcraft',
-                '--win32metadata.FileDescription=Partcraft', '--win32metadata.OriginalFilename=Partcraft.exe')
+                '--win32metadata.CompanyName=SushiFlux', '--win32metadata.ProductName=HalfCube',
+                '--win32metadata.FileDescription=HalfCube', '--win32metadata.OriginalFilename=HalfCube.exe')
             if ($engineFiles.Count -gt 0) { $packagerArgs += "--extra-resource=$(Join-Path $extra 'engine')" }
             Run 'npx.cmd' @packagerArgs
         }
         $pkgDir = (Get-ChildItem $pkgOut -Directory | Select-Object -First 1).FullName
-        if (-not (Test-Path (Join-Path $pkgDir 'Partcraft.exe'))) { throw "Partcraft.exe fehlt im verpackten Ordner $pkgDir" }
-        if ($engineFiles.Count -gt 0 -and -not (Test-Path (Join-Path $pkgDir 'resources\engine\partcraft-engine.exe'))) { throw 'resources\engine\partcraft-engine.exe fehlt im verpackten Ordner.' }
+        if (-not (Test-Path (Join-Path $pkgDir 'HalfCube.exe'))) { throw "HalfCube.exe fehlt im verpackten Ordner $pkgDir" }
+        if ($engineFiles.Count -gt 0 -and -not (Test-Path (Join-Path $pkgDir 'resources\engine\halfcube-engine.exe'))) { throw 'resources\engine\halfcube-engine.exe fehlt im verpackten Ordner.' }
         if (-not $AlleSprachen) {
             # The program speaks German and English; Chromium falls back to en-US for everything else (about 35 MB less)
             Get-ChildItem (Join-Path $pkgDir 'locales') -Filter '*.pak' | Where-Object { $_.Name -notin @('en-US.pak', 'de.pak') } | Remove-Item -Force
@@ -233,7 +233,7 @@ try {
             # setup, which runs it silently. Shortcuts (desktop and start menu) are fixed in the package; the setup removes the ones
             # the user switches off.
             Run 'dotnet' 'tool' 'run' 'vpk' '--' 'pack' '--packId' $PackId '--packVersion' $packVersion '--packDir' $pkgDir `
-                '--mainExe' 'Partcraft.exe' '--packTitle' $Title '--packAuthors' 'SushiFlux' `
+                '--mainExe' 'HalfCube.exe' '--packTitle' $Title '--packAuthors' 'SushiFlux' `
                 '--icon' (Join-Path $root 'branding\icons\icon.ico') '--channel' $Channel '--runtime' 'win-x64' `
                 '--outputDir' $feed '--delta' 'None' '--noPortable' '--shortcuts' 'Desktop,StartMenuRoot'
         }
@@ -254,12 +254,12 @@ try {
 
     # ---------------------------------------------------------------- 5. the designed setup
     $setupSources = @('installer\setup', 'installer\Directory.Build.props', 'branding\icons\icon-512.png', 'branding\icons\icon.ico')
-    $setupPublished = Join-Path $setupOut 'Partcraft-Setup.exe'
+    $setupPublished = Join-Path $setupOut 'HalfCube-Setup.exe'
     $setupStale = $Neubau -or (Test-Stale $setupPublished $setupSources)
     if ($setupStale) {
         Step 'Setup-Programm bauen (.NET)' {
             Remove-Item $setupOut -Recurse -Force -ErrorAction SilentlyContinue
-            Run 'dotnet' 'publish' (Join-Path $root 'installer\setup\Partcraft.Setup.csproj') '-c' 'Release' '-r' 'win-x64' '--self-contained' 'true' '-o' $setupOut '--nologo' '-v' 'quiet'
+            Run 'dotnet' 'publish' (Join-Path $root 'installer\setup\HalfCube.Setup.csproj') '-c' 'Release' '-r' 'win-x64' '--self-contained' 'true' '-o' $setupOut '--nologo' '-v' 'quiet'
         }
     } else { Say 'Setup-Programm ist aktuell, uebersprungen.' }
     if (-not (Test-Path $setupPublished)) { throw "Setup-Programm fehlt nach dem Bau: $setupPublished" }
@@ -275,7 +275,7 @@ try {
             version        = $id
             displayVersion = $display
             channel        = $Channel
-            mainExe        = 'Partcraft.exe'
+            mainExe        = 'HalfCube.exe'
             installedBytes = $installedBytes
             setupBytes     = [int64]$vpkSetup[0].Length
         }
@@ -291,7 +291,7 @@ try {
             try { $writer.Write(($info | ConvertTo-Json)) } finally { $writer.Dispose() }
         } finally { $zip.Dispose() }
         $final = Join-Path $out $finalName
-        Get-ChildItem $out -Filter 'Partcraft-Setup-*.exe' -File | Where-Object { $_.Name -ne $finalName } | Remove-Item -Force -ErrorAction SilentlyContinue
+        Get-ChildItem $out -Filter 'HalfCube-Setup-*.exe' -File | Where-Object { $_.Name -ne $finalName } | Remove-Item -Force -ErrorAction SilentlyContinue
         Copy-Item $setupPublished $final -Force
         # The published exe appends the payload to the copy (a running exe cannot be written, and it is a window program: wait for it)
         $append = Start-Process -FilePath $setupPublished -ArgumentList @('--append-payload', "`"$final`"", "`"$payloadZip`"") -Wait -PassThru -WindowStyle Hidden

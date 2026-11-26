@@ -39,7 +39,7 @@ const block = (selector: string, lines: readonly string[], indent = ""): string 
   `${indent}${selector} {\n${lines.map((l) => `${indent}  ${l}`).join("\n")}\n${indent}}\n`;
 
 function wordmarkLines(mode: Mode): string[] {
-  return [`--wm-part: ${wordmarkColours[mode].part};`, `--wm-craft: ${wordmarkColours[mode].craft};`];
+  return [`--wm-half: ${wordmarkColours[mode].half};`, `--wm-cube: ${wordmarkColours[mode].cube};`];
 }
 
 /** The complete stylesheet: brand constants, the fallback before the script runs and all 14 theme blocks. */

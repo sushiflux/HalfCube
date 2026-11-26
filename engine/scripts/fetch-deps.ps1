@@ -1,6 +1,6 @@
 # Fetches the engine's third-party sources into engine/_deps (git-ignored), pinned by the "fetch" blocks of
 # third_party/manifest.json: git checkouts must end up at the pinned commit, archives and single files must match
-# their SHA-256. Each folder gets a ".partcraft-pin" stamp; a folder whose stamp matches is kept as it is.
+# their SHA-256. Each folder gets a ".halfcube-pin" stamp; a folder whose stamp matches is kept as it is.
 # Licence files of every library stay inside its folder. Nothing is installed system-wide.
 #
 #   powershell -NoProfile -ExecutionPolicy Bypass -File engine/scripts/fetch-deps.ps1 [-Skip occt] [-Only eigen,boost]
@@ -26,12 +26,12 @@ function Get-PinText($f) {
 }
 
 function Test-Stamp([string]$Dir, [string]$Pin) {
-    $stamp = Join-Path $Dir '.partcraft-pin'
+    $stamp = Join-Path $Dir '.halfcube-pin'
     return (Test-Path $stamp) -and ((Get-Content -Raw $stamp).Trim() -eq $Pin)
 }
 
 function Write-Stamp([string]$Dir, [string]$Pin) {
-    [IO.File]::WriteAllText((Join-Path $Dir '.partcraft-pin'), "$Pin`n")
+    [IO.File]::WriteAllText((Join-Path $Dir '.halfcube-pin'), "$Pin`n")
 }
 
 function Get-Sha256([string]$Path) { (Get-FileHash -Algorithm SHA256 $Path).Hash.ToLowerInvariant() }
@@ -70,7 +70,7 @@ function Fetch-Git($c, $f, [string]$Dir, [string]$Pin) {
 }
 
 function Fetch-Archive($c, $f, [string]$Dir, [string]$Pin) {
-    if (Test-Path $Dir) { throw "$($c.id): $Dir exists without a matching .partcraft-pin stamp. Delete the folder and run the script again." }
+    if (Test-Path $Dir) { throw "$($c.id): $Dir exists without a matching .halfcube-pin stamp. Delete the folder and run the script again." }
     $tmp = Join-Path $deps ".download-$($c.id)"
     if (Test-Path $tmp) { Remove-Item -Recurse -Force $tmp }
     New-Item -ItemType Directory -Force -Path $tmp | Out-Null

@@ -203,20 +203,20 @@ describeUnless(skipUnlessNativeTesting, "EngineHost with the real native engine"
 
 describe("EngineHost start failures", () => {
   it("returns the complete cause when the program is missing, and the session reports it", async () => {
-    const r = rig({}, "C:\\does-not-exist\\partcraft-engine.exe");
+    const r = rig({}, "C:\\does-not-exist\\halfcube-engine.exe");
     const s = r.session();
     const status = await s.start();
     expect(status.phase).toBe("failed");
     expect(status.problem?.code).toBe("engine_start_failed");
-    expect(status.problem?.message).toMatch(/The engine could not be started \(C:\\does-not-exist\\partcraft-engine\.exe\): spawn .*ENOENT/);
-    expect(status.problem?.message).toContain("Engine program: C:\\does-not-exist\\partcraft-engine.exe");
+    expect(status.problem?.message).toMatch(/The engine could not be started \(C:\\does-not-exist\\halfcube-engine\.exe\): spawn .*ENOENT/);
+    expect(status.problem?.message).toContain("Engine program: C:\\does-not-exist\\halfcube-engine.exe");
   });
 
   it("passes on what the locator says when the program cannot be found", async () => {
-    const r = rig({ locate: () => ({ ok: false, message: "The engine program is missing from the installation. Reinstall Partcraft.", details: "Looked for: X" }) });
+    const r = rig({ locate: () => ({ ok: false, message: "The engine program is missing from the installation. Reinstall HalfCube.", details: "Looked for: X" }) });
     expect(await r.bridge.startEngine()).toEqual({
       ok: false,
-      message: "The engine program is missing from the installation. Reinstall Partcraft.",
+      message: "The engine program is missing from the installation. Reinstall HalfCube.",
       details: "Looked for: X",
     });
   });

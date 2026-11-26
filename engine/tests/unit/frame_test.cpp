@@ -5,11 +5,11 @@
 
 #include <string>
 
-using namespace pc;
+using namespace hc;
 
-TEST_CASE("frame prefix is little-endian with magic PCE1") {
+TEST_CASE("frame prefix is little-endian with magic HCE1") {
     const auto p = frame::encodePrefix(5, 300);
-    CHECK(p[0] == 'P');
+    CHECK(p[0] == 'H');
     CHECK(p[1] == 'C');
     CHECK(p[2] == 'E');
     CHECK(p[3] == '1');

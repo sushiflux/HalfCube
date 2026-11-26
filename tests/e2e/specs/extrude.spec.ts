@@ -24,7 +24,7 @@ interface ModelState {
 }
 
 interface Hooks {
-  __partcraft?: {
+  __halfcube?: {
     model: unknown;
     editor: unknown;
     viewport: { worldToClient(p: [number, number, number]): { x: number; y: number } | null } | null;
@@ -33,7 +33,7 @@ interface Hooks {
       pick(ref: { sketchId: string; regionId: string }): void;
     } | null;
   };
-  __partcraftSession?: { client: { request(c: unknown): { reply: Promise<unknown> } }; getStatus(): { phase: string } };
+  __halfcubeSession?: { client: { request(c: unknown): { reply: Promise<unknown> } }; getStatus(): { phase: string } };
 }
 
 async function openMain(app: AppUnderTest, search: string): Promise<void> {
@@ -50,7 +50,7 @@ const readModel = (page: Page): Promise<ModelState> =>
       getModelView(): { bodies: BodyState[]; steps: { featureId: string; state: string; problem?: { code: string } }[] };
       document: { getSnapshot(): { timeline: Record<string, unknown>[]; components: { bodies: { id: string; name: string; createdBy: string }[] }[] } };
     };
-    const model = (window as unknown as Hooks).__partcraft?.model as Model | undefined;
+    const model = (window as unknown as Hooks).__halfcube?.model as Model | undefined;
     if (!model) throw new Error("no model");
     const view = model.getModelView();
     const doc = model.document.getSnapshot();
@@ -88,11 +88,11 @@ async function makeSketchWithRectangle(page: Page, width = 40, height = 25, extr
   await page.getByTestId("tool-sketch").click();
   await page.getByTestId("tree-row-plane:xy").click();
   await expect(page.getByTestId("finish-sketch")).toBeVisible({ timeout: 30_000 });
-  const drawn = await page.evaluate(([w, h]) => (window as unknown as { __partcraft: { editor: { addRectangle(a: unknown, b: unknown): Promise<{ ok: boolean }> } } }).__partcraft.editor.addRectangle({ x: 0, y: 0 }, { x: w, y: h }), [width, height] as const);
+  const drawn = await page.evaluate(([w, h]) => (window as unknown as { __halfcube: { editor: { addRectangle(a: unknown, b: unknown): Promise<{ ok: boolean }> } } }).__halfcube.editor.addRectangle({ x: 0, y: 0 }, { x: w, y: h }), [width, height] as const);
   expect(drawn.ok).toBe(true);
   if (extraCircle) {
     // A second, separate closed area in the same sketch: the command cannot know which one is meant, so it asks.
-    const circle = await page.evaluate(() => (window as unknown as { __partcraft: { editor: { addCircle(c: unknown, d: unknown): Promise<{ ok: boolean }> } } }).__partcraft.editor.addCircle({ x: 80, y: 12 }, { value: 16, unit: "mm" }));
+    const circle = await page.evaluate(() => (window as unknown as { __halfcube: { editor: { addCircle(c: unknown, d: unknown): Promise<{ ok: boolean }> } } }).__halfcube.editor.addCircle({ x: 80, y: 12 }, { value: 16, unit: "mm" }));
     expect(circle.ok).toBe(true);
   }
   await page.getByTestId("finish-sketch").click();
@@ -102,12 +102,12 @@ async function makeSketchWithRectangle(page: Page, width = 40, height = 25, extr
 
 /** The start view (front, right, above): every origin plane can be seen and clicked. */
 const goHome = (page: Page): Promise<void> =>
-  page.evaluate(() => (window as unknown as { __partcraft: { viewport: { goHome(animate: boolean): void } } }).__partcraft.viewport.goHome(false));
+  page.evaluate(() => (window as unknown as { __halfcube: { viewport: { goHome(animate: boolean): void } } }).__halfcube.viewport.goHome(false));
 
 /** Page coordinates of a world point in the 3D view. */
 const clientAt = (page: Page, p: [number, number, number]): Promise<{ x: number; y: number }> =>
   page.evaluate((point) => {
-    const at = (window as unknown as Hooks).__partcraft?.viewport?.worldToClient(point);
+    const at = (window as unknown as Hooks).__halfcube?.viewport?.worldToClient(point);
     if (!at) throw new Error("the point is not in the view");
     return { x: at.x, y: at.y };
   }, p);
@@ -163,7 +163,7 @@ test("the Extrude tool needs a finished sketch with a closed area: a sketch that
   // Two lines are no area.
   await page.evaluate(async () => {
     type Editor = { getView(): { points: { id: string }[] }; addLine(a: unknown, b: unknown): Promise<unknown> };
-    const editor = (window as unknown as { __partcraft: { editor: Editor } }).__partcraft.editor;
+    const editor = (window as unknown as { __halfcube: { editor: Editor } }).__halfcube.editor;
     await editor.addLine({ x: 0, y: 0 }, { x: 30, y: 0 });
     const end = editor.getView().points[1]!.id;
     await editor.addLine({ snap: end }, { x: 30, y: 20 });
@@ -178,7 +178,7 @@ test("the Extrude tool needs a finished sketch with a closed area: a sketch that
   await page.getByTestId("timeline-step-f1").dblclick();
   await expect(page.getByTestId("finish-sketch")).toBeVisible({ timeout: 30_000 });
   await page.evaluate(() => {
-    const editor = (window as unknown as { __partcraft: { editor: { getView(): { points: { id: string }[] }; addLine(a: unknown, b: unknown): Promise<unknown> } } }).__partcraft.editor;
+    const editor = (window as unknown as { __halfcube: { editor: { getView(): { points: { id: string }[] }; addLine(a: unknown, b: unknown): Promise<unknown> } } }).__halfcube.editor;
     const ids = editor.getView().points.map((p) => p.id);
     return editor.addLine({ snap: ids[0]! }, { snap: ids[ids.length - 1]! });
   });
@@ -268,7 +268,7 @@ test("OK is ONE undo step: the step follows its sketch in the timeline with the 
   const undoSteps = () =>
     // How many undo steps the document has: undo all of them through the model, then redo all of them (the document ends as it was).
     page.evaluate(() => {
-      const model = (window as unknown as { __partcraft: { model: { undo(): boolean; redo(): boolean } } }).__partcraft.model;
+      const model = (window as unknown as { __halfcube: { model: { undo(): boolean; redo(): boolean } } }).__halfcube.model;
       let n = 0;
       while (model.undo()) n++;
       for (let i = 0; i < n; i++) model.redo();
@@ -383,7 +383,7 @@ test("the command asks for an area when several exist, Esc ends it from the view
   await page.getByTestId("tool-sketch").click();
   await page.getByTestId("tree-row-plane:xz").click();
   await expect(page.getByTestId("finish-sketch")).toBeVisible({ timeout: 30_000 });
-  await page.evaluate(() => (window as unknown as { __partcraft: { editor: { addCircle(c: unknown, d: unknown): Promise<unknown> } } }).__partcraft.editor.addCircle({ x: 60, y: 20 }, { value: 16, unit: "mm" }));
+  await page.evaluate(() => (window as unknown as { __halfcube: { editor: { addCircle(c: unknown, d: unknown): Promise<unknown> } } }).__halfcube.editor.addCircle({ x: 60, y: 20 }, { value: 16, unit: "mm" }));
   await page.getByTestId("finish-sketch").click();
   await expect(page.getByTestId("tool-extrude")).toBeEnabled({ timeout: 30_000 });
   const second = (await readModel(page)).timeline.at(-1)!.id;
@@ -488,7 +488,7 @@ test("a double-click on the step or on the body edits the extrusion with the sam
   await expect(page.getByTestId("finish-sketch")).toBeVisible({ timeout: 30_000 });
   const widthAfter = await page.evaluate(async () => {
     type View = { points: { id: string; x: number; y: number }[]; lines: { id: string; p1: string; p2: string }[] };
-    const editor = (window as unknown as { __partcraft: { editor: { getView(): View; addDimension(k: string, refs: string[], v: unknown, label: unknown): Promise<{ ok: boolean }> } } }).__partcraft.editor;
+    const editor = (window as unknown as { __halfcube: { editor: { getView(): View; addDimension(k: string, refs: string[], v: unknown, label: unknown): Promise<{ ok: boolean }> } } }).__halfcube.editor;
     const view = editor.getView();
     const at = (id: string) => view.points.find((p) => p.id === id)!;
     const bottom = view.lines.find((l) => at(l.p1).y === at(l.p2).y && at(l.p1).y === Math.min(...view.points.map((p) => p.y)))!;
@@ -523,7 +523,7 @@ test("when a changed sketch no longer has the area of a step, the step fails wit
   // A circle inside the rectangle makes a hole: the area's key changes, the step cannot find its area any more.
   await page.getByTestId("timeline-step-f1").dblclick();
   await expect(page.getByTestId("finish-sketch")).toBeVisible({ timeout: 30_000 });
-  await page.evaluate(() => (window as unknown as { __partcraft: { editor: { addCircle(c: unknown, d: unknown): Promise<unknown> } } }).__partcraft.editor.addCircle({ x: 20, y: 12 }, { value: 10, unit: "mm" }));
+  await page.evaluate(() => (window as unknown as { __halfcube: { editor: { addCircle(c: unknown, d: unknown): Promise<unknown> } } }).__halfcube.editor.addCircle({ x: 20, y: 12 }, { value: 10, unit: "mm" }));
   await page.getByTestId("finish-sketch").click();
   await expect(page.getByTestId("tab-sketch")).toHaveCount(0);
   await expect(page.getByTestId(`timeline-step-${step.id}`)).toHaveAttribute("data-state", "error", { timeout: 20_000 });
@@ -618,10 +618,10 @@ test("the engine crashes while the dialog is open: a notice says so and keeps th
   const crashed = await app.crashEngine();
   expect(crashed, "the engine was ended on purpose").toBe(true);
   // While the engine is down nothing can be computed: typing is accepted, the notice names the engine and keeps the values.
-  await expect.poll(() => page.evaluate(() => (window as unknown as Hooks).__partcraftSession?.getStatus().phase), { timeout: 10_000 }).not.toBe("ready");
+  await expect.poll(() => page.evaluate(() => (window as unknown as Hooks).__halfcubeSession?.getStatus().phase), { timeout: 10_000 }).not.toBe("ready");
   await distanceField(page).fill("30");
   await expect(page.getByTestId("extrude-failure")).toBeVisible({ timeout: 15_000 });
-  await expect(page.getByTestId("extrude-failure")).toHaveAttribute("data-code", "PC-EXTRUDE-ENGINE");
+  await expect(page.getByTestId("extrude-failure")).toHaveAttribute("data-code", "HC-EXTRUDE-ENGINE");
   await expect(page.getByTestId("extrude-failure")).toContainText("did not compute the preview");
   await expect(distanceField(page)).toHaveValue("30");
   // The failure notice has the copy button with the complete text (skill ui-regeln).
@@ -746,13 +746,13 @@ async function setMode(page: Page, mode: "light" | "dark"): Promise<void> {
 }
 
 test("screenshots of the real app for the report (extrude, light and dark)", async ({ app }, testInfo) => {
-  test.skip(process.env.PARTCRAFT_U3B_SHOTS === undefined || app.target !== "browser", "only when PARTCRAFT_U3B_SHOTS names a folder, in the browser project");
-  const dir = process.env.PARTCRAFT_U3B_SHOTS!;
+  test.skip(process.env.HALFCUBE_U3B_SHOTS === undefined || app.target !== "browser", "only when HALFCUBE_U3B_SHOTS names a folder, in the browser project");
+  const dir = process.env.HALFCUBE_U3B_SHOTS!;
   const { page } = app;
   await openMain(app, "lang=de&theme=praezision&mode=light");
   await page.setViewportSize({ width: 1440, height: 860 });
   await makeSketchWithRectangle(page, 40, 25, true);
-  const home = () => page.evaluate(() => (window as unknown as { __partcraft: { viewport: { goHome(animate: boolean): void; whenIdle(): Promise<void> } } }).__partcraft.viewport.goHome(false));
+  const home = () => page.evaluate(() => (window as unknown as { __halfcube: { viewport: { goHome(animate: boolean): void; whenIdle(): Promise<void> } } }).__halfcube.viewport.goHome(false));
   await home();
   const shoot = async (name: string) => {
     await page.mouse.move(2, 2);

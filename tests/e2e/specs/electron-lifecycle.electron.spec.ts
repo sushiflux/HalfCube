@@ -19,17 +19,17 @@ test("the program starts inactive, shows its version in the title, runs one engi
 
   // The engine is ready when the welcome screen follows the loading screen.
   await expect(page.getByRole("dialog", { name: "Sketch first, then build" })).toBeVisible({ timeout: 60_000 });
-  await expect(page.getByTestId("version")).toHaveText(`Partcraft ${expectedVersionDisplay()}`);
+  await expect(page.getByTestId("version")).toHaveText(`HalfCube ${expectedVersionDisplay()}`);
 
   const window = await app.evaluate(({ BrowserWindow }) => {
     const win = BrowserWindow.getAllWindows()[0];
     if (!win) throw new Error("no window");
     return { title: win.getTitle(), visible: win.isVisible(), focused: win.isFocused(), minimized: win.isMinimized(), count: BrowserWindow.getAllWindows().length };
   });
-  expect(window.title).toBe(`Partcraft ${expectedVersionDisplay()}`);
+  expect(window.title).toBe(`HalfCube ${expectedVersionDisplay()}`);
   expect(window.count).toBe(1);
   expect(window.visible, "shown (inactive), so the page renders").toBe(true);
-  expect(window.focused, "PARTCRAFT_WINDOW=inactive: the window must not take the focus").toBe(false);
+  expect(window.focused, "HALFCUBE_WINDOW=inactive: the window must not take the focus").toBe(false);
 
   // Exactly one native engine process, child of the program.
   const engines = engineChildren(pid);
@@ -50,13 +50,13 @@ test("a second program with its own user data folder starts next to the first an
   await expect(first).toBeVisible({ timeout: 60_000 });
   await first.getByText("Don’t show this at the next start").click();
   await expect(first.getByRole("checkbox")).toBeChecked();
-  expect(await program.page.evaluate(() => localStorage.getItem("partcraft.welcome.hidden"))).toBe("1");
+  expect(await program.page.evaluate(() => localStorage.getItem("halfcube.welcome.hidden"))).toBe("1");
 
   const other = await launchElectron({ language: "de", colorMode: "dark" });
   try {
     // Its own first-start file: German, and nothing of the first program's stored preferences.
     await expect(other.page.getByRole("dialog", { name: "Erst skizzieren, dann bauen" })).toBeVisible({ timeout: 60_000 });
-    expect(await other.page.evaluate(() => localStorage.getItem("partcraft.welcome.hidden"))).toBeNull();
+    expect(await other.page.evaluate(() => localStorage.getItem("halfcube.welcome.hidden"))).toBeNull();
     expect(other.userData).not.toBe(program.userData);
     expect(engineChildren(other.pid)).toHaveLength(1);
     expect(engineChildren(program.pid)).toHaveLength(1);

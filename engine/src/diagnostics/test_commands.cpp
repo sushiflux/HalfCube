@@ -1,13 +1,13 @@
 #include "diagnostics/test_commands.hpp"
 
-#if defined(PARTCRAFT_TEST_COMMANDS)
+#if defined(HALFCUBE_TEST_COMMANDS)
 
 #include <chrono>
 #include <cstdio>
 #include <cstdlib>
 #include <thread>
 
-namespace pc::testing {
+namespace hc::testing {
 
 namespace {
 
@@ -23,17 +23,17 @@ double msSince(Clock::time_point t0) { return std::chrono::duration<double, std:
 } // namespace
 
 void crash(const std::string& mode, std::int64_t requestId) {
-    std::fprintf(stderr, "partcraft-engine: diagnostics.crash \"%s\" requested by command %lld\n", mode.c_str(),
+    std::fprintf(stderr, "halfcube-engine: diagnostics.crash \"%s\" requested by command %lld\n", mode.c_str(),
                  static_cast<long long>(requestId));
     std::fflush(stderr);
     if (mode == "abort") std::abort();
     if (mode == "nullcall") {
         const int r = gNullFunction(1);
-        std::fprintf(stderr, "partcraft-engine: the null call returned %d\n", r);
+        std::fprintf(stderr, "halfcube-engine: the null call returned %d\n", r);
     }
     if (mode == "intdiv") {
         const int q = 7 / gZero;
-        std::fprintf(stderr, "partcraft-engine: the division by zero returned %d\n", q);
+        std::fprintf(stderr, "halfcube-engine: the division by zero returned %d\n", q);
     }
     throw EngineError(protocol::err::kCrashNotTriggered,
                       "diagnostics.crash \"" + mode + "\" did not end the engine on this platform; the engine keeps running.");
@@ -42,7 +42,7 @@ void crash(const std::string& mode, std::int64_t requestId) {
 protocol::HangResult hang(const protocol::DiagnosticsHangCommand& c, const CancelCheck& cancelled, std::mutex& engineLock) {
     const auto t0 = Clock::now();
     if (c.mode == "frozen") {
-        std::fprintf(stderr, "partcraft-engine: diagnostics.hang \"frozen\": the engine stops answering until it is ended\n");
+        std::fprintf(stderr, "halfcube-engine: diagnostics.hang \"frozen\": the engine stops answering until it is ended\n");
         std::fflush(stderr);
         std::lock_guard<std::mutex> hold(engineLock);
         for (;;) {
@@ -71,6 +71,6 @@ protocol::HangResult hang(const protocol::DiagnosticsHangCommand& c, const Cance
     return r;
 }
 
-} // namespace pc::testing
+} // namespace hc::testing
 
 #endif

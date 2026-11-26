@@ -13,7 +13,7 @@
 #   -NurDesktop      Electron window only; it loads the built bundle (app://), no dev server is started
 #   -Ausweichport    take the next free port for this run if the registered one is held by a foreign program
 #   -ImHintergrund   the Electron window starts minimized and without taking the focus (after a commit, tests); implies -Zweitmonitor
-#   -Zweitmonitor    the Electron window opens on the secondary monitor (PARTCRAFT_WINDOW_DISPLAY=secondary): the landscape
+#   -Zweitmonitor    the Electron window opens on the secondary monitor (HALFCUBE_WINDOW_DISPLAY=secondary): the landscape
 #                    one that is not the primary, else the largest; with a single monitor it stays on the primary one
 # The ports come from config\dev-ports.json.
 param(
@@ -27,8 +27,8 @@ $root = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 $build = Join-Path $root '_build'
 $run = Join-Path $build 'run'
 $viteJs = Join-Path $root 'node_modules\vite\bin\vite.js'
-# PARTCRAFT_ELECTRON_EXE points the script at another Electron runtime (default: the one npm installed).
-$electronExe = if ($env:PARTCRAFT_ELECTRON_EXE) { $env:PARTCRAFT_ELECTRON_EXE } else { Join-Path $root 'node_modules\electron\dist\electron.exe' }
+# HALFCUBE_ELECTRON_EXE points the script at another Electron runtime (default: the one npm installed).
+$electronExe = if ($env:HALFCUBE_ELECTRON_EXE) { $env:HALFCUBE_ELECTRON_EXE } else { Join-Path $root 'node_modules\electron\dist\electron.exe' }
 $mainBundle = Join-Path $build 'desktop\main.cjs'
 $webBundle = Join-Path $build 'web\index.html'
 $ports = Get-Content -Raw (Join-Path $root 'config\dev-ports.json') | ConvertFrom-Json
@@ -203,12 +203,12 @@ function Start-Desktop {
     Stop-Tree 'electron'
     $log = Join-Path $run 'electron.log'
     $saved = @{}
-    foreach ($n in 'PARTCRAFT_WINDOW', 'PARTCRAFT_WINDOW_DISPLAY', 'PARTCRAFT_DEV_URL', 'PARTCRAFT_USER_DATA') { $saved[$n] = [Environment]::GetEnvironmentVariable($n) }
+    foreach ($n in 'HALFCUBE_WINDOW', 'HALFCUBE_WINDOW_DISPLAY', 'HALFCUBE_DEV_URL', 'HALFCUBE_USER_DATA') { $saved[$n] = [Environment]::GetEnvironmentVariable($n) }
     try {
-        $env:PARTCRAFT_USER_DATA = Join-Path $build 'dev-data'
-        if ($ImHintergrund) { $env:PARTCRAFT_WINDOW = 'minimized' } else { Remove-Item Env:\PARTCRAFT_WINDOW -ErrorAction SilentlyContinue }
-        if ($Zweitmonitor -or $ImHintergrund) { $env:PARTCRAFT_WINDOW_DISPLAY = 'secondary' } else { Remove-Item Env:PARTCRAFT_WINDOW_DISPLAY -ErrorAction SilentlyContinue }
-        if ($script:url) { $env:PARTCRAFT_DEV_URL = $script:url } else { Remove-Item Env:\PARTCRAFT_DEV_URL -ErrorAction SilentlyContinue }
+        $env:HALFCUBE_USER_DATA = Join-Path $build 'dev-data'
+        if ($ImHintergrund) { $env:HALFCUBE_WINDOW = 'minimized' } else { Remove-Item Env:\HALFCUBE_WINDOW -ErrorAction SilentlyContinue }
+        if ($Zweitmonitor -or $ImHintergrund) { $env:HALFCUBE_WINDOW_DISPLAY = 'secondary' } else { Remove-Item Env:HALFCUBE_WINDOW_DISPLAY -ErrorAction SilentlyContinue }
+        if ($script:url) { $env:HALFCUBE_DEV_URL = $script:url } else { Remove-Item Env:\HALFCUBE_DEV_URL -ErrorAction SilentlyContinue }
         $p = Start-Detached "`"$electronExe`" ." $log
     } finally {
         foreach ($n in $saved.Keys) { [Environment]::SetEnvironmentVariable($n, $saved[$n]) }

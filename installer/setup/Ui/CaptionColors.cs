@@ -1,4 +1,4 @@
-namespace Partcraft.Setup.Ui;
+namespace HalfCube.Setup.Ui;
 
 public enum CaptionState
 {

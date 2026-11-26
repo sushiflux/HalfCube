@@ -1,14 +1,14 @@
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Text;
-using Partcraft.Setup.Localization;
-using Partcraft.Setup.Ui;
+using HalfCube.Setup.Localization;
+using HalfCube.Setup.Ui;
 
-namespace Partcraft.Setup;
+namespace HalfCube.Setup;
 
 /// <summary>
-/// Partcraft-Setup-&lt;version&gt;.exe: the designed installer. It carries Velopack's Setup.exe as an appended ZIP (see <see cref="Payload"/>)
-/// and runs it silently underneath, per user and without administrator rights. Started again while Partcraft is installed it replaces
+/// HalfCube-Setup-&lt;version&gt;.exe: the designed installer. It carries Velopack's Setup.exe as an appended ZIP (see <see cref="Payload"/>)
+/// and runs it silently underneath, per user and without administrator rights. Started again while HalfCube is installed it replaces
 /// the installation (projects and settings stay) and offers the uninstaller.
 /// Options for the build and for tests: <c>--append-payload &lt;exe&gt; &lt;zip&gt;</c> (build script), <c>--payload &lt;zip&gt;</c>,
 /// <c>--install-dir &lt;folder&gt;</c>, <c>--appdata &lt;folder&gt;</c> (where %APPDATA% is taken from, tests never touch the real one),

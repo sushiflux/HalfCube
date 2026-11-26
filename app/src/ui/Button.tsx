@@ -72,7 +72,7 @@ export function Button({
               stroke="currentColor"
               strokeWidth="2"
               strokeLinecap="round"
-              style={{ transformOrigin: "50% 50%", animation: "pc-spin 0.9s linear infinite" }}
+              style={{ transformOrigin: "50% 50%", animation: "hc-spin 0.9s linear infinite" }}
             />
           </svg>
         </span>

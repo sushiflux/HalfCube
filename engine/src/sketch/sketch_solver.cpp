@@ -14,7 +14,7 @@
 #include <set>
 #include <stdexcept>
 
-namespace pc::sketch {
+namespace hc::sketch {
 
 namespace {
 
@@ -646,4 +646,4 @@ std::string boostVersion() {
            std::to_string(BOOST_VERSION % 100);
 }
 
-} // namespace pc::sketch
+} // namespace hc::sketch

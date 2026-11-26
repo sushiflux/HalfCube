@@ -1,6 +1,6 @@
 using System.Drawing.Drawing2D;
 
-namespace Partcraft.Setup.Ui;
+namespace HalfCube.Setup.Ui;
 
 /// <summary>
 /// Small line icons for the setup windows (round caps and joins, the look of the Tabler outline set that the mockup uses), drawn as
@@ -142,7 +142,7 @@ public static class Glyphs
 }
 
 /// <summary>A feature line: icon in a soft tinted square, bold title, muted explanation (wraps inside its fixed box).</summary>
-public sealed class PcFeature : PcControl
+public sealed class HcFeature : HcControl
 {
     public Action<Graphics, RectangleF, Color>? Icon { get; set; }
 

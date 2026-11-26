@@ -31,7 +31,7 @@ const collector: Plugin = {
   },
 };
 
-const outDir = mkdtempSync(join(tmpdir(), "partcraft-notices-"));
+const outDir = mkdtempSync(join(tmpdir(), "halfcube-notices-"));
 try {
   await build({
     configFile: join(root, "vite.config.ts"),
@@ -84,7 +84,7 @@ try {
 
   const missing = THIRD_PARTY.filter((e) => e.textFile !== null && !existsSync(join(outDir, e.textFile)));
   for (const entry of missing) problems.push(`${entry.textFile} of ${entry.id} is not in the build output.`);
-  for (const own of ["partcraft-license", "partcraft-notice"]) {
+  for (const own of ["halfcube-license", "halfcube-notice"]) {
     if (!existsSync(join(outDir, "licenses", `${own}.txt`))) problems.push(`licenses/${own}.txt is not in the build output.`);
   }
 

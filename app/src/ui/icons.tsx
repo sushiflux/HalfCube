@@ -115,7 +115,7 @@ export function StepIcon({ state, className = "" }: { state: StepIconState; clas
               stroke="currentColor"
               strokeWidth="2"
               strokeLinecap="round"
-              style={{ transformOrigin: "50% 50%", animation: "pc-spin 0.9s linear infinite" }}
+              style={{ transformOrigin: "50% 50%", animation: "hc-spin 0.9s linear infinite" }}
             />
           </svg>
         </span>
@@ -151,7 +151,7 @@ export function StepIcon({ state, className = "" }: { state: StepIconState; clas
   }
 }
 
-// Tabler Icons (MIT), 24 px grid, used by "About Partcraft".
+// Tabler Icons (MIT), 24 px grid, used by "About HalfCube".
 export const IconFileText = outline(
   <>
     <path d="M14 3v4a1 1 0 0 0 1 1h4" />

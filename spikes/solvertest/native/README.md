@@ -90,7 +90,7 @@ The only code that is not planegcs is `ConstraintEqualCurvatureCircleSplineEnd` 
 
 The same `CMakeLists.txt`, `driver.cpp` and unchanged planegcs sources are built with Emscripten (image
 `emscripten/emsdk:7.0.1`, Emscripten 7.0.1, Clang 24.0.0) inside a throwaway container, and the module is run
-under the local Node. Container and volume are named `partcraft-solvertest-wasm` and are removed at the end
+under the local Node. Container and volume are named `halfcube-solvertest-wasm` and are removed at the end
 (`docker ps -a` and `docker volume ls` show nothing with that prefix afterwards). Nothing of the drive is mounted:
 the sources are copied in with `docker cp`.
 
@@ -135,7 +135,7 @@ Portability changes to the shared files (the native build was rebuilt and rerun 
 differences to the stored native result):
 
 - `CMakeLists.txt`: `Threads` is searched and linked only `if(NOT EMSCRIPTEN)` (no `-pthread`, so no
-  SharedArrayBuffer requirement); new cache variable `PCST_LINK_FLAGS` (empty by default) is passed to the linker
+  SharedArrayBuffer requirement); new cache variable `HCST_LINK_FLAGS` (empty by default) is passed to the linker
   of the driver and appended to the flags string in the result file.
 - `src/driver.cpp`: `#include <emscripten/version.h>` inside `#if defined(__EMSCRIPTEN__)` (the version macros
   used by `compilerVersion()` are defined there; without the include the build failed with "use of undeclared

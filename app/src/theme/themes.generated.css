@@ -101,8 +101,8 @@
   --o-plane: 0.1;
   --o-selection: 0.22;
   --o-hover: 0.14;
-  --wm-part: #16476e;
-  --wm-craft: #1f75ae;
+  --wm-half: #16476e;
+  --wm-cube: #1f75ae;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -199,19 +199,19 @@
     --o-plane: 0.1;
     --o-selection: 0.22;
     --o-hover: 0.14;
-    --wm-part: #ffffff;
-    --wm-craft: #4cd1e0;
+    --wm-half: #ffffff;
+    --wm-cube: #4cd1e0;
   }
 }
 
 :root[data-mode="light"] {
-  --wm-part: #16476e;
-  --wm-craft: #1f75ae;
+  --wm-half: #16476e;
+  --wm-cube: #1f75ae;
 }
 
 :root[data-mode="dark"] {
-  --wm-part: #ffffff;
-  --wm-craft: #4cd1e0;
+  --wm-half: #ffffff;
+  --wm-cube: #4cd1e0;
 }
 
 :root[data-theme="praezision"][data-mode="light"] {

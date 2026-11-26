@@ -1,4 +1,4 @@
-// Shape of the minimal bridge the Electron preload script exposes to the UI (window.partcraftDesktop), and of the
+// Shape of the minimal bridge the Electron preload script exposes to the UI (window.halfCubeDesktop), and of the
 // messages on the MessagePort between the UI and the Electron main process. Types only; shared by both sides.
 import type { ExitInfo } from "../../client/transport.ts";
 
@@ -9,14 +9,14 @@ export interface DesktopBridge {
   readonly versions: { electron: string; chrome: string; node: string };
   /**
    * Asks the main process to (re)start the native engine. It kills a previous engine of this window, spawns a new
-   * one and then delivers a MessagePort for it through window.postMessage({ partcraft: "engine-port", generation }).
+   * one and then delivers a MessagePort for it through window.postMessage({ halfcube: "engine-port", generation }).
    */
   startEngine(): Promise<StartEngineResult>;
 }
 
 /** Message the preload script posts to the page together with the transferred MessagePort. */
 export interface EnginePortEnvelope {
-  partcraft: "engine-port";
+  halfcube: "engine-port";
   generation: number;
 }
 
@@ -37,6 +37,6 @@ export type FromMain =
 
 declare global {
   interface Window {
-    partcraftDesktop?: DesktopBridge;
+    halfCubeDesktop?: DesktopBridge;
   }
 }

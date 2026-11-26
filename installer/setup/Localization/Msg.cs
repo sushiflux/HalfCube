@@ -1,6 +1,6 @@
 using System.Runtime.InteropServices;
 
-namespace Partcraft.Setup.Localization;
+namespace HalfCube.Setup.Localization;
 
 /// <summary>
 /// A user-facing text in both languages of the setup. The language is picked when the text is READ (<see cref="ToString"/>), so a

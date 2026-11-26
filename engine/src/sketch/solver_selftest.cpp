@@ -7,7 +7,7 @@
 #include <cmath>
 #include <cstdio>
 
-namespace pc::sketch {
+namespace hc::sketch {
 
 namespace {
 
@@ -128,4 +128,4 @@ protocol::SolverSelftestResult runSelftest(const CancelCheck& cancelled) {
     return out;
 }
 
-} // namespace pc::sketch
+} // namespace hc::sketch

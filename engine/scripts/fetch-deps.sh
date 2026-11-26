@@ -1,7 +1,7 @@
 #!/usr/bin/env sh
 # Fetches the engine's third-party sources into engine/_deps (git-ignored), pinned by the "fetch" blocks of
 # third_party/manifest.json (POSIX counterpart of fetch-deps.ps1, used by CI on Linux). Git checkouts must end up at
-# the pinned commit, archives and single files must match their SHA-256. Each folder gets a ".partcraft-pin" stamp;
+# the pinned commit, archives and single files must match their SHA-256. Each folder gets a ".halfcube-pin" stamp;
 # a folder whose stamp matches is kept. Needs git, curl, tar, sha256sum (or shasum) and node (reads the manifest).
 #
 #   sh engine/scripts/fetch-deps.sh [--skip occt] [--only eigen,boost]
@@ -46,7 +46,7 @@ for (const c of m.components) {
 }' "$manifest")
 
 listed() { case ",$1," in *",$2,"*) return 0 ;; *) return 1 ;; esac; }
-stamp_ok() { [ -f "$1/.partcraft-pin" ] && [ "$(cat "$1/.partcraft-pin")" = "$2" ]; }
+stamp_ok() { [ -f "$1/.halfcube-pin" ] && [ "$(cat "$1/.halfcube-pin")" = "$2" ]; }
 
 tab=$(printf '\t')
 done_ids=","
@@ -66,7 +66,7 @@ echo "$plan" | while IFS="$tab" read -r kind id version dir pin a b c d; do
       if [ -d "$target/.git" ]; then
         have=$(git -C "$target" rev-parse HEAD)
         [ "$have" = "$commit" ] || { echo "$id: $target is at commit $have, but $commit ($ref) is pinned. Delete the folder and run again." >&2; exit 1; }
-        printf '%s\n' "$pin" > "$target/.partcraft-pin"
+        printf '%s\n' "$pin" > "$target/.halfcube-pin"
         echo "verified: $id $version ($commit)"
         continue
       fi
@@ -80,12 +80,12 @@ echo "$plan" | while IFS="$tab" read -r kind id version dir pin a b c d; do
       fi
       have=$(git -C "$target" rev-parse HEAD)
       [ "$have" = "$commit" ] || { echo "$id: tag $ref of $url points to $have, but $commit is pinned (the tag was moved)." >&2; exit 1; }
-      printf '%s\n' "$pin" > "$target/.partcraft-pin"
+      printf '%s\n' "$pin" > "$target/.halfcube-pin"
       echo "fetched: $id $version ($commit)"
       ;;
     archive)
       url=$a; sum=$b; strip=$c; members=$d
-      [ ! -e "$target" ] || { echo "$id: $target exists without a matching .partcraft-pin stamp. Delete the folder and run again." >&2; exit 1; }
+      [ ! -e "$target" ] || { echo "$id: $target exists without a matching .halfcube-pin stamp. Delete the folder and run again." >&2; exit 1; }
       tmp="$deps/.download-$id"
       rm -rf "$tmp" "$target.partial"
       mkdir -p "$tmp" "$target.partial"
@@ -97,7 +97,7 @@ echo "$plan" | while IFS="$tab" read -r kind id version dir pin a b c d; do
       tar -xzf "$file" -C "$target.partial" --strip-components="$strip" $members
       mv "$target.partial" "$target"
       rm -rf "$tmp"
-      printf '%s\n' "$pin" > "$target/.partcraft-pin"
+      printf '%s\n' "$pin" > "$target/.halfcube-pin"
       echo "fetched: $id $version (SHA-256 verified)"
       ;;
     file)
@@ -111,13 +111,13 @@ echo "$plan" | while IFS="$tab" read -r kind id version dir pin a b c d; do
         mv "$out.partial" "$out"
       fi
       # The stamp is written after each verified file; it only matches once the last file is in place.
-      printf '%s\n' "$pin" > "$target/.partcraft-pin.next"
+      printf '%s\n' "$pin" > "$target/.halfcube-pin.next"
       all_ok=1
       for p in $(echo "$pin" | cut -d' ' -f2-); do
         fp=${p%%=*}; fs=${p#*=}
         if [ ! -f "$target/$fp" ] || [ "$(sha256 "$target/$fp")" != "$fs" ]; then all_ok=0; fi
       done
-      if [ "$all_ok" = 1 ]; then mv "$target/.partcraft-pin.next" "$target/.partcraft-pin"; echo "fetched: $id $version (SHA-256 verified)"; else rm -f "$target/.partcraft-pin.next"; fi
+      if [ "$all_ok" = 1 ]; then mv "$target/.halfcube-pin.next" "$target/.halfcube-pin"; echo "fetched: $id $version (SHA-256 verified)"; else rm -f "$target/.halfcube-pin.next"; fi
       ;;
   esac
 done

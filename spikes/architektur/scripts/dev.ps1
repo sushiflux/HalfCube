@@ -15,8 +15,8 @@ $ErrorActionPreference = 'Stop'
 $spike = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 $build = Join-Path $spike '_build'
 $run = Join-Path $build 'run'
-$exe = Join-Path $build 'engine-win\partcraft-engine.exe'
-$wasm = Join-Path $build 'engine-wasm\partcraft-engine.wasm'
+$exe = Join-Path $build 'engine-win\halfcube-engine.exe'
+$wasm = Join-Path $build 'engine-wasm\halfcube-engine.wasm'
 $cfg = Get-Content -Raw (Join-Path $spike 'vite.config.ts')
 $port = [int][regex]::Match($cfg, 'PREVIEW_PORT\s*=\s*(\d+)').Groups[1].Value
 if (-not $port) { throw 'PREVIEW_PORT nicht in vite.config.ts gefunden.' }

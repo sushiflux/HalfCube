@@ -11,7 +11,7 @@ import type { Reply } from "../engine/client.ts";
 import type { ModelResult } from "../engine/generated/protocol.ts";
 import type { WatchdogClock } from "../engine/watchdog.ts";
 import type { DocumentStore } from "../document/store.ts";
-import type { PartcraftDocument } from "../document/types.ts";
+import type { HalfCubeDocument } from "../document/types.ts";
 import type { ModelView } from "./editors.ts";
 import { MODEL_SYNC_TIMEOUT_MS, type EngineLink } from "./engine-link.ts";
 import { LatestOnly, type LatestResult } from "./latest-only.ts";
@@ -19,13 +19,13 @@ import { bodyView } from "./payload.ts";
 
 export interface ModelPreview {
   /** The previewed document, built on the committed one at the moment it is sent. */
-  build(committed: PartcraftDocument): PartcraftDocument;
+  build(committed: HalfCubeDocument): HalfCubeDocument;
   /** Steps being previewed (their bodies are marked preview). */
   features: string[];
 }
 
 interface SyncRequest {
-  document: PartcraftDocument;
+  document: HalfCubeDocument;
   purpose: "commit" | "preview";
   features: string[];
 }
@@ -51,7 +51,7 @@ export class ModelSync {
   private holds = 0;
   private preview: ModelPreview | null = null;
   /** Document and purpose of the last submitted request, to skip sending the same state twice. */
-  private last: { document: PartcraftDocument; purpose: string } | null = null;
+  private last: { document: HalfCubeDocument; purpose: string } | null = null;
   private readonly lane: LatestOnly<SyncRequest, Reply<"model.sync">>;
   private readonly unsubscribe: (() => void)[] = [];
   private readonly link: EngineLink;

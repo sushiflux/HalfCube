@@ -8,7 +8,7 @@ import { afterAll, describe, expect, it } from "vitest";
 import { repoRoot } from "../../../config/build-info.ts";
 
 describe("desktop build", () => {
-  const out = mkdtempSync(join(tmpdir(), "partcraft-desktop-build-"));
+  const out = mkdtempSync(join(tmpdir(), "halfcube-desktop-build-"));
   afterAll(() => rmSync(out, { recursive: true, force: true }));
 
   it("writes main.cjs and a self-contained preload.cjs that requires only electron", () => {
@@ -22,7 +22,7 @@ describe("desktop build", () => {
     expect(required).toEqual(["electron"]);
     expect(existsSync(join(out, "assets"))).toBe(false);
     // The bridge names the engine channels the main process listens on.
-    for (const channel of ["partcraft:start-engine", "partcraft:engine-port", "partcraft:setup-choices"]) {
+    for (const channel of ["halfcube:start-engine", "halfcube:engine-port", "halfcube:setup-choices"]) {
       expect(preload).toContain(channel);
       expect(readFileSync(join(out, "main.cjs"), "utf8")).toContain(channel);
     }

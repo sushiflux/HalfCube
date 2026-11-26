@@ -11,7 +11,7 @@
 #include <string_view>
 #include <vector>
 
-namespace pc::sketch {
+namespace hc::sketch {
 
 inline constexpr std::string_view kOrigin = "@origin";
 inline constexpr std::string_view kAxisU = "@axisU";
@@ -117,4 +117,4 @@ struct Sketch {
     bool isLine(const std::string& id) const;
 };
 
-} // namespace pc::sketch
+} // namespace hc::sketch

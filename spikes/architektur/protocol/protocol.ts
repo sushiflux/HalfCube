@@ -20,7 +20,7 @@ export const MAX_REQUEST_ID = 2147483647;
 export type RecipeValue = number | string;
 
 export interface Recipe {
-  format: "partcraft.recipe";
+  format: "halfcube.recipe";
   formatVersion: 0;
   /** Named parameters (mm, or turns for springs). setParameter changes one of them. */
   parameters: Record<string, number>;
@@ -123,7 +123,7 @@ interface EngineMessageBase {
 }
 
 export interface EngineInfo {
-  name: "partcraft-engine";
+  name: "halfcube-engine";
   version: string;
   kernel: string;
   platform: "windows-x64" | "wasm32" | string;

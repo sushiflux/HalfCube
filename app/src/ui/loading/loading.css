@@ -4,9 +4,9 @@
  * 1 px at a window height of 900 px, scaled with the window height between 0.6 and 1.25 so the composition keeps
  * its proportions. Text sizes stay in px, they have to stay readable.
  */
-.pc-stage {
+.hc-stage {
   --u: min(max(0.6px, 0.1111vh), 1.25px);
-  --pc-details-max: clamp(80px, calc(100vh - 586 * var(--u) - 200px), 240px);
+  --hc-details-max: clamp(80px, calc(100vh - 586 * var(--u) - 200px), 240px);
   position: fixed;
   inset: 0;
   z-index: 90;
@@ -17,16 +17,16 @@
   color: var(--c-text);
   font-family: var(--font-sans);
 }
-.pc-stage::-webkit-scrollbar {
+.hc-stage::-webkit-scrollbar {
   display: none;
 }
-.pc-stage-inner {
+.hc-stage-inner {
   position: relative;
   width: 100%;
   height: max(100%, calc(586 * var(--u) + 300px));
 }
 
-.pc-stage-bg {
+.hc-stage-bg {
   position: fixed;
   inset: 0;
   background:
@@ -35,14 +35,14 @@
     radial-gradient(calc(700 * var(--u)) calc(460 * var(--u)) at 6% -10%, color-mix(in srgb, var(--brand-blue) 10%, transparent), transparent 70%),
     linear-gradient(180deg, var(--c-bg) 0%, color-mix(in srgb, var(--c-bg) 70%, black) 100%);
 }
-:root[data-mode="light"] .pc-stage-bg {
+:root[data-mode="light"] .hc-stage-bg {
   background:
     radial-gradient(calc(560 * var(--u)) calc(420 * var(--u)) at 50% 30%, color-mix(in srgb, var(--brand-cyan) 16%, transparent), transparent 70%),
     radial-gradient(calc(900 * var(--u)) calc(520 * var(--u)) at 88% 112%, color-mix(in srgb, var(--brand-blue) 10%, transparent), transparent 70%),
     linear-gradient(180deg, color-mix(in srgb, var(--c-bg) 55%, var(--c-surface)) 0%, var(--c-surface-2) 100%);
 }
 
-.pc-halo {
+.hc-halo {
   position: absolute;
   left: 50%;
   top: calc(263 * var(--u));
@@ -52,12 +52,12 @@
   border-radius: 50%;
   background: radial-gradient(closest-side, color-mix(in srgb, var(--brand-cyan) 22%, transparent), color-mix(in srgb, var(--brand-cyan) 6%, transparent) 55%, transparent 100%);
 }
-:root[data-mode="light"] .pc-halo {
+:root[data-mode="light"] .hc-halo {
   background: radial-gradient(closest-side, color-mix(in srgb, var(--brand-cyan) 26%, transparent), color-mix(in srgb, var(--brand-cyan) 7%, transparent) 55%, transparent 100%);
 }
 
 /* The logo is a square image with a transparent margin; the visible logo is 0.865 times as wide as high. */
-.pc-logo {
+.hc-logo {
   position: absolute;
   left: 50%;
   top: calc(150 * var(--u));
@@ -67,20 +67,20 @@
   transform-origin: 0 0;
   z-index: 2;
 }
-.pc-logo svg {
+.hc-logo svg {
   display: block;
   width: 100%;
   height: 100%;
   overflow: visible;
 }
-.pc-logo-intro {
+.hc-logo-intro {
   transform-origin: 50% 50%;
-  animation: pc-intro 1.1s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  animation: hc-intro 1.1s cubic-bezier(0.2, 0.7, 0.2, 1) both;
 }
-.pc-sweep {
-  animation: pc-sweep 2.6s cubic-bezier(0.45, 0, 0.2, 1) 0.35s 1 both;
+.hc-sweep {
+  animation: hc-sweep 2.6s cubic-bezier(0.45, 0, 0.2, 1) 0.35s 1 both;
 }
-@keyframes pc-intro {
+@keyframes hc-intro {
   from {
     opacity: 0;
     transform: scale(0.965);
@@ -90,7 +90,7 @@
     transform: none;
   }
 }
-@keyframes pc-sweep {
+@keyframes hc-sweep {
   from {
     transform: translateX(-1400px) skewX(-18deg);
   }
@@ -99,12 +99,12 @@
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  .pc-sweep {
+  .hc-sweep {
     display: none;
   }
 }
 
-.pc-word {
+.hc-word {
   position: absolute;
   left: 0;
   right: 0;
@@ -112,7 +112,7 @@
   text-align: center;
 }
 
-.pc-tag {
+.hc-tag {
   position: absolute;
   left: 0;
   right: 0;
@@ -127,8 +127,8 @@
   text-transform: uppercase;
   color: var(--c-muted);
 }
-.pc-tag::before,
-.pc-tag::after {
+.hc-tag::before,
+.hc-tag::after {
   content: "";
   width: 36px;
   height: 1px;
@@ -136,7 +136,7 @@
   opacity: 0.6;
 }
 
-.pc-slot {
+.hc-slot {
   position: absolute;
   left: 50%;
   top: calc(586 * var(--u));
@@ -144,39 +144,39 @@
   transform: translateX(-50%);
 }
 /* The progress part keeps its room when an error replaces it, so nothing moves. */
-.pc-slot-load {
+.hc-slot-load {
   display: flex;
   flex-direction: column;
   align-items: center;
 }
-.pc-slot-load[data-hidden="true"] {
+.hc-slot-load[data-hidden="true"] {
   visibility: hidden;
 }
-.pc-slot-error {
+.hc-slot-error {
   position: absolute;
   left: 0;
   right: 0;
   top: 0;
 }
 
-.pc-track {
+.hc-track {
   position: relative;
   width: 340px;
   max-width: 100%;
   height: 2px;
   background: var(--c-line);
 }
-.pc-fill {
+.hc-fill {
   position: absolute;
   inset: 0 auto 0 0;
   width: 0;
   background: linear-gradient(90deg, var(--brand-blue), var(--brand-cyan));
   transition: width 0.25s ease-out;
 }
-:root[data-mode="light"] .pc-fill {
+:root[data-mode="light"] .hc-fill {
   background: linear-gradient(90deg, var(--brand-navy), var(--brand-blue));
 }
-.pc-fill::after {
+.hc-fill::after {
   content: "";
   position: absolute;
   right: -3px;
@@ -188,12 +188,12 @@
   box-shadow: 0 0 12px 3px color-mix(in srgb, var(--brand-cyan) 55%, transparent);
   opacity: var(--head, 1);
 }
-:root[data-mode="light"] .pc-fill::after {
+:root[data-mode="light"] .hc-fill::after {
   background: var(--brand-blue);
   box-shadow: 0 0 10px 2px color-mix(in srgb, var(--brand-blue) 35%, transparent);
 }
 
-.pc-stepline {
+.hc-stepline {
   margin-top: 20px;
   height: 22px;
   display: flex;
@@ -202,7 +202,7 @@
   font-size: 15px;
   font-weight: 500;
 }
-.pc-stepsub {
+.hc-stepsub {
   margin-top: 6px;
   min-height: 18px;
   max-width: 100%;
@@ -211,11 +211,11 @@
   font-size: 12.5px;
   color: var(--c-muted);
 }
-.pc-fadein {
-  animation: pc-fade-in 0.28s ease both;
+.hc-fadein {
+  animation: hc-fade-in 0.28s ease both;
 }
 
-.pc-vers {
+.hc-vers {
   position: absolute;
   right: 28px;
   bottom: 22px;
@@ -225,14 +225,14 @@
 }
 
 /* ---------- loading panel inside the app ---------- */
-.pc-veil {
+.hc-veil {
   position: absolute;
   inset: 0;
   z-index: 40;
   background: color-mix(in srgb, var(--c-bg) 78%, transparent);
   backdrop-filter: blur(3px);
 }
-.pc-panel {
+.hc-panel {
   position: absolute;
   left: 50%;
   top: min(118px, 14%);
@@ -244,10 +244,10 @@
   background: var(--c-surface);
   box-shadow: 0 12px 32px rgb(10 20 30 / 0.1), 0 1px 2px rgb(10 20 30 / 0.06);
 }
-:root[data-mode="dark"] .pc-panel {
+:root[data-mode="dark"] .hc-panel {
   box-shadow: 0 14px 36px rgb(0 0 0 / 0.35);
 }
-.pc-panel-top {
+.hc-panel-top {
   position: absolute;
   left: 0;
   top: 0;

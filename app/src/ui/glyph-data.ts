@@ -1,4 +1,4 @@
-// Glyph data of the product UI: Tabler Icons (MIT, tabler.io/icons) and Partcraft's own drawings in the same 24 px grid.
+// Glyph data of the product UI: Tabler Icons (MIT, tabler.io/icons) and HalfCube's own drawings in the same 24 px grid.
 // Generated once from an icon set and edited here from now on. Rendered by Glyph.tsx; nothing is
 // loaded at run time and every glyph follows currentColor. The four function icons (fn*) are two-tone: lines in
 // currentColor, the part a function changes in var(--c-fn), the function accent token.

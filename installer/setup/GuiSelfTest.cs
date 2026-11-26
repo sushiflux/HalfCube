@@ -1,7 +1,7 @@
-using Partcraft.Setup.Localization;
-using Partcraft.Setup.Ui;
+using HalfCube.Setup.Localization;
+using HalfCube.Setup.Ui;
 
-namespace Partcraft.Setup;
+namespace HalfCube.Setup;
 
 /// <summary>
 /// <c>--selftest-gui &lt;folder&gt;</c> (with the usual <c>--install-dir</c>, <c>--appdata</c>, <c>--payload</c> options): drives the real window

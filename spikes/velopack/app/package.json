@@ -1,6 +1,6 @@
 {
-  "name": "PartcraftVelopackTest",
-  "productName": "PartcraftVelopackTest",
+  "name": "HalfCubeVelopackTest",
+  "productName": "HalfCubeVelopackTest",
   "version": "0.0.0",
   "private": true,
   "description": "Test application for the Velopack installer and update test (no product code)",

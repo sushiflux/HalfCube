@@ -1,10 +1,10 @@
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
 
-namespace Partcraft.Setup.Ui;
+namespace HalfCube.Setup.Ui;
 
 /// <summary>
-/// The Partcraft brand marks of the setup: the logo (the real logo file of the repository's branding folder, scaled only - never
+/// The HalfCube brand marks of the setup: the logo (the real logo file of the repository's branding folder, scaled only - never
 /// redrawn, recoloured or altered; transparent margins are left out of the drawn area), the window icon and the wordmark in Geist.
 /// </summary>
 public static class Branding
@@ -35,21 +35,21 @@ public static class Branding
     /// <summary>The window and taskbar icon (the multi-size .ico of the branding folder).</summary>
     public static Icon GetIcon(int size)
     {
-        using var stream = typeof(Branding).Assembly.GetManifestResourceStream("partcraft.ico")
+        using var stream = typeof(Branding).Assembly.GetManifestResourceStream("halfcube.ico")
                            ?? throw new InvalidOperationException("The app icon is missing from the setup.");
         return new Icon(stream, new Size(size, size));
     }
 
     /// <summary>
-    /// "Part" + "craft" in Geist SemiBold with the fixed brand colours of the dark panel (wordmark option "Klar"; weight 640 of the
+    /// "Half" + "Cube" in Geist SemiBold with the fixed brand colours of the dark panel (wordmark option "Klar"; weight 640 of the
     /// mockup is drawn as the nearest shipped weight, 600). <paramref name="height"/> is the font size in pixels.
     /// </summary>
     public static Size MeasureWordmark(float fontPixels)
     {
         var font = Fonts.Get(fontPixels * 72f / 96f, 1f, FontStyle.Bold);
         var flags = TextFormatFlags.NoPrefix | TextFormatFlags.NoPadding | TextFormatFlags.SingleLine;
-        var a = TextRenderer.MeasureText("Part", font, Size.Empty, flags);
-        var b = TextRenderer.MeasureText("craft", font, Size.Empty, flags);
+        var a = TextRenderer.MeasureText("Half", font, Size.Empty, flags);
+        var b = TextRenderer.MeasureText("Cube", font, Size.Empty, flags);
         return new Size(a.Width + b.Width, Math.Max(a.Height, b.Height));
     }
 
@@ -57,9 +57,9 @@ public static class Branding
     {
         var font = Fonts.Get(fontPixels * 72f / 96f, 1f, FontStyle.Bold);
         var flags = TextFormatFlags.NoPrefix | TextFormatFlags.NoPadding | TextFormatFlags.SingleLine;
-        var part = TextRenderer.MeasureText(g, "Part", font, Size.Empty, flags);
-        TextRenderer.DrawText(g, "Part", font, origin, Brand.WordPart, flags);
-        TextRenderer.DrawText(g, "craft", font, new Point(origin.X + part.Width, origin.Y), Brand.WordCraft, flags);
+        var half = TextRenderer.MeasureText(g, "Half", font, Size.Empty, flags);
+        TextRenderer.DrawText(g, "Half", font, origin, Brand.WordHalf, flags);
+        TextRenderer.DrawText(g, "Cube", font, new Point(origin.X + half.Width, origin.Y), Brand.WordCube, flags);
     }
 
     /// <summary>A small filled heart (the "made with" line); drawn as a shape so it does not depend on a font glyph.</summary>

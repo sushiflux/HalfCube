@@ -64,8 +64,8 @@ describeUnless(skipUnlessWasmTesting, "wasm engine specifics", () => {
   });
 
   it("reports a module that cannot be loaded with the URL", async () => {
-    const t = new WorkerTransport({ createPort: () => nodeWorkerPort(), moduleUrl: "file:///nowhere/partcraft-engine.mjs" });
-    await expect(t.start()).rejects.toThrow(/The WebAssembly engine could not be loaded from file:\/\/\/nowhere\/partcraft-engine\.mjs: /);
+    const t = new WorkerTransport({ createPort: () => nodeWorkerPort(), moduleUrl: "file:///nowhere/halfcube-engine.mjs" });
+    await expect(t.start()).rejects.toThrow(/The WebAssembly engine could not be loaded from file:\/\/\/nowhere\/halfcube-engine\.mjs: /);
   });
 
   it("gives up when the module does not become ready in time", async () => {

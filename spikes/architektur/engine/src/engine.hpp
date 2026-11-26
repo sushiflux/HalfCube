@@ -17,7 +17,7 @@
 #include <string_view>
 #include <vector>
 
-namespace pc {
+namespace hc {
 
 // Sink for engine messages. Must be safe to call from several threads (native: reader and compute thread).
 class Output {
@@ -100,4 +100,4 @@ private:
     std::map<std::string, MeshCacheEntry> meshCache_;
 };
 
-} // namespace pc
+} // namespace hc

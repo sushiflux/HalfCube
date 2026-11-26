@@ -7,7 +7,7 @@
 #include <numbers>
 #include <set>
 
-namespace pc::model {
+namespace hc::model {
 
 namespace {
 
@@ -365,4 +365,4 @@ ProfileResult findRegions(const sketch::Sketch& s) {
     return result;
 }
 
-} // namespace pc::model
+} // namespace hc::model

@@ -1,6 +1,6 @@
 // The words of a failure in the extrude dialog: a headline that says what failed and why, the error code, and the technical lines
 // for the copy button. Complete sentences, never cut (skill ui-regeln). Pure: text in, text out.
-import type { PartcraftDocument } from "../../document/types.ts";
+import type { HalfCubeDocument } from "../../document/types.ts";
 import type { Translate } from "../../i18n/core.ts";
 import { elementWord, problemText } from "../../model/index.ts";
 import type { ErrorBlock } from "../../ui/errorText.ts";
@@ -15,7 +15,7 @@ export interface FailureText {
 
 /** The document the failure belongs to and the number format: with them the problem names steps and shapes ("Skizze1", "Rechteck 1"). */
 export interface FailureContext {
-  doc: PartcraftDocument;
+  doc: HalfCubeDocument;
   decimalComma: boolean;
 }
 
@@ -47,7 +47,7 @@ export function failureText(t: Translate, failure: CommandFailure, context?: Fai
       const { problem } = failure;
       return {
         title: `${t(rejected ? "main.extrude.commitFailedTitle" : "main.extrude.previewFailedTitle")}: ${problemHeadline(t, problem, context)}`,
-        code: `PC-EXTRUDE-${problem.code.toUpperCase()}`,
+        code: `HC-EXTRUDE-${problem.code.toUpperCase()}`,
         blocks: [
           { kind: "text", text: t(rejected ? "main.extrude.commitFailedLead" : "main.extrude.previewFailedLead") },
           { kind: "code", text: engineLine(t, problem.message, context) },
@@ -57,7 +57,7 @@ export function failureText(t: Translate, failure: CommandFailure, context?: Fai
     case "engine":
       return {
         title: t("main.extrude.engineTitle"),
-        code: "PC-EXTRUDE-ENGINE",
+        code: "HC-EXTRUDE-ENGINE",
         blocks: [
           { kind: "text", text: t("main.extrude.engineText") },
           { kind: "code", text: `${failure.error.name}: ${failure.error.message}` },
@@ -66,7 +66,7 @@ export function failureText(t: Translate, failure: CommandFailure, context?: Fai
     case "invalid":
       return {
         title: t("main.extrude.invalidTitle"),
-        code: "PC-EXTRUDE-INVALID",
+        code: "HC-EXTRUDE-INVALID",
         blocks: [{ kind: "code", text: failure.message }],
       };
   }

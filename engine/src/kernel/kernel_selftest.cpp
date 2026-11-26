@@ -20,7 +20,7 @@
 #include <functional>
 #include <numbers>
 
-namespace pc::kernel {
+namespace hc::kernel {
 
 namespace {
 
@@ -150,4 +150,4 @@ protocol::KernelSelftestResult runSelftest(const CancelCheck& cancelled) {
     return result;
 }
 
-} // namespace pc::kernel
+} // namespace hc::kernel

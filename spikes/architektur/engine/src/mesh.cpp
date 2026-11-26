@@ -28,7 +28,7 @@
 
 static_assert(std::endian::native == std::endian::little, "the mesh encoding assumes a little-endian target");
 
-namespace pc {
+namespace hc {
 
 namespace {
 
@@ -229,4 +229,4 @@ Json appendBlock(const MeshBlock& block, std::vector<uint8_t>& payload) {
     return info;
 }
 
-} // namespace pc
+} // namespace hc

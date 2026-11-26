@@ -34,7 +34,7 @@ export function LoadingPanel({ progress, onCancel, onAction }: LoadingPanelProps
   useFocusTrap(panel, true, cancel);
 
   return (
-    <div className="pc-veil" data-testid="loading-panel">
+    <div className="hc-veil" data-testid="loading-panel">
       <div
         ref={panel}
         role="dialog"
@@ -42,7 +42,7 @@ export function LoadingPanel({ progress, onCancel, onAction }: LoadingPanelProps
         aria-labelledby={title ? titleId : undefined}
         aria-busy={!error}
         tabIndex={-1}
-        className="pc-panel outline-none"
+        className="hc-panel outline-none"
         onKeyDown={(event) => {
           if (event.key === "Escape" && onCancel && !error) {
             event.stopPropagation();
@@ -50,7 +50,7 @@ export function LoadingPanel({ progress, onCancel, onAction }: LoadingPanelProps
           }
         }}
       >
-        <div className="pc-panel-top" style={{ width: `${(fraction * 100).toFixed(2)}%` }} />
+        <div className="hc-panel-top" style={{ width: `${(fraction * 100).toFixed(2)}%` }} />
         <div className="flex items-center gap-3.5 px-5 pt-[18px] pb-3.5">
           <Logo size={34} source="medium" />
           <div className="min-w-0">

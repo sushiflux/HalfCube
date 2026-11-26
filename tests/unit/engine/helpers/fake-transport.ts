@@ -74,7 +74,7 @@ export function helloResult(replyTo: number, kind: "native" | "wasm" = "native")
     protocolId: PROTOCOL_ID,
     documentFormat: DOCUMENT_FORMAT,
     engine: {
-      name: "partcraft-engine",
+      name: "halfcube-engine",
       version: "v2026.11.5",
       versionFull: "v2026.11.5.13.12369",
       buildType: "Release",

@@ -7,7 +7,7 @@
 #include <cstdint>
 #include <vector>
 
-namespace pc {
+namespace hc {
 
 struct MeshParams {
     double deflection = 0.05;  // chordal deflection, mm
@@ -29,4 +29,4 @@ MeshBlock meshBody(const BodyOut& body, const MeshParams& p, const Model::Cancel
 // Appends a block to a payload at an aligned offset and returns the body JSON with absolute offsets.
 Json appendBlock(const MeshBlock& block, std::vector<uint8_t>& payload);
 
-} // namespace pc
+} // namespace hc

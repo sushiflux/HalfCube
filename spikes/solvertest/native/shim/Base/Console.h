@@ -4,8 +4,8 @@
 // printf-style arguments. This shim formats the text and either drops it or appends it to a
 // capture buffer that the test driver installs (used to count solver iterations, which planegcs
 // only reports through this log when debugMode == IterationLevel).
-#ifndef PARTCRAFT_SOLVERTEST_SHIM_BASE_CONSOLE_H
-#define PARTCRAFT_SOLVERTEST_SHIM_BASE_CONSOLE_H
+#ifndef HALFCUBE_SOLVERTEST_SHIM_BASE_CONSOLE_H
+#define HALFCUBE_SOLVERTEST_SHIM_BASE_CONSOLE_H
 
 #include <cstdio>
 #include <string>

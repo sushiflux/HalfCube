@@ -6,21 +6,21 @@ import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { repoRoot } from "../../../../config/build-info.ts";
 
-const exeName = process.platform === "win32" ? "partcraft-engine.exe" : "partcraft-engine";
+const exeName = process.platform === "win32" ? "halfcube-engine.exe" : "halfcube-engine";
 const build = join(repoRoot, "engine", "_build");
 
-/** Native engine built with test commands (diagnostics.crash, diagnostics.hang); override with PC_ENGINE_TESTING_EXE. */
-export const nativeTestingExe = process.env.PC_ENGINE_TESTING_EXE ?? join(build, "windows-release-testing", "bin", exeName);
-/** Native release engine; override with PC_ENGINE_RELEASE_EXE. */
-export const nativeReleaseExe = process.env.PC_ENGINE_RELEASE_EXE ?? join(build, "windows-release", "bin", exeName);
-/** WebAssembly engine with test commands; override with PC_ENGINE_WASM_TESTING_DIR. */
-export const wasmTestingDir = process.env.PC_ENGINE_WASM_TESTING_DIR ?? join(build, "wasm-testing");
-/** WebAssembly release engine; override with PC_ENGINE_WASM_DIR. */
-export const wasmReleaseDir = process.env.PC_ENGINE_WASM_DIR ?? join(build, "wasm");
+/** Native engine built with test commands (diagnostics.crash, diagnostics.hang); override with HC_ENGINE_TESTING_EXE. */
+export const nativeTestingExe = process.env.HC_ENGINE_TESTING_EXE ?? join(build, "windows-release-testing", "bin", exeName);
+/** Native release engine; override with HC_ENGINE_RELEASE_EXE. */
+export const nativeReleaseExe = process.env.HC_ENGINE_RELEASE_EXE ?? join(build, "windows-release", "bin", exeName);
+/** WebAssembly engine with test commands; override with HC_ENGINE_WASM_TESTING_DIR. */
+export const wasmTestingDir = process.env.HC_ENGINE_WASM_TESTING_DIR ?? join(build, "wasm-testing");
+/** WebAssembly release engine; override with HC_ENGINE_WASM_DIR. */
+export const wasmReleaseDir = process.env.HC_ENGINE_WASM_DIR ?? join(build, "wasm");
 
-export const wasmModuleUrl = (dir: string): string => pathToFileURL(join(dir, "partcraft-engine.mjs")).href;
+export const wasmModuleUrl = (dir: string): string => pathToFileURL(join(dir, "halfcube-engine.mjs")).href;
 
-const wasmPresent = (dir: string) => existsSync(join(dir, "partcraft-engine.mjs")) && existsSync(join(dir, "partcraft-engine.wasm"));
+const wasmPresent = (dir: string) => existsSync(join(dir, "halfcube-engine.mjs")) && existsSync(join(dir, "halfcube-engine.wasm"));
 
 /** Reason to skip when the build is missing, otherwise false (the shape describe(..., { skip }) wants). */
 export const skipUnlessNativeTesting = process.platform !== "win32" || !existsSync(nativeTestingExe) ? `native testing build missing (${nativeTestingExe})` : false;

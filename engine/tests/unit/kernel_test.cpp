@@ -8,7 +8,7 @@
 
 #include <cmath>
 
-using namespace pc;
+using namespace hc;
 
 TEST_CASE("closed-form volume of the self-test part") {
     // Block 80000 minus hole 2000 pi minus the fillet ring (Pappus): 73587.33 mm^3.

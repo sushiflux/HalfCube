@@ -299,7 +299,7 @@ export interface ModelView {
   error?: Error;
 }
 
-export interface PartcraftModel {
+export interface HalfCubeModel {
   readonly document: DocumentStore;
   getModelView: () => ModelView;
   subscribeModel: (listener: () => void) => () => void;

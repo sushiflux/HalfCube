@@ -1,45 +1,45 @@
-Partcraft
-=========
+HalfCube
+========
 
-Required Notice: Copyright 2026 SushiFlux (https://github.com/sushiflux/Partcraft)
+Required Notice: Copyright 2026 SushiFlux (https://github.com/sushiflux/HalfCube)
 
-Partcraft is licensed under the PolyForm Shield License 1.0.0. The full terms are in the file LICENSE and at
+HalfCube is licensed under the PolyForm Shield License 1.0.0. The full terms are in the file LICENSE and at
 https://polyformproject.org/licenses/shield/1.0.0
 
-The line starting with "Required Notice:" above must stay with every copy of Partcraft or of any part of it that you pass
+The line starting with "Required Notice:" above must stay with every copy of HalfCube or of any part of it that you pass
 on (see the section "Notices" of the license).
 
 
 Additional permission for bundled libraries
 -------------------------------------------
 
-Partcraft ships with Open CASCADE Technology (OCCT) and planegcs. Both are licensed under the GNU Lesser General Public
+HalfCube ships with Open CASCADE Technology (OCCT) and planegcs. Both are licensed under the GNU Lesser General Public
 License version 2.1 (LGPL-2.1). Section 6 of that license allows a work that uses such a library to be distributed under
 terms of the distributor's choice, provided that, in the license's words:
 
     "the terms permit modification of the work for the customer's own use and reverse engineering for debugging such
     modifications."
 
-To meet this condition, the licensor grants this additional permission, which applies to every copy of Partcraft:
+To meet this condition, the licensor grants this additional permission, which applies to every copy of HalfCube:
 
-You may modify Partcraft for your own use, and you may reverse engineer Partcraft as far as that is needed to debug such
+You may modify HalfCube for your own use, and you may reverse engineer HalfCube as far as that is needed to debug such
 modifications.
 
-Here, "Partcraft" means the program files that Partcraft's author wrote, together with the OCCT and planegcs libraries
+Here, "HalfCube" means the program files that HalfCube's author wrote, together with the OCCT and planegcs libraries
 named above. It does not include the Microsoft files described in the section "Microsoft Visual C++ runtime" below: this
 permission does not apply to them.
 
 This permission does not widen the PolyForm Shield License in any other way. In particular, it does not allow you to provide a
-product that competes with Partcraft (section "Noncompete" of the license).
+product that competes with HalfCube (section "Noncompete" of the license).
 
-The texts of the LGPL-2.1 and of the OCCT exception come with the OCCT and planegcs files that Partcraft passes on. OCCT and
+The texts of the LGPL-2.1 and of the OCCT exception come with the OCCT and planegcs files that HalfCube passes on. OCCT and
 planegcs remain under their own licenses; this file does not change them.
 
 
 Notice about Open CASCADE Technology
 ------------------------------------
 
-Partcraft makes use of, and is based on facilities provided by, the Open CASCADE Technology software (OCCT, https://dev.opencascade.org).
+HalfCube makes use of, and is based on facilities provided by, the Open CASCADE Technology software (OCCT, https://dev.opencascade.org).
 OCCT is licensed under the GNU LGPL version 2.1 with the Open CASCADE exception (version 1.0). The exception reads, in part:
 the object code of a "work that uses the Library" may be distributed under terms of your choice, "provided that you give
 prominent notice in supporting documentation to this code that it makes use of or is based on facilities provided by the Open
@@ -49,7 +49,7 @@ CASCADE Technology software."
 Microsoft Visual C++ runtime
 ----------------------------
 
-The Windows version of Partcraft ships four files of the Microsoft Visual C++ runtime, unmodified, in the folder of the engine
+The Windows version of HalfCube ships four files of the Microsoft Visual C++ runtime, unmodified, in the folder of the engine
 program: vcruntime140.dll, vcruntime140_1.dll, msvcp140.dll and msvcp140_2.dll. Microsoft owns these files. Microsoft makes
 them available for distribution with applications as "Distributable Code" under the Microsoft Software License Terms for
 Visual Studio 2022 (section "Distributable Code"; the file list is at https://aka.ms/vs/17/redistribution).
@@ -57,10 +57,10 @@ Visual Studio 2022 (section "Distributable Code"; the file list is at https://ak
 The PolyForm Shield License 1.0.0 and the additional permission above do not apply to these files. They stay under Microsoft's
 terms. In particular, the permission to modify and to reverse engineer does not extend to them.
 
-Microsoft's terms require that everyone who receives these files with Partcraft agrees to terms that protect them at least as
-much as Microsoft's own terms do. By installing or using Partcraft, you agree to the following for these files:
+Microsoft's terms require that everyone who receives these files with HalfCube agrees to terms that protect them at least as
+much as Microsoft's own terms do. By installing or using HalfCube, you agree to the following for these files:
 
-(1) You may use them only as part of Partcraft, to run Partcraft. You may not share, publish, rent or lease them, offer them
+(1) You may use them only as part of HalfCube, to run HalfCube. You may not share, publish, rent or lease them, offer them
 as a stand-alone product, or combine them with other applications for others to use.
 
 (2) You may not modify them.
@@ -78,12 +78,12 @@ to them.
 (7) They are provided "as is". To the extent that applicable law permits, Microsoft and its suppliers give no warranty for
 them, and you can recover from Microsoft and its suppliers only direct damages up to U.S. $5.00, and no other damages.
 
-If you pass on a copy of Partcraft that contains these files, you must make the recipient agree to the terms in this section.
+If you pass on a copy of HalfCube that contains these files, you must make the recipient agree to the terms in this section.
 
 Earlier versions
 ----------------
 
-Versions of Partcraft published up to and including commit e18de2c (2026-11-25) were released under the GNU General Public
+Versions of this software published up to and including commit e18de2c (2026-11-25), then named Partcraft, were released under the GNU General Public
 License, version 3 or (at your option) any later version (GPL-3.0-or-later). Copies of those versions stay under that license
 for everyone who received them; the GPL cannot be revoked (GPL-3.0, section 2). The PolyForm Shield License applies to the
 code published after that commit.
@@ -92,5 +92,5 @@ code published after that commit.
 Name and logo
 -------------
 
-The name "Partcraft", the logo and the look of the program are not licensed under the PolyForm Shield License. Rules for
+The name "HalfCube", the logo and the look of the program are not licensed under the PolyForm Shield License. Rules for
 using them will follow.

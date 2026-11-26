@@ -26,7 +26,7 @@ function fakeModule(overrides: ModuleOverrides, behaviour: { version?: number; t
     overrides,
     heap,
     HEAPU8: heap,
-    _pc_init(flags) {
+    _hc_init(flags) {
       m.calls.push(`init(${flags})`);
       return behaviour.version ?? PROTOCOL_VERSION;
     },
@@ -40,7 +40,7 @@ function fakeModule(overrides: ModuleOverrides, behaviour: { version?: number; t
     _free(p) {
       m.calls.push(`free(${p})`);
     },
-    _pc_handle(hp, hb, pp, pb) {
+    _hc_handle(hp, hb, pp, pb) {
       if (behaviour.trap) throw behaviour.trap;
       const header = new TextDecoder().decode(heap.subarray(hp, hp + hb));
       m.handled.push({ header, payload: Array.from(heap.subarray(pp, pp + pb)) });
@@ -71,7 +71,7 @@ describe("engine worker core", () => {
   it("loads the module, initialises the engine (with cancel flags) and announces ready", async () => {
     const { core, kinds, module } = setup();
     const flags = new Int32Array(new SharedArrayBuffer(4));
-    core.handle({ kind: "init", moduleUrl: "file:///x/partcraft-engine.mjs", cancelFlags: flags });
+    core.handle({ kind: "init", moduleUrl: "file:///x/halfcube-engine.mjs", cancelFlags: flags });
     await tick();
     expect(kinds()).toEqual(["ready"]);
     expect(module().calls).toEqual(["init(1)"]);
@@ -84,7 +84,7 @@ describe("engine worker core", () => {
     expect(module().calls).toEqual(["init(0)"]);
   });
 
-  it("writes the header into the module's memory, calls _pc_handle, frees the buffers and forwards replies with transfer", async () => {
+  it("writes the header into the module's memory, calls _hc_handle, frees the buffers and forwards replies with transfer", async () => {
     const { core, posted, module } = setup();
     core.handle({ kind: "init", moduleUrl: "u", cancelFlags: null });
     await tick();
@@ -108,12 +108,12 @@ describe("engine worker core", () => {
 
   it("reports a module that cannot be loaded, with the URL and the cause", async () => {
     const { core, posted } = setup({}, new Error("Failed to fetch"));
-    core.handle({ kind: "init", moduleUrl: "https://example.test/engine/partcraft-engine.mjs", cancelFlags: null });
+    core.handle({ kind: "init", moduleUrl: "https://example.test/engine/halfcube-engine.mjs", cancelFlags: null });
     await tick();
     expect(posted).toHaveLength(1);
     expect(posted[0]!.message).toEqual({
       kind: "fatal",
-      message: expect.stringMatching(/^The WebAssembly engine could not be loaded from https:\/\/example\.test\/engine\/partcraft-engine\.mjs: Error: Failed to fetch/),
+      message: expect.stringMatching(/^The WebAssembly engine could not be loaded from https:\/\/example\.test\/engine\/halfcube-engine\.mjs: Error: Failed to fetch/),
     });
   });
 

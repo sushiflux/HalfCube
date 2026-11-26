@@ -20,7 +20,7 @@ export function rejectText(t: Translate, rejection: Rejection, decimalComma: boo
   if (outcome.reason === "engine") {
     return {
       title: t("sketch.reject.engineTitle"),
-      code: "PC-SKETCH-ENGINE",
+      code: "HC-SKETCH-ENGINE",
       blocks: [
         { kind: "text", text: t("sketch.reject.engineText") },
         { kind: "code", text: `${outcome.error.name}: ${outcome.error.message}` },
@@ -31,7 +31,7 @@ export function rejectText(t: Translate, rejection: Rejection, decimalComma: boo
   if (outcome.reason === "invalid") {
     return {
       title: t("sketch.reject.invalidTitle"),
-      code: "PC-SKETCH-INVALID",
+      code: "HC-SKETCH-INVALID",
       blocks: [{ kind: "text", text: t("sketch.reject.invalidText", { message: outcome.message }) }],
       offerReference: false,
     };
@@ -69,7 +69,7 @@ export function rejectText(t: Translate, rejection: Rejection, decimalComma: boo
   blocks.push({ kind: "code", text: technical.join("\n") });
   return {
     title: dimension ? t("sketch.reject.dimensionTitle") : t(`sketch.reject.${action.kind}Title`),
-    code: `PC-${problem.code.toUpperCase().replaceAll("_", "-")}`,
+    code: `HC-${problem.code.toUpperCase().replaceAll("_", "-")}`,
     blocks,
     offerReference: dimension !== null,
   };

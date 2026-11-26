@@ -61,7 +61,7 @@ describe("catalogue parity (the type system already rejects a missing key; this 
       "main.timeline.constraints.horizontal",
       "main.timeline.constraints.parallel",
       "welcome.openProjectHint",
-      // "About Partcraft": tab name, channel names, the copyright line and the product name Electron read the same in both.
+      // "About HalfCube": tab name, channel names, the copyright line and the product name Electron read the same in both.
       "about.tabInfo",
       "about.channelNightly",
       "about.channelBeta",

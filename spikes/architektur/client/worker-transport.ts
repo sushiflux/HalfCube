@@ -26,7 +26,7 @@ export function browserWorkerPort(url: string | URL): WorkerPort {
 
 export interface WorkerTransportOptions {
   createPort: () => WorkerPort;
-  /** URL of partcraft-engine.mjs (the Emscripten module); resolved inside the worker. */
+  /** URL of halfcube-engine.mjs (the Emscripten module); resolved inside the worker. */
   moduleUrl: string;
   debugCommands?: boolean;
   /**

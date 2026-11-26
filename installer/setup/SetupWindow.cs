@@ -1,12 +1,12 @@
 using System.Text.RegularExpressions;
-using Partcraft.Setup.Localization;
-using Partcraft.Setup.Ui;
+using HalfCube.Setup.Localization;
+using HalfCube.Setup.Ui;
 
-namespace Partcraft.Setup;
+namespace HalfCube.Setup;
 
 /// <summary>
 /// The designed setup (mockup variant B): Welcome (with the language) → Licence → Location → Installing (real progress) → Done. Every
-/// message has its room from the start (rigid layout); errors are shown completely in a scrolling, copyable slot. When Partcraft is
+/// message has its room from the start (rigid layout); errors are shown completely in a scrolling, copyable slot. When HalfCube is
 /// installed already the setup says so, replaces it (projects and settings stay) and offers the uninstaller on the first page.
 /// </summary>
 internal sealed partial class SetupWindow : WizardWindow
@@ -44,7 +44,7 @@ internal sealed partial class SetupWindow : WizardWindow
     private static IReadOnlyList<WizardPage> BuildPages(SetupState state) =>
         [new WelcomePage(state), new LicencePage(state), new LocationPage(state), new InstallingPage(state), new DonePage(state)];
 
-    /// <summary>The user wants Partcraft started after "Start Partcraft".</summary>
+    /// <summary>The user wants HalfCube started after "Start HalfCube".</summary>
     public bool LaunchAfterFinish { get; private set; }
 
     /// <summary>The overall progress last reported (0..1); the GUI self-test watches it.</summary>
@@ -64,8 +64,8 @@ internal sealed partial class SetupWindow : WizardWindow
         Cancel.Text = CommonTexts.Cancel;
         var back = StepIndex > 0 && page is not InstallingPage and not DonePage;
         var cancel = page is not InstallingPage and not DonePage;
-        Cancel.Kind = PcButtonKind.Ghost;
-        Next.Kind = PcButtonKind.Primary;
+        Cancel.Kind = HcButtonKind.Ghost;
+        Next.Kind = HcButtonKind.Primary;
         Next.Glyph = null;
         Next.Visible = true;
         Hint.Text = string.Empty;
@@ -111,7 +111,7 @@ internal sealed partial class SetupWindow : WizardWindow
                 break;
             case DonePage:
                 cancel = true;
-                Cancel.Kind = PcButtonKind.Secondary;
+                Cancel.Kind = HcButtonKind.Secondary;
                 Cancel.Text = CommonTexts.Close;
                 Next.Text = SetupTexts.StartNow;
                 Next.Glyph = Glyphs.Play;
@@ -210,7 +210,7 @@ internal sealed partial class SetupWindow : WizardWindow
             return;
         }
         var answer = Dialogs.Show(this, DialogKind.Question, SetupTexts.CancelQuestion,
-            [new DialogButton(SetupTexts.CancelYes, DialogResult.Yes), new DialogButton(SetupTexts.CancelNo, DialogResult.No, PcButtonKind.Primary)],
+            [new DialogButton(SetupTexts.CancelYes, DialogResult.Yes), new DialogButton(SetupTexts.CancelNo, DialogResult.No, HcButtonKind.Primary)],
             DialogResult.No, focusIndex: 1);
         if (answer == DialogResult.Yes) Close();
     }
@@ -236,12 +236,12 @@ internal sealed partial class SetupWindow : WizardWindow
         });
         yield return ("licence-agreed-focus", () => _licence.SetAgreed(true));
         // The end of the scrolling area: the NOTICE section that follows the licence text
-        yield return ("licence-agreed-end", () => Controls.Find("txtLicence", true).OfType<PcScrollText>().Single().ScrollBy(int.MaxValue / 2));
+        yield return ("licence-agreed-end", () => Controls.Find("txtLicence", true).OfType<HcScrollText>().Single().ScrollBy(int.MaxValue / 2));
         yield return ("location", () => { GoTo(2); UpdateButtons(); });
         if (!_state.IsUpdate)
         {
             yield return ("location-unsafe-folder", () => { _location.SetFolder(@"C:\"); GoTo(2); UpdateButtons(); });
-            yield return ("location-long-path", () => { _location.SetFolder(@"C:\Users\Beispielbenutzer\AppData\Local\Programs\Partcraft\VeryLongFolderNameForTheLayoutCheck\AnotherLongSubfolder\Partcraft"); GoTo(2); UpdateButtons(); });
+            yield return ("location-long-path", () => { _location.SetFolder(@"C:\Users\Beispielbenutzer\AppData\Local\Programs\HalfCube\VeryLongFolderNameForTheLayoutCheck\AnotherLongSubfolder\HalfCube"); GoTo(2); UpdateButtons(); });
             yield return ("location-ok", () => { _location.SetFolder(original); GoTo(2); UpdateButtons(); });
         }
         yield return ("installing", () =>
@@ -257,16 +257,16 @@ internal sealed partial class SetupWindow : WizardWindow
         {
             _running = false;
             _state.Failed = true;
-            _state.Error = SetupTexts.ErrVelopackFailed(1, @"C:\Users\Name\AppData\Local\Temp\Partcraft-Setup-0f3a\velopack-setup.log",
-                string.Join('\n', Enumerable.Repeat("[12:04:11] [ERROR] An error has occurred: Unable to write file C:\\Users\\Name\\AppData\\Local\\Partcraft\\current\\resources\\engine\\partcraft-engine.exe: access denied", 4)));
+            _state.Error = SetupTexts.ErrVelopackFailed(1, @"C:\Users\Name\AppData\Local\Temp\HalfCube-Setup-0f3a\velopack-setup.log",
+                string.Join('\n', Enumerable.Repeat("[12:04:11] [ERROR] An error has occurred: Unable to write file C:\\Users\\Name\\AppData\\Local\\HalfCube\\current\\resources\\engine\\halfcube-engine.exe: access denied", 4)));
             GoTo(InstallingIndex);
             UpdateButtons();
         });
         // The same page after a click on "Copy": the status slot fills, nothing else may move (compared by the layout check)
-        yield return ("failed-copied", () => Controls.Find("btnCopyInstallError", true).OfType<PcButton>().Single().PerformClick());
+        yield return ("failed-copied", () => Controls.Find("btnCopyInstallError", true).OfType<HcButton>().Single().PerformClick());
         yield return ("failed-copy-not-possible", () =>
         {
-            var status = Controls.Find("lblCopyStatusInstallError", true).OfType<PcText>().Single();
+            var status = Controls.Find("lblCopyStatusInstallError", true).OfType<HcText>().Single();
             status.Color = p => p.Danger;
             status.Text = CommonTexts.CopyFailed;
         });
@@ -290,16 +290,16 @@ internal sealed partial class SetupWindow : WizardWindow
 
         public override void Build(PageCanvas c)
         {
-            var german = c.Add(new PcChoice { Text = "Deutsch", Description = SetupTexts.GermanText.De, Badge = "DE", Selected = UiLang.Current == UiLang.German }, 0, 0, PageCanvas.Width, 68, "choiceGerman");
-            var english = c.Add(new PcChoice { Text = "English", Description = SetupTexts.EnglishText.En, Badge = "EN", Selected = UiLang.Current == UiLang.English }, 0, 78, PageCanvas.Width, 68, "choiceEnglish");
+            var german = c.Add(new HcChoice { Text = "Deutsch", Description = SetupTexts.GermanText.De, Badge = "DE", Selected = UiLang.Current == UiLang.German }, 0, 0, PageCanvas.Width, 68, "choiceGerman");
+            var english = c.Add(new HcChoice { Text = "English", Description = SetupTexts.EnglishText.En, Badge = "EN", Selected = UiLang.Current == UiLang.English }, 0, 78, PageCanvas.Width, 68, "choiceEnglish");
             // Switching re-renders the whole window in the chosen language at once
             german.Click += (_, _) => UiLang.Current = UiLang.German;
             english.Click += (_, _) => UiLang.Current = UiLang.English;
 
             var y = 170;
-            c.Add(new PcFeature { Text = SetupTexts.FeatureSketch, Icon = Glyphs.Sketch, Compact = true }, 0, y, PageCanvas.Width, 28, "featureSketch");
-            c.Add(new PcFeature { Text = SetupTexts.FeatureTimeline, Icon = Glyphs.Timeline, Compact = true }, 0, y + 34, PageCanvas.Width, 28, "featureTimeline");
-            c.Add(new PcFeature { Text = SetupTexts.FeatureFree, Icon = Glyphs.Branch, Compact = true }, 0, y + 68, PageCanvas.Width, 28, "featureFree");
+            c.Add(new HcFeature { Text = SetupTexts.FeatureSketch, Icon = Glyphs.Sketch, Compact = true }, 0, y, PageCanvas.Width, 28, "featureSketch");
+            c.Add(new HcFeature { Text = SetupTexts.FeatureTimeline, Icon = Glyphs.Timeline, Compact = true }, 0, y + 34, PageCanvas.Width, 28, "featureTimeline");
+            c.Add(new HcFeature { Text = SetupTexts.FeatureFree, Icon = Glyphs.Branch, Compact = true }, 0, y + 68, PageCanvas.Width, 28, "featureFree");
         }
     }
 
@@ -313,14 +313,14 @@ internal sealed partial class SetupWindow : WizardWindow
         // The summary of the licence runs to four lines in German at 100 %: its slot is 34 units taller than the standard two lines
         public override int ExtraSubtitleHeight => 34;
 
-        private PcCheck? _agree;
-        private PcText? _hint;
+        private HcCheck? _agree;
+        private HcText? _hint;
 
         /// <summary>Raised when the agreement box was ticked or unticked (the window enables or disables "Next").</summary>
         public Action? Changed { get; set; }
 
         /// <summary>The agreement box (the layout check ticks it and sends keys to it).</summary>
-        public PcCheck? Agreement => _agree;
+        public HcCheck? Agreement => _agree;
 
         public void SetAgreed(bool agreed)
         {
@@ -332,7 +332,7 @@ internal sealed partial class SetupWindow : WizardWindow
         {
             // The official PolyForm Shield 1.0.0 text (English only, Markdown), shown as plain text
             // The NOTICE file follows below it in the same scrolling area, under a heading of its own
-            var box = c.Add(new PcScrollText { Framed = true, Points = 8.8f }, 0, 0, PageCanvas.Width, 142, "txtLicence");
+            var box = c.Add(new HcScrollText { Framed = true, Points = 8.8f }, 0, 0, PageCanvas.Width, 142, "txtLicence");
             if (state.LicenceText is { } text) box.SetText(LicenceWithNotice(text, state.NoticeText, SetupTexts.NoticeHeading.ToString()), p => p.Text);
             else box.SetText(SetupTexts.LicenceMissing, p => p.Danger);
             c.Text(SetupTexts.LicenceSource, 0, 148, PageCanvas.Width, 38, 9.5f, color: p => p.Muted, name: "lblLicenceSource");
@@ -343,7 +343,7 @@ internal sealed partial class SetupWindow : WizardWindow
 
             // The agreement: the box is a row of its own and the hint under it has its slot from the start (it only gets text or loses
             // it, nothing around it moves)
-            _agree = c.Add(new PcCheck { Text = SetupTexts.LicenceAgree, Checked = state.LicenceAgreed }, 0, 256, PageCanvas.Width, 32, "chkAgree");
+            _agree = c.Add(new HcCheck { Text = SetupTexts.LicenceAgree, Checked = state.LicenceAgreed }, 0, 256, PageCanvas.Width, 32, "chkAgree");
             _hint = c.Text(state.LicenceAgreed ? string.Empty : SetupTexts.LicenceAgreeHint, 38, 290, PageCanvas.Width - 38, 22, 9.5f, color: p => p.Muted, name: "lblAgreeHint");
             _agree.CheckedChanged += (_, _) =>
             {
@@ -355,7 +355,7 @@ internal sealed partial class SetupWindow : WizardWindow
     }
 
     /// <summary>A small bordered card with a library's name and its licence (the licence page's third-party row).</summary>
-    private sealed class LibraryCard : PcControl
+    private sealed class LibraryCard : HcControl
     {
         public string Licence { get; set; } = string.Empty;
 
@@ -373,8 +373,8 @@ internal sealed partial class SetupWindow : WizardWindow
 
     private sealed class LocationPage(SetupState state) : WizardPage
     {
-        private PcScrollText? _path;
-        private PcScrollText? _problemText;
+        private HcScrollText? _path;
+        private HcScrollText? _problemText;
         private SpaceBar? _space;
 
         public Action? Changed { get; set; }
@@ -418,21 +418,21 @@ internal sealed partial class SetupWindow : WizardWindow
             c.Add(new FolderCard(), 0, 0, PageCanvas.Width, 68, "cardFolder");
             c.Text(SetupTexts.ProgramFolder, 62, 12, 300, 18, 9f, color: p => p.Muted, name: "lblFolderTitle").Surface = c.P.Surface;
             // The whole path in a scrolling slot of two lines: a long path is never cut
-            _path = c.Add(new PcScrollText { Points = 9.2f, Mono = true }, 62, 30, PageCanvas.Width - 62 - 132, 34, "lblFolder");
+            _path = c.Add(new HcScrollText { Points = 9.2f, Mono = true }, 62, 30, PageCanvas.Width - 62 - 132, 34, "lblFolder");
             _path.Surface = c.P.Surface;
             _path.SetText(state.InstallDir, p => p.Text);
-            var change = c.Add(new PcButton { Text = SetupTexts.ChangeFolder, Kind = PcButtonKind.Secondary, Enabled = !state.IsUpdate }, PageCanvas.Width - 122, 15, 110, 38, "btnChangeFolder");
+            var change = c.Add(new HcButton { Text = SetupTexts.ChangeFolder, Kind = HcButtonKind.Secondary, Enabled = !state.IsUpdate }, PageCanvas.Width - 122, 15, 110, 38, "btnChangeFolder");
             change.Surface = c.P.Surface;
             change.Click += (_, _) => ChooseFolder(c.Host);
             // One reserved slot below the card: free space or what is wrong with the folder (scrolls if a path makes it long)
             _space = c.Add(new SpaceBar(), 2, 82, 120, 6, "barSpace");
             _space.Set(Problem is null ? Needed : 0, Problem is null ? InstallEngine.FreeSpace(state.InstallDir) ?? 0 : 0);
-            _problemText = c.Add(new PcScrollText { Points = 9.5f }, 134, 72, PageCanvas.Width - 134, 54, "txtFolderProblem");
+            _problemText = c.Add(new HcScrollText { Points = 9.5f }, 134, 72, PageCanvas.Width - 134, 54, "txtFolderProblem");
             _problemText.SetText(ProblemText(), p => Problem is null ? p.Muted : p.Danger);
 
-            var menu = c.Add(new PcToggle { Text = SetupTexts.StartMenuTitle, Checked = state.StartMenu }, 0, 134, PageCanvas.Width, 46, "tglStartMenu");
+            var menu = c.Add(new HcToggle { Text = SetupTexts.StartMenuTitle, Checked = state.StartMenu }, 0, 134, PageCanvas.Width, 46, "tglStartMenu");
             menu.CheckedChanged += (_, _) => state.StartMenu = menu.Checked;
-            var desktop = c.Add(new PcToggle { Text = SetupTexts.DesktopTitle, Checked = state.DesktopShortcut }, 0, 188, PageCanvas.Width, 46, "tglDesktop");
+            var desktop = c.Add(new HcToggle { Text = SetupTexts.DesktopTitle, Checked = state.DesktopShortcut }, 0, 188, PageCanvas.Width, 46, "tglDesktop");
             desktop.CheckedChanged += (_, _) => state.DesktopShortcut = desktop.Checked;
 
             c.Add(new NoteRow { Text = SetupTexts.DataNote }, 0, 250, PageCanvas.Width, 44, "noteData");
@@ -445,12 +445,12 @@ internal sealed partial class SetupWindow : WizardWindow
             if (dialog.ShowDialog(owner.FindForm()) != DialogResult.OK) return;
             var chosen = dialog.SelectedPath;
             // A chosen parent folder gets the program's own subfolder, so nothing is ever installed straight into "Documents" or a drive
-            if (!string.Equals(Path.GetFileName(chosen.TrimEnd('\\')), "Partcraft", StringComparison.OrdinalIgnoreCase))
-                chosen = Path.Combine(chosen, "Partcraft");
+            if (!string.Equals(Path.GetFileName(chosen.TrimEnd('\\')), "HalfCube", StringComparison.OrdinalIgnoreCase))
+                chosen = Path.Combine(chosen, "HalfCube");
             SetFolder(chosen);
         }
 
-        private sealed class FolderCard : PcControl
+        private sealed class FolderCard : HcControl
         {
             protected override void OnPaint(PaintEventArgs e)
             {
@@ -464,7 +464,7 @@ internal sealed partial class SetupWindow : WizardWindow
         }
 
         /// <summary>The mockup's small bar next to the space line: the share of the drive the program needs.</summary>
-        private sealed class SpaceBar : PcControl
+        private sealed class SpaceBar : HcControl
         {
             private long _needed;
             private long _free;
@@ -489,7 +489,7 @@ internal sealed partial class SetupWindow : WizardWindow
         }
 
         /// <summary>A line with the green shield and a muted note (the mockup's "your projects stay" row).</summary>
-        private sealed class NoteRow : PcControl
+        private sealed class NoteRow : HcControl
         {
             protected override void OnPaint(PaintEventArgs e)
             {
@@ -505,9 +505,9 @@ internal sealed partial class SetupWindow : WizardWindow
 
     private sealed class InstallingPage(SetupState state) : WizardPage
     {
-        private PcProgress? _bar;
-        private PcText? _percent;
-        private PcText? _amount;
+        private HcProgress? _bar;
+        private HcText? _percent;
+        private HcText? _amount;
         private readonly Dictionary<InstallTask, TaskRow> _rows = [];
         private readonly Dictionary<InstallTask, Msg> _details = [];
         private InstallProgress _last = new(0f, InstallTask.Prepare);
@@ -577,11 +577,11 @@ internal sealed partial class SetupWindow : WizardWindow
             {
                 // The complete reason, scrolling inside its slot; it replaces the step list (a different page state, not a message)
                 // (selectable; the Copy button copies all of it plus version and time). The red bar keeps where the installation stopped.
-                c.Add(new PcProgress { Value = Math.Max(_last.Value, 0.05f), Running = false, Failed = true }, 0, 4, PageCanvas.Width, 8, "progress");
+                c.Add(new HcProgress { Value = Math.Max(_last.Value, 0.05f), Running = false, Failed = true }, 0, 4, PageCanvas.Width, 8, "progress");
                 c.AddErrorBox(() => error, p => p.Text, 0, 28, PageCanvas.Width, 244, "txtInstallError");
                 return;
             }
-            _bar = c.Add(new PcProgress { Value = _last.Value, Running = true }, 0, 46, PageCanvas.Width, 8, "progress");
+            _bar = c.Add(new HcProgress { Value = _last.Value, Running = true }, 0, 46, PageCanvas.Width, 8, "progress");
 
             var y = 70;
             foreach (var task in new[] { InstallTask.Prepare, InstallTask.Package, InstallTask.Files, InstallTask.Shortcuts, InstallTask.Finish })
@@ -596,7 +596,7 @@ internal sealed partial class SetupWindow : WizardWindow
     private enum RowState { Pending, Active, Done }
 
     /// <summary>One step of the installation: status mark, text and (right, monospace) a detail such as "298 of 480 MB".</summary>
-    private sealed class TaskRow : PcControl
+    private sealed class TaskRow : HcControl
     {
         public RowState State { get; set; }
 
@@ -639,9 +639,9 @@ internal sealed partial class SetupWindow : WizardWindow
 
         public override void Build(PageCanvas c)
         {
-            c.Add(new PcFeature { Text = SetupTexts.TipSearchTitle, Description = SetupTexts.TipSearchText, Icon = Glyphs.Search }, 0, 0, PageCanvas.Width, 58, "tipSearch");
-            c.Add(new PcFeature { Text = SetupTexts.TipLookTitle, Description = SetupTexts.TipLookText, Icon = Glyphs.Gear }, 0, 78, PageCanvas.Width, 58, "tipLook");
-            c.Add(new PcFeature { Text = SetupTexts.TipEarlyTitle, Description = SetupTexts.TipEarlyText, Icon = Glyphs.Bug }, 0, 156, PageCanvas.Width, 58, "tipEarly");
+            c.Add(new HcFeature { Text = SetupTexts.TipSearchTitle, Description = SetupTexts.TipSearchText, Icon = Glyphs.Search }, 0, 0, PageCanvas.Width, 58, "tipSearch");
+            c.Add(new HcFeature { Text = SetupTexts.TipLookTitle, Description = SetupTexts.TipLookText, Icon = Glyphs.Gear }, 0, 78, PageCanvas.Width, 58, "tipLook");
+            c.Add(new HcFeature { Text = SetupTexts.TipEarlyTitle, Description = SetupTexts.TipEarlyText, Icon = Glyphs.Bug }, 0, 156, PageCanvas.Width, 58, "tipEarly");
         }
     }
 

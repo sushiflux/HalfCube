@@ -39,8 +39,8 @@ function status(patch: Partial<EngineStatus>): EngineStatus {
 const problem = (code: EngineProblemCode, extra: Partial<EngineProblem> = {}): EngineProblem => ({
   code,
   step: "engine",
-  message: "The engine program was not found: C:\\x\\partcraft-engine.exe",
-  details: "Partcraft engine problem\nCode: engine_start_failed\n\nCause: not found",
+  message: "The engine program was not found: C:\\x\\halfcube-engine.exe",
+  details: "HalfCube engine problem\nCode: engine_start_failed\n\nCause: not found",
   occurredAt: "2026-11-25T10:00:00.000Z",
   ...extra,
 });
@@ -48,7 +48,7 @@ const problem = (code: EngineProblemCode, extra: Partial<EngineProblem> = {}): E
 describe("first start (screen)", () => {
   it("shows the three real steps with their state and the right label for it", () => {
     const p = engineStatusToProgress(
-      status({ steps: [step("engine", "done", "partcraft-engine 1.0"), step("kernel", "running"), step("solver", "pending")] }),
+      status({ steps: [step("engine", "done", "halfcube-engine 1.0"), step("kernel", "running"), step("solver", "pending")] }),
       en,
       "start",
     );
@@ -57,7 +57,7 @@ describe("first start (screen)", () => {
       ["kernel", "active", "Checking the geometry kernel"],
       ["solver", "pending", "Checking the sketch solver"],
     ]);
-    expect(p.steps[0]?.detail).toBe("partcraft-engine 1.0");
+    expect(p.steps[0]?.detail).toBe("halfcube-engine 1.0");
     expect(p.error).toBeUndefined();
   });
 

@@ -83,7 +83,7 @@ describe("demo scenarios (dev only) behave like real progress would", () => {
     expect(isComplete(progressAt(ok, scenarioDuration(ok) + 10))).toBe(true);
     const bad = buildScenario("start-error", "en") as Scenario;
     const failed = progressAt(bad, 10);
-    expect(failed.error?.code).toBe("PC-ENGINE-001");
+    expect(failed.error?.code).toBe("HC-ENGINE-001");
     expect(failed.steps[0]?.state).toBe("failed");
     expect(failed.steps.slice(1).every((s) => s.state === "pending")).toBe(true);
   });
@@ -91,7 +91,7 @@ describe("demo scenarios (dev only) behave like real progress would", () => {
   it("the download step fails at its measured point, not before", () => {
     const bad = buildScenario("start-browser-error", "en") as Scenario;
     expect(progressAt(bad, 1000).error).toBeUndefined();
-    expect(progressAt(bad, 4000).error?.code).toBe("PC-ENGINE-002");
+    expect(progressAt(bad, 4000).error?.code).toBe("HC-ENGINE-002");
   });
 
   it("every demo text exists in both languages and is not empty", () => {

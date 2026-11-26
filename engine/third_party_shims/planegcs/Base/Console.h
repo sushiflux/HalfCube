@@ -2,8 +2,8 @@
 // Base::Console().log(...) and Base::Console().warning(...) with printf-style arguments; FreeCAD's real console is a
 // singleton of its application framework. Log text is dropped; warnings and errors go to stderr with the prefix
 // "planegcs: " (the engine's diagnostic stream; never the protocol stream).
-#ifndef PARTCRAFT_PLANEGCS_SHIM_BASE_CONSOLE_H
-#define PARTCRAFT_PLANEGCS_SHIM_BASE_CONSOLE_H
+#ifndef HALFCUBE_PLANEGCS_SHIM_BASE_CONSOLE_H
+#define HALFCUBE_PLANEGCS_SHIM_BASE_CONSOLE_H
 
 #include <cstdio>
 #include <string>

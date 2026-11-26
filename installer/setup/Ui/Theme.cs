@@ -3,10 +3,10 @@ using System.Drawing.Text;
 using System.Runtime.InteropServices;
 using Microsoft.Win32;
 
-namespace Partcraft.Setup.Ui;
+namespace HalfCube.Setup.Ui;
 
 /// <summary>
-/// The colours of the Partcraft installer (the mockup variant B tokens) for native windows, light
+/// The colours of the HalfCube installer (the mockup variant B tokens) for native windows, light
 /// and dark. Text/background pairs reach WCAG AA (4.5:1) on the surface they are used on, except the accent as text on its own soft
 /// tint, which is only used for large or bold labels.
 /// </summary>
@@ -80,8 +80,8 @@ public static class Brand
     public static readonly Color Bad = Palette.Hex("#f06a62");
 
     /// <summary>Wordmark colours on the night panel (fixed brand colours, independent of the theme).</summary>
-    public static readonly Color WordPart = Color.White;
-    public static readonly Color WordCraft = Palette.Hex("#4cd1e0");
+    public static readonly Color WordHalf = Color.White;
+    public static readonly Color WordCube = Palette.Hex("#4cd1e0");
 
     /// <summary>Paints the panel into <paramref name="bounds"/>: gradient, two glows and the grid fading out towards the middle.</summary>
     public static void PaintNight(Graphics g, Rectangle bounds)
@@ -304,7 +304,7 @@ public static class Fonts
             }
             // GDI+ reads the files from a temporary folder (the in-memory variant of the same API left a font out of the collection in
             // about one run in ten); the folder is removed when the process ends
-            var folder = Path.Combine(Path.GetTempPath(), "Partcraft-Setup-fonts-" + Environment.ProcessId.ToString(System.Globalization.CultureInfo.InvariantCulture));
+            var folder = Path.Combine(Path.GetTempPath(), "HalfCube-Setup-fonts-" + Environment.ProcessId.ToString(System.Globalization.CultureInfo.InvariantCulture));
             Directory.CreateDirectory(folder);
             AppDomain.CurrentDomain.ProcessExit += (_, _) =>
             {

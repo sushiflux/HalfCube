@@ -1,29 +1,29 @@
 {
-  "$comment": "Single source of the Partcraft engine message protocol. protocol/generate.mjs turns it into TypeScript (app/src/engine/generated/protocol.ts), C++ (engine/src/generated/protocol.hpp) and JSON Schema (protocol/engine-protocol.schema.json). Edit only this file, then run: node protocol/generate.mjs",
+  "$comment": "Single source of the HalfCube engine message protocol. protocol/generate.mjs turns it into TypeScript (app/src/engine/generated/protocol.ts), C++ (engine/src/generated/protocol.hpp) and JSON Schema (protocol/engine-protocol.schema.json). Edit only this file, then run: node protocol/generate.mjs",
   "protocol": {
-    "name": "partcraft-engine",
+    "name": "halfcube-engine",
     "version": 3,
     "doc": "A message is a UTF-8 JSON header plus an optional binary payload. Commands go from the client to the engine and carry a client-chosen request id; every engine message that answers a command carries that id as replyTo. Desktop: the engine is a child process, both directions use length-prefixed frames on stdin/stdout. Browser: the engine is a WebAssembly module in a Web Worker; header and payload are passed as (string, ArrayBuffer | null)."
   },
-  "$commentDocument": "documentTypes describe the stored Partcraft document (history.json in a .pcraft file, and the document of model.sync); generate.mjs also writes protocol/document.schema.json from them. Lengths are stored in mm and angles in degrees, as the user means them. Ids are a kind letter plus a number from the document counter nextId (p point, l line, c circle, k constraint, d dimension, f timeline step, b body, s sketch step), unique in the whole document and never reused. Ids starting with @ are fixed references of every sketch: @origin (the origin point), @axisU and @axisV (the sketch axes as fixed lines); they are not stored. Lists are only appended to or shortened, never reordered: the solver creates its parameters in list order.",
+  "$commentDocument": "documentTypes describe the stored HalfCube document (history.json in a .hcube file, and the document of model.sync); generate.mjs also writes protocol/document.schema.json from them. Lengths are stored in mm and angles in degrees, as the user means them. Ids are a kind letter plus a number from the document counter nextId (p point, l line, c circle, k constraint, d dimension, f timeline step, b body, s sketch step), unique in the whole document and never reused. Ids starting with @ are fixed references of every sketch: @origin (the origin point), @axisU and @axisV (the sketch axes as fixed lines); they are not stored. Lists are only appended to or shortened, never reordered: the solver creates its parameters in list order.",
   "constants": [
-    { "name": "frameMagic", "type": "u32", "value": "0x31454350", "doc": "First four bytes of every stdio frame: 'P' 'C' 'E' '1' (frame format 1), read as a little-endian u32." },
+    { "name": "frameMagic", "type": "u32", "value": "0x31454348", "doc": "First four bytes of every stdio frame: 'H' 'C' 'E' '1' (frame format 1), read as a little-endian u32." },
     { "name": "framePrefixBytes", "type": "u32", "value": 16, "doc": "Frame prefix: u32 magic, u32 header bytes, u32 payload bytes, u32 reserved (0); all little-endian. Header and payload follow." },
     { "name": "maxHeaderBytes", "type": "u32", "value": 16777216, "doc": "Largest accepted JSON header (16 MiB)." },
     { "name": "maxPayloadBytes", "type": "u32", "value": 1073741824, "doc": "Largest accepted binary payload (1 GiB)." },
     { "name": "payloadAlignment", "type": "u32", "value": 16, "doc": "Every buffer inside a payload starts at a multiple of this many bytes from the payload start." },
-    { "name": "documentFormat", "type": "u32", "value": 1, "doc": "Format version of the Partcraft document (history.json, the document of model.sync) this engine reads. It changes only when the stored format changes incompatibly; the protocol version changes with every change of the messages." },
+    { "name": "documentFormat", "type": "u32", "value": 1, "doc": "Format version of the HalfCube document (history.json, the document of model.sync) this engine reads. It changes only when the stored format changes incompatibly; the protocol version changes with every change of the messages." },
     { "name": "maxRevision", "type": "i64", "value": 9007199254740991, "doc": "Largest model.sync revision (2^53 - 1, exact in JavaScript numbers)." },
     { "name": "maxRequestId", "type": "i64", "value": 2147483647, "doc": "Request ids are integers from 1 to this value (they must fit an Int32Array slot, used by the WebAssembly cancel flag)." },
     { "name": "pingIntervalMs", "type": "u32", "value": 1000, "doc": "Desktop supervisor: interval between pings to the native engine." },
     { "name": "pingTimeoutMs", "type": "u32", "value": 5000, "doc": "Desktop supervisor: the native engine is stopped when a ping stays unanswered this long. The native engine answers pings while it computes." },
     { "name": "protocolId", "type": "string", "value": "d60beafbc03237e2", "doc": "Identifies this message protocol. hello carries it in both directions and each side refuses a peer that names a different one: the version number alone is the same in unrelated builds, and a program must never talk to an engine whose messages mean something else. It stays the same for the whole protocol line; a breaking change raises the protocol version." },
-    { "name": "nativeExecutable", "type": "string", "value": "partcraft-engine", "doc": "File name of the native engine without extension (.exe on Windows)." },
-    { "name": "wasmModuleFile", "type": "string", "value": "partcraft-engine.mjs", "doc": "ES module that loads the WebAssembly engine; partcraft-engine.wasm must be served next to it." },
-    { "name": "wasmBinaryFile", "type": "string", "value": "partcraft-engine.wasm", "doc": "WebAssembly binary of the engine." },
+    { "name": "nativeExecutable", "type": "string", "value": "halfcube-engine", "doc": "File name of the native engine without extension (.exe on Windows)." },
+    { "name": "wasmModuleFile", "type": "string", "value": "halfcube-engine.mjs", "doc": "ES module that loads the WebAssembly engine; halfcube-engine.wasm must be served next to it." },
+    { "name": "wasmBinaryFile", "type": "string", "value": "halfcube-engine.wasm", "doc": "WebAssembly binary of the engine." },
     { "name": "wasmModuleFactory", "type": "string", "value": "createEngineModule", "doc": "Default export of the ES module: async factory (moduleOverrides) -> module. Overrides used: onEngineMessage(header: string, payload: ArrayBuffer | null), optional cancelFlags (Int32Array, slot 0 = id of the command to cancel), print, printErr." },
-    { "name": "wasmInitExport", "type": "string", "value": "_pc_init", "doc": "Module function _pc_init(hasCancelFlags: 0 | 1): number. Creates the engine once and returns the protocol version." },
-    { "name": "wasmHandleExport", "type": "string", "value": "_pc_handle", "doc": "Module function _pc_handle(headerPtr, headerBytes, payloadPtr, payloadBytes): void. Handles one message and runs everything it queued before returning; replies arrive synchronously through onEngineMessage. The caller allocates both buffers with _malloc and frees them with _free afterwards." }
+    { "name": "wasmInitExport", "type": "string", "value": "_hc_init", "doc": "Module function _hc_init(hasCancelFlags: 0 | 1): number. Creates the engine once and returns the protocol version." },
+    { "name": "wasmHandleExport", "type": "string", "value": "_hc_handle", "doc": "Module function _hc_handle(headerPtr, headerBytes, payloadPtr, payloadBytes): void. Handles one message and runs everything it queued before returning; replies arrive synchronously through onEngineMessage. The caller allocates both buffers with _malloc and frees them with _free afterwards." }
   ],
   "errors": [
     { "code": "protocol_mismatch", "doc": "hello asked for a protocol version the engine does not speak; user interface and engine come from different builds." },
@@ -119,7 +119,7 @@
         "refs": { "type": "array", "items": { "type": "string" } },
         "value": { "ref": "Quantity" },
         "driving": { "type": "boolean" },
-        "number": { "type": "integer", "minimum": 0, "optional": true, "doc": "The automatic name of the dimension is d followed by this number (d3); the pattern d plus a number is reserved for these names, counted over the whole document from 0 in creation order (d0, d1, d2 ...) (see PartcraftDocument.nextParameter). Reference dimensions have one too. Never changed and never reused, not after a deletion, an undo or a reload. Absent in documents from before the names (readers number those dimensions in creation order). Never read by the engine." },
+        "number": { "type": "integer", "minimum": 0, "optional": true, "doc": "The automatic name of the dimension is d followed by this number (d3); the pattern d plus a number is reserved for these names, counted over the whole document from 0 in creation order (d0, d1, d2 ...) (see HalfCubeDocument.nextParameter). Reference dimensions have one too. Never changed and never reused, not after a deletion, an undo or a reload. Absent in documents from before the names (readers number those dimensions in creation order). Never read by the engine." },
         "reverse": { "type": "array", "items": { "type": "boolean" }, "optional": true, "doc": "Angle only. Which of the four angles between two lines is meant: the angle between two rays, one along each line, counted counter-clockwise from the ray of refs[0] to the ray of refs[1], value 0 to 180 degrees. Two flags, one per reference: true when that ray runs against the direction of its line (p1 to p2; the axes run along +u and +v). Absent: the old reading (angle between the two directions)." },
         "label": { "ref": "Vec2", "doc": "Position of the number relative to what the dimension measures (x, y mean different things per kind). distance (a line, or two of point, line and circle; the measured segment runs from the first point to the nearest point of the other, for a circle its rim): x = distance along the measured direction from the midpoint of a and b as a share of the length |b - a|, y = mm perpendicular to it (to the left of the segment from a to b). distanceX / distanceY: x = along u / v from the midpoint as a share of b - a in that direction, y = mm of the dimension line from the midpoint across it. angle: x = direction as a share of the swept angle counted from the first ray (0 on it, 1 on the second ray), y = mm from the vertex. diameter / radius: offset from the circle centre as a multiple of the radius in x (u) and y (v). A share of a length that is 0 is stored as 0." }
       }
@@ -224,8 +224,8 @@
         "lengthUnit": { "type": "string", "const": "mm" }
       }
     },
-    "PartcraftDocument": {
-      "doc": "A Partcraft document: the timeline with its sketches and extrusions plus the components with their bodies.",
+    "HalfCubeDocument": {
+      "doc": "A HalfCube document: the timeline with its sketches and extrusions plus the components with their bodies.",
       "fields": {
         "format": { "type": "integer", "minimum": 1, "doc": "Document format version (constant documentFormat)." },
         "documentId": { "type": "string" },
@@ -242,7 +242,7 @@
     "EngineInfo": {
       "doc": "What the engine is and how it was built.",
       "fields": {
-        "name": { "type": "string", "const": "partcraft-engine" },
+        "name": { "type": "string", "const": "halfcube-engine" },
         "version": { "type": "string", "doc": "Short product version of the build (first line of version.txt), e.g. v2026.11.4." },
         "versionFull": { "type": "string", "doc": "Full build version (second line of version.txt)." },
         "buildType": { "type": "string", "doc": "CMake build type, e.g. Release." },
@@ -545,7 +545,7 @@
       "doc": "Hands the engine the whole document and rebuilds the timeline in order. Unchanged steps come from the cache of the previous rebuild. preview and commit compute the same; purpose only says what the document is.",
       "fields": {
         "revision": { "type": "integer", "minimum": 1, "maximum": 9007199254740991, "doc": "Greater than every revision this engine accepted before (the client keeps counting across engine restarts); otherwise stale_revision." },
-        "document": { "ref": "PartcraftDocument" },
+        "document": { "ref": "HalfCubeDocument" },
         "purpose": { "type": "string", "enum": ["commit", "preview"], "doc": "commit: the accepted document. preview: a dialog is open, its values are not accepted yet." },
         "previewFeatures": { "type": "array", "items": { "type": "string" }, "optional": true, "doc": "Steps that are being previewed; bodies they build or change are marked preview." }
       },

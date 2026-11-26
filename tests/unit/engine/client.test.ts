@@ -39,7 +39,7 @@ describe("EngineClient start", () => {
   it("performs the hello handshake with the current protocol and the client name", async () => {
     const { client, current } = setup();
     const hello = await client.start();
-    expect(hello.engine.name).toBe("partcraft-engine");
+    expect(hello.engine.name).toBe("halfcube-engine");
     expect(current().sent[0]).toMatchObject({ type: "hello", id: 1, raw: { protocol: PROTOCOL_VERSION, protocolId: PROTOCOL_ID, client: "unit-test" } });
     expect(client.state).toBe("running");
     expect(client.hello).toBe(hello);

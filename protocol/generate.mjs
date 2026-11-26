@@ -412,7 +412,7 @@ function generateHpp() {
   const structNames = order.filter((n) => !isUnion(n));
   let s = `// ${header}\n//\n// ${def.protocol.doc}\n#pragma once\n\n`;
   s += `#include <nlohmann/json.hpp>\n\n#include <cmath>\n#include <cstddef>\n#include <cstdint>\n#include <initializer_list>\n#include <limits>\n#include <map>\n#include <optional>\n#include <stdexcept>\n#include <string>\n#include <string_view>\n#include <utility>\n#include <variant>\n#include <vector>\n\n`;
-  s += `namespace pc::protocol {\n\nusing Json = nlohmann::ordered_json;\n\n`;
+  s += `namespace hc::protocol {\n\nusing Json = nlohmann::ordered_json;\n\n`;
   s += `// Protocol version; hello must name exactly this one.\ninline constexpr int kVersion = ${def.protocol.version};\n\n`;
   for (const c of def.constants) {
     s += cppDoc(c.doc, "");
@@ -507,7 +507,7 @@ function generateHpp() {
     s += `    if (type == ${commandCppName(name)}::kType) {\n        ${commandCppName(name)} c;\n        parse(j, c);\n        return true;\n    }\n`;
   }
   s += `    return false;\n}\n\n`;
-  s += `} // namespace pc::protocol\n`;
+  s += `} // namespace hc::protocol\n`;
   return s;
 }
 
@@ -569,8 +569,8 @@ function generateSchema() {
   defs.engineMessage = { oneOf: Object.keys(messages).map((n) => ({ $ref: `#/$defs/${messageTsName(n)}` })) };
   const schema = {
     $schema: "https://json-schema.org/draft/2020-12/schema",
-    $id: `urn:partcraft:engine-protocol:${def.protocol.version}`,
-    title: `Partcraft engine message protocol, version ${def.protocol.version}`,
+    $id: `urn:halfcube:engine-protocol:${def.protocol.version}`,
+    title: `HalfCube engine message protocol, version ${def.protocol.version}`,
     description: `${header} Entry points: #/$defs/command and #/$defs/engineMessage. ${def.protocol.doc}`,
     $defs: defs,
   };
@@ -583,10 +583,10 @@ function documentSchemaObject() {
   const format = def.constants.find((c) => c.name === "documentFormat")?.value ?? 1;
   return {
     $schema: "https://json-schema.org/draft/2020-12/schema",
-    $id: `urn:partcraft:document:${format}`,
-    title: `Partcraft document, format ${format}`,
-    description: `${header} The stored Partcraft document (history.json inside a .pcraft file). ${def.$commentDocument ?? ""}`.trim(),
-    $ref: "#/$defs/PartcraftDocument",
+    $id: `urn:halfcube:document:${format}`,
+    title: `HalfCube document, format ${format}`,
+    description: `${header} The stored HalfCube document (history.json inside a .hcube file). ${def.$commentDocument ?? ""}`.trim(),
+    $ref: "#/$defs/HalfCubeDocument",
     $defs: defs,
   };
 }
@@ -596,7 +596,7 @@ function generateDocumentSchema() {
 }
 
 function generateDocumentSchemaTs() {
-  let s = `// ${header}\n//\n// JSON Schema of the stored Partcraft document (the same as protocol/document.schema.json), for the document\n// store's checks in the app.\n\n`;
+  let s = `// ${header}\n//\n// JSON Schema of the stored HalfCube document (the same as protocol/document.schema.json), for the document\n// store's checks in the app.\n\n`;
   s += `export const DOCUMENT_SCHEMA = ${JSON.stringify(documentSchemaObject(), null, 2)} as const;\n`;
   return s;
 }

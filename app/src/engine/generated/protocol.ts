@@ -5,8 +5,8 @@
 /** Protocol version; hello must name exactly this one. */
 export const PROTOCOL_VERSION = 3;
 
-/** First four bytes of every stdio frame: 'P' 'C' 'E' '1' (frame format 1), read as a little-endian u32. */
-export const FRAME_MAGIC = 0x31454350;
+/** First four bytes of every stdio frame: 'H' 'C' 'E' '1' (frame format 1), read as a little-endian u32. */
+export const FRAME_MAGIC = 0x31454348;
 /** Frame prefix: u32 magic, u32 header bytes, u32 payload bytes, u32 reserved (0); all little-endian. Header and payload follow. */
 export const FRAME_PREFIX_BYTES = 16;
 /** Largest accepted JSON header (16 MiB). */
@@ -15,7 +15,7 @@ export const MAX_HEADER_BYTES = 16777216;
 export const MAX_PAYLOAD_BYTES = 1073741824;
 /** Every buffer inside a payload starts at a multiple of this many bytes from the payload start. */
 export const PAYLOAD_ALIGNMENT = 16;
-/** Format version of the Partcraft document (history.json, the document of model.sync) this engine reads. It changes only when the stored format changes incompatibly; the protocol version changes with every change of the messages. */
+/** Format version of the HalfCube document (history.json, the document of model.sync) this engine reads. It changes only when the stored format changes incompatibly; the protocol version changes with every change of the messages. */
 export const DOCUMENT_FORMAT = 1;
 /** Largest model.sync revision (2^53 - 1, exact in JavaScript numbers). */
 export const MAX_REVISION = 9007199254740991;
@@ -28,17 +28,17 @@ export const PING_TIMEOUT_MS = 5000;
 /** Identifies this message protocol. hello carries it in both directions and each side refuses a peer that names a different one: the version number alone is the same in unrelated builds, and a program must never talk to an engine whose messages mean something else. It stays the same for the whole protocol line; a breaking change raises the protocol version. */
 export const PROTOCOL_ID = "d60beafbc03237e2";
 /** File name of the native engine without extension (.exe on Windows). */
-export const NATIVE_EXECUTABLE = "partcraft-engine";
-/** ES module that loads the WebAssembly engine; partcraft-engine.wasm must be served next to it. */
-export const WASM_MODULE_FILE = "partcraft-engine.mjs";
+export const NATIVE_EXECUTABLE = "halfcube-engine";
+/** ES module that loads the WebAssembly engine; halfcube-engine.wasm must be served next to it. */
+export const WASM_MODULE_FILE = "halfcube-engine.mjs";
 /** WebAssembly binary of the engine. */
-export const WASM_BINARY_FILE = "partcraft-engine.wasm";
+export const WASM_BINARY_FILE = "halfcube-engine.wasm";
 /** Default export of the ES module: async factory (moduleOverrides) -> module. Overrides used: onEngineMessage(header: string, payload: ArrayBuffer | null), optional cancelFlags (Int32Array, slot 0 = id of the command to cancel), print, printErr. */
 export const WASM_MODULE_FACTORY = "createEngineModule";
-/** Module function _pc_init(hasCancelFlags: 0 | 1): number. Creates the engine once and returns the protocol version. */
-export const WASM_INIT_EXPORT = "_pc_init";
-/** Module function _pc_handle(headerPtr, headerBytes, payloadPtr, payloadBytes): void. Handles one message and runs everything it queued before returning; replies arrive synchronously through onEngineMessage. The caller allocates both buffers with _malloc and frees them with _free afterwards. */
-export const WASM_HANDLE_EXPORT = "_pc_handle";
+/** Module function _hc_init(hasCancelFlags: 0 | 1): number. Creates the engine once and returns the protocol version. */
+export const WASM_INIT_EXPORT = "_hc_init";
+/** Module function _hc_handle(headerPtr, headerBytes, payloadPtr, payloadBytes): void. Handles one message and runs everything it queued before returning; replies arrive synchronously through onEngineMessage. The caller allocates both buffers with _malloc and frees them with _free afterwards. */
+export const WASM_HANDLE_EXPORT = "_hc_handle";
 
 /** Error codes of the "error" message. */
 export const ERROR_CODES = [
@@ -132,7 +132,7 @@ export interface Dimension {
   refs: string[];
   value: Quantity;
   driving: boolean;
-  /** The automatic name of the dimension is d followed by this number (d3); the pattern d plus a number is reserved for these names, counted over the whole document from 0 in creation order (d0, d1, d2 ...) (see PartcraftDocument.nextParameter). Reference dimensions have one too. Never changed and never reused, not after a deletion, an undo or a reload. Absent in documents from before the names (readers number those dimensions in creation order). Never read by the engine. */
+  /** The automatic name of the dimension is d followed by this number (d3); the pattern d plus a number is reserved for these names, counted over the whole document from 0 in creation order (d0, d1, d2 ...) (see HalfCubeDocument.nextParameter). Reference dimensions have one too. Never changed and never reused, not after a deletion, an undo or a reload. Absent in documents from before the names (readers number those dimensions in creation order). Never read by the engine. */
   number?: number;
   /** Angle only. Which of the four angles between two lines is meant: the angle between two rays, one along each line, counted counter-clockwise from the ray of refs[0] to the ray of refs[1], value 0 to 180 degrees. Two flags, one per reference: true when that ray runs against the direction of its line (p1 to p2; the axes run along +u and +v). Absent: the old reading (angle between the two directions). */
   reverse?: boolean[];
@@ -238,8 +238,8 @@ export interface DocumentSettings {
   lengthUnit: "mm";
 }
 
-/** A Partcraft document: the timeline with its sketches and extrusions plus the components with their bodies. */
-export interface PartcraftDocument {
+/** A HalfCube document: the timeline with its sketches and extrusions plus the components with their bodies. */
+export interface HalfCubeDocument {
   /** Document format version (constant documentFormat). */
   format: number;
   documentId: string;
@@ -257,7 +257,7 @@ export interface PartcraftDocument {
 
 /** What the engine is and how it was built. */
 export interface EngineInfo {
-  name: "partcraft-engine";
+  name: "halfcube-engine";
   /** Short product version of the build (first line of version.txt), e.g. v2026.11.4. */
   version: string;
   /** Full build version (second line of version.txt). */
@@ -590,7 +590,7 @@ export interface ModelSyncCommand {
   id: number;
   /** Greater than every revision this engine accepted before (the client keeps counting across engine restarts); otherwise stale_revision. */
   revision: number;
-  document: PartcraftDocument;
+  document: HalfCubeDocument;
   /** commit: the accepted document. preview: a dialog is open, its values are not accepted yet. */
   purpose: "commit" | "preview";
   /** Steps that are being previewed; bodies they build or change are marked preview. */

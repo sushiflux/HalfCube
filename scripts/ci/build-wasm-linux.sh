@@ -19,11 +19,11 @@ rm -rf "$out"
 mkdir -p "$out"
 
 mounts=(-v "$repo:/work/src:ro" -v "$out:/work/out")
-if [ -f "$occt_install/.partcraft-occt" ]; then
+if [ -f "$occt_install/.halfcube-occt" ]; then
   echo "using the cached WebAssembly OCCT in $occt_install"
   mounts+=(-v "$occt_install:/work/occt-install:ro")
 else
-  [ -f "$engine/_deps/occt-src/.partcraft-pin" ] || { echo "build-wasm-linux.sh: no cached OCCT and no engine/_deps/occt-src" >&2; exit 1; }
+  [ -f "$engine/_deps/occt-src/.halfcube-pin" ] || { echo "build-wasm-linux.sh: no cached OCCT and no engine/_deps/occt-src" >&2; exit 1; }
   echo "building OCCT for WebAssembly from source"
   mounts+=(-v "$engine/_deps/occt-src:/work/occt-src:ro")
 fi
@@ -34,13 +34,13 @@ docker run --rm "${mounts[@]}" -e "JOBS=$(nproc)" -e TEST_COMMANDS=0 -e "HOST_UI
     set -euo pipefail
     code=0
     bash /work/src/engine/docker/wasm-build.sh || code=$?
-    if [ "$code" = 0 ] && [ -d /work/occt-build ] && [ -f /work/occt-install/.partcraft-occt ]; then
+    if [ "$code" = 0 ] && [ -d /work/occt-build ] && [ -f /work/occt-install/.halfcube-occt ]; then
       cp -a /work/occt-install /work/out/occt-install
     fi
     chown -R "$HOST_UID:$HOST_GID" /work/out
     exit "$code"'
 
-for f in partcraft-engine.mjs partcraft-engine.wasm; do
+for f in halfcube-engine.mjs halfcube-engine.wasm; do
   [ -f "$out/$f" ] || { echo "build-wasm-linux.sh: $f was not produced" >&2; exit 1; }
 done
 # A freshly built OCCT comes out as out/occt-install; move it next to the other build trees for the cache step.
@@ -48,4 +48,4 @@ if [ -d "$out/occt-install" ]; then
   rm -rf "$occt_install"
   mv "$out/occt-install" "$occt_install"
 fi
-ls -l "$out/partcraft-engine.mjs" "$out/partcraft-engine.wasm"
+ls -l "$out/halfcube-engine.mjs" "$out/halfcube-engine.wasm"

@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { createEmptyDocument } from "../../../app/src/document/create.ts";
 import { formatQuantity, parseQuantity } from "../../../app/src/document/quantity.ts";
 import { DocumentStore } from "../../../app/src/document/store.ts";
-import type { PartcraftDocument } from "../../../app/src/document/types.ts";
+import type { HalfCubeDocument } from "../../../app/src/document/types.ts";
 import { canonicalDocument, documentProblems, serializeDocument } from "../../../app/src/document/validate.ts";
 import { document, rectangle } from "../../fixtures/engine/cases.ts";
 
@@ -42,7 +42,7 @@ describe("DocumentStore", () => {
 
   it("refuses an invalid document with the path of the problem", () => {
     const store = new DocumentStore(empty());
-    expect(() => store.commit((d) => ({ ...d, settings: { lengthUnit: "in" } }) as unknown as PartcraftDocument)).toThrow(
+    expect(() => store.commit((d) => ({ ...d, settings: { lengthUnit: "in" } }) as unknown as HalfCubeDocument)).toThrow(
       /document\.settings\.lengthUnit must be "mm"/,
     );
     expect(store.canUndo).toBe(false);
@@ -57,7 +57,7 @@ describe("DocumentStore", () => {
 });
 
 describe("DocumentStore undo groups", () => {
-  const rename = (name: string) => (d: PartcraftDocument): PartcraftDocument => ({ ...d, components: [{ ...d.components[0]!, name }] });
+  const rename = (name: string) => (d: HalfCubeDocument): HalfCubeDocument => ({ ...d, components: [{ ...d.components[0]!, name }] });
 
   it("commits inside a group are one undo step; one undo and one redo take and bring back all of them", () => {
     const store = new DocumentStore(empty());
@@ -114,7 +114,7 @@ describe("DocumentStore undo groups", () => {
     const store = new DocumentStore(empty());
     const group = store.beginGroup();
     store.commit(rename("a"));
-    expect(() => store.commit((d) => ({ ...d, settings: { lengthUnit: "in" } }) as unknown as PartcraftDocument)).toThrow(/lengthUnit/);
+    expect(() => store.commit((d) => ({ ...d, settings: { lengthUnit: "in" } }) as unknown as HalfCubeDocument)).toThrow(/lengthUnit/);
     store.commit(rename("b"));
     group.close();
     expect(store.getSnapshot().components[0]!.name).toBe("b");
@@ -253,7 +253,7 @@ describe("document schema", () => {
     const doc = document(rectangle(1));
     const reverse = (v: unknown): unknown =>
       Array.isArray(v) ? v.map(reverse) : v !== null && typeof v === "object" ? Object.fromEntries(Object.entries(v).reverse().map(([k, x]) => [k, reverse(x)])) : v;
-    const reordered = reverse(doc) as PartcraftDocument;
+    const reordered = reverse(doc) as HalfCubeDocument;
     expect(Object.keys(reordered)[0]).toBe("timeline");
     expect(serializeDocument(reordered)).toBe(serializeDocument(doc));
     expect(Object.keys(canonicalDocument(reordered))).toEqual(["format", "documentId", "settings", "nextId", "parameters", "components", "timeline"]);

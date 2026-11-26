@@ -19,7 +19,7 @@ export interface WelcomeProps {
   onNewProject: () => void;
   onOpenProject: () => void;
   onTour: () => void;
-  /** The licence hint line: opens "About Partcraft" on the Lizenzen tab with the Partcraft licence. */
+  /** The licence hint line: opens "About HalfCube" on the Lizenzen tab with the HalfCube licence. */
   onShowLicence: () => void;
   /** The checkbox "Don't show this at the next start". */
   dontShowAgain: boolean;
@@ -77,22 +77,22 @@ export function Welcome({ open, onClose, onNewProject, onOpenProject, onTour, on
       closeOnBackdrop={false}
       className="grid h-[min(600px,calc(100vh-min(12vh,120px)-16px))] w-[920px] grid-cols-[300px_1fr] overflow-hidden rounded-card border border-line bg-surface text-fg shadow-dialog max-[860px]:grid-cols-1"
     >
-      <aside className="pc-night flex flex-col px-[30px] pt-[30px] max-[860px]:hidden" aria-hidden="true">
-        <div className="pc-night-grid" />
-        <Logo size={300} source="medium" className="pc-night-mark" />
+      <aside className="hc-night flex flex-col px-[30px] pt-[30px] max-[860px]:hidden" aria-hidden="true">
+        <div className="hc-night-grid" />
+        <Logo size={300} source="medium" className="hc-night-mark" />
         <div className="relative z-[1] flex items-center gap-3">
           <Logo size={40} source="medium" />
           <Wordmark size={27} />
         </div>
-        <div className="pc-night-what relative z-[1] mt-3 text-[11.5px] font-semibold tracking-[0.16em] uppercase">
+        <div className="hc-night-what relative z-[1] mt-3 text-[11.5px] font-semibold tracking-[0.16em] uppercase">
           {t("welcome.firstStart")}
         </div>
         <ol className="relative z-[1] mt-10 flex list-none flex-col p-0">
           {steps.map((step) => {
             const state = step.page < page ? "done" : step.page === page ? "active" : "todo";
             return (
-              <li key={step.page} className="pc-night-step" data-state={state}>
-                <span className="pc-night-dot">
+              <li key={step.page} className="hc-night-step" data-state={state}>
+                <span className="hc-night-dot">
                   {state === "done" ? (
                     <svg width="12" height="12" viewBox="0 0 16 16">
                       <path d="M3.4 8.4l3 3 6.2-7" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
@@ -106,7 +106,7 @@ export function Welcome({ open, onClose, onNewProject, onOpenProject, onTour, on
             );
           })}
         </ol>
-        <div className="pc-night-foot relative z-[1] mt-auto pt-3.5 pb-5">
+        <div className="hc-night-foot relative z-[1] mt-auto pt-3.5 pb-5">
           <div className="mono text-[#d5e2ea]">{currentVersion().display}</div>
           <CreditLine onDark className="mt-1 block" />
         </div>
@@ -189,7 +189,7 @@ export function Welcome({ open, onClose, onNewProject, onOpenProject, onTour, on
           )}
         </ScrollArea>
 
-        {/* The licence hint is on both pages and in both versions; the link opens the licence text in "About Partcraft". It has a row
+        {/* The licence hint is on both pages and in both versions; the link opens the licence text in "About HalfCube". It has a row
             of its own, as wide as the dialog's content, so it never wraps and nothing moves between the pages. */}
         <p className="m-0 flex h-8 flex-none items-center px-10 text-[12px] whitespace-nowrap text-muted" data-testid="welcome-licence-hint">
           {t("welcome.licenceHint")}&nbsp;<span aria-hidden="true">·</span>&nbsp;

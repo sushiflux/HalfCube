@@ -1,4 +1,4 @@
-// "About Partcraft" dialog: how it opens (status bar, title bar, the welcome screen's licence hint), Esc and
+// "About HalfCube" dialog: how it opens (status bar, title bar, the welcome screen's licence hint), Esc and
 // the close button, the Info and Lizenzen tabs at exactly the same height, the credit line level with the last row of the right
 // column, "Copied" and the search moving nothing, the licence texts loading, a reload keeping tab and component in the address, the
 // browser hiding the desktop-only entries, the outside links going through the main process on the desktop, and the contrast of the
@@ -10,8 +10,8 @@ import type { Lang } from "../support/paths.ts";
 
 const words: Record<Lang, { title: string; close: string; tabInfo: string; tabLicences: string; early: string; licenceHint: string; licenceLink: string; copyVersion: string; copied: string; news: RegExp }> = {
   en: {
-    title: "About Partcraft",
-    close: "Close window “About Partcraft”",
+    title: "About HalfCube",
+    close: "Close window “About HalfCube”",
     tabInfo: "Info",
     tabLicences: "Licences",
     early: "Early access",
@@ -22,8 +22,8 @@ const words: Record<Lang, { title: string; close: string; tabInfo: string; tabLi
     news: /what.s new/i,
   },
   de: {
-    title: "Über Partcraft",
-    close: "Fenster „Über Partcraft“ schließen",
+    title: "Über HalfCube",
+    close: "Fenster „Über HalfCube“ schließen",
     tabInfo: "Info",
     tabLicences: "Lizenzen",
     early: "Frühphase",
@@ -35,7 +35,7 @@ const words: Record<Lang, { title: string; close: string; tabInfo: string; tabLi
   },
 };
 
-/** Opens the main window past the welcome screen with "About Partcraft" already open (through the address, as a reload would). */
+/** Opens the main window past the welcome screen with "About HalfCube" already open (through the address, as a reload would). */
 async function openAbout(app: AppUnderTest, lang: Lang, about = "about=info"): Promise<void> {
   const { page } = app;
   await app.open(`?screen=main&lang=${lang}&${about}`);
@@ -81,7 +81,7 @@ async function opened(app: AppUnderTest): Promise<string[]> {
   return app.electron.evaluate(() => (globalThis as unknown as { __opened?: string[] }).__opened ?? []);
 }
 
-test.describe("About Partcraft: entry points", () => {
+test.describe("About HalfCube: entry points", () => {
   for (const lang of ["en", "de"] as const) {
     test(`opens from the early-access label in the status bar (${lang})`, async ({ app }) => {
       const { page } = app;
@@ -106,7 +106,7 @@ test.describe("About Partcraft: entry points", () => {
     });
   }
 
-  test("opens from the licence hint line of the welcome screen, on the Lizenzen tab with the Partcraft licence", async ({ app }) => {
+  test("opens from the licence hint line of the welcome screen, on the Lizenzen tab with the HalfCube licence", async ({ app }) => {
     const { page } = app;
     await app.open("?lang=en");
     const welcome = page.getByRole("dialog", { name: "Sketch first, then build" });
@@ -123,11 +123,11 @@ test.describe("About Partcraft: entry points", () => {
     const about = dialogOf(page, "en");
     await expect(about).toBeVisible();
     await expect(page.getByTestId("about-tab-licenses")).toHaveAttribute("aria-selected", "true");
-    await expect(page.getByTestId("about-licence-detail")).toHaveAttribute("data-item", "partcraft");
-    await expect(about.getByRole("heading", { name: "Partcraft", exact: true })).toBeVisible();
+    await expect(page.getByTestId("about-licence-detail")).toHaveAttribute("data-item", "halfcube");
+    await expect(about.getByRole("heading", { name: "HalfCube", exact: true })).toBeVisible();
     const query = new URL(page.url()).searchParams;
     expect(query.get("about")).toBe("licenses");
-    expect(query.get("item")).toBe("partcraft");
+    expect(query.get("item")).toBe("halfcube");
 
     // The welcome screen stays underneath: Esc closes only the view on top.
     await page.keyboard.press("Escape");
@@ -145,7 +145,7 @@ test.describe("About Partcraft: entry points", () => {
   });
 });
 
-test.describe("About Partcraft: closing and keyboard", () => {
+test.describe("About HalfCube: closing and keyboard", () => {
   test("Esc and the red close button close it; Tab stays inside; the close button has a 48 px target and a name", async ({ app }) => {
     const { page } = app;
     await openAbout(app, "en");
@@ -195,7 +195,7 @@ test.describe("About Partcraft: closing and keyboard", () => {
   });
 });
 
-test.describe("About Partcraft: layout", () => {
+test.describe("About HalfCube: layout", () => {
   for (const lang of ["de", "en"] as const) {
     test(`Info and Lizenzen have exactly the same height, and the credit line meets the last row (${lang})`, async ({ app }) => {
       const { page } = app;
@@ -274,13 +274,13 @@ test.describe("About Partcraft: layout", () => {
     await expect(page.getByTestId("about-copy-version").getByRole("status")).toHaveText(words.en.copied);
     const during = await snapshot(page, targets);
     expectNothingMoved(before, during, "after copying the version");
-    expect(await app.readClipboard()).toMatch(/^Partcraft v\d{4}\.\d+\.\d+\.\d+\.\d+ \(.*\)( · Electron [\d.]+)?( · OCCT [\d.]+)?$/);
+    expect(await app.readClipboard()).toMatch(/^HalfCube v\d{4}\.\d+\.\d+\.\d+\.\d+ \(.*\)( · Electron [\d.]+)?( · OCCT [\d.]+)?$/);
     await expect(button).toHaveAttribute("data-copy-state", "idle", { timeout: 5000 });
     expectNothingMoved(before, await snapshot(page, targets), "after the confirmation went away");
   });
 });
 
-test.describe("About Partcraft: smallest window", () => {
+test.describe("About HalfCube: smallest window", () => {
   for (const lang of ["de", "en"] as const) {
     test(`fits completely into the smallest window the program allows, 960 x 600 (${lang})`, async ({ app }) => {
       const { page } = app;
@@ -308,7 +308,7 @@ test.describe("About Partcraft: smallest window", () => {
   }
 });
 
-test.describe("About Partcraft: contents", () => {
+test.describe("About HalfCube: contents", () => {
   test("the brand strip shows the real logo, the wordmark, version with channel, labels, copyright and credit", async ({ app }) => {
     const { page } = app;
     await openAbout(app, "de");
@@ -316,7 +316,7 @@ test.describe("About Partcraft: contents", () => {
     await expect(strip.locator("img")).toHaveCount(1);
     await expect(strip.locator("img")).toHaveJSProperty("complete", true);
     expect(await strip.locator("img").evaluate((img: HTMLImageElement) => img.naturalWidth)).toBeGreaterThan(100);
-    await expect(strip.getByRole("img", { name: "Partcraft" })).toBeVisible();
+    await expect(strip.getByRole("img", { name: "HalfCube" })).toBeVisible();
     await expect(page.getByTestId("about-version")).toHaveText(/^v\d{4}\.\d+\.\d+\.\d+\.\d+ \(<\/>\)$/);
     await expect(page.getByTestId("about-channel")).toHaveText("Dev");
     await expect(page.getByTestId("about-early")).toHaveText("Frühphase");
@@ -334,8 +334,8 @@ test.describe("About Partcraft: contents", () => {
       const dialog = dialogOf(page, lang);
       const summary =
         lang === "de"
-          ? "Partcraft wird unter der PolyForm Shield License 1.0.0 bereitgestellt. Sie erlaubt die kostenlose Nutzung, privat und geschäftlich, sowie Änderungen für den eigenen Gebrauch. Ausgenommen ist das Anbieten von Produkten, die mit Partcraft im Wettbewerb stehen. Ohne Gewährleistung."
-          : "Partcraft is provided under the PolyForm Shield License 1.0.0. It permits free use, private and commercial, and changes for your own use. Offering products that compete with Partcraft is excluded. No warranty.";
+          ? "HalfCube wird unter der PolyForm Shield License 1.0.0 bereitgestellt. Sie erlaubt die kostenlose Nutzung, privat und geschäftlich, sowie Änderungen für den eigenen Gebrauch. Ausgenommen ist das Anbieten von Produkten, die mit HalfCube im Wettbewerb stehen. Ohne Gewährleistung."
+          : "HalfCube is provided under the PolyForm Shield License 1.0.0. It permits free use, private and commercial, and changes for your own use. Offering products that compete with HalfCube is excluded. No warranty.";
       await expect(page.getByTestId("about-licence-summary")).toHaveText(summary);
       await expect(dialog.getByText(words[lang].news)).toHaveCount(0);
 
@@ -356,10 +356,10 @@ test.describe("About Partcraft: contents", () => {
     const { page } = app;
     await openAbout(app, "en");
     await page.getByTestId("about-show-licence").click();
-    await expect(page.getByTestId("about-licence-detail")).toHaveAttribute("data-item", "partcraft");
+    await expect(page.getByTestId("about-licence-detail")).toHaveAttribute("data-item", "halfcube");
     await expect(page.getByTestId("licence-text")).toHaveAttribute("data-state", "ready");
     await expect(page.getByTestId("licence-text")).toContainText("PolyForm Shield License 1.0.0");
-    expect(new URL(page.url()).searchParams.get("item")).toBe("partcraft");
+    expect(new URL(page.url()).searchParams.get("item")).toBe("halfcube");
 
     await page.getByTestId("about-tab-info").click();
     expect(new URL(page.url()).searchParams.get("about")).toBe("info");
@@ -375,7 +375,7 @@ test.describe("About Partcraft: contents", () => {
     await stubOpeners(app);
     await openAbout(app, "en");
     const link = page.getByTestId("about-source");
-    await expect(link).toHaveAttribute("href", "https://github.com/sushiflux/Partcraft");
+    await expect(link).toHaveAttribute("href", "https://github.com/sushiflux/HalfCube");
     await expect(link).toHaveAttribute("target", "_blank");
     await expect(link).toHaveAttribute("rel", /noopener/);
     if (app.target !== "electron") return;
@@ -383,7 +383,7 @@ test.describe("About Partcraft: contents", () => {
     const before = page.url();
     const windows = app.electron ? app.electron.windows().length : 0;
     await link.click();
-    await expect.poll(() => opened(app)).toEqual(["external:https://github.com/sushiflux/Partcraft"]);
+    await expect.poll(() => opened(app)).toEqual(["external:https://github.com/sushiflux/HalfCube"]);
     expect(page.url()).toBe(before);
     expect(app.electron?.windows().length).toBe(windows);
     await expect(dialogOf(page, "en")).toBeVisible();
@@ -394,7 +394,7 @@ test.describe("About Partcraft: contents", () => {
       return [await bridge.openExternal("http://example.com/"), await bridge.openExternal("file:///C:/Windows/notepad.exe"), await bridge.openExternal("javascript:alert(1)")];
     });
     expect(refused.map((r) => r.ok)).toEqual([false, false, false]);
-    expect(await opened(app)).toEqual(["external:https://github.com/sushiflux/Partcraft"]);
+    expect(await opened(app)).toEqual(["external:https://github.com/sushiflux/HalfCube"]);
   });
 
   test("technical details: the geometry kernel always, Electron only in the desktop program", async ({ app }) => {
@@ -410,13 +410,13 @@ test.describe("About Partcraft: contents", () => {
   });
 });
 
-test.describe("About Partcraft: licences", () => {
+test.describe("About HalfCube: licences", () => {
   test("the list is grouped, the browser leaves out the desktop-only entries, the desktop shows them", async ({ app }) => {
     const { page } = app;
     await openAbout(app, "en", "about=licenses");
     await expect(page.getByTestId("about-licences-list")).toBeVisible();
     await expect(page.getByTestId("about-group-self")).toBeVisible();
-    await expect(page.getByTestId("licence-row-partcraft")).toBeVisible();
+    await expect(page.getByTestId("licence-row-halfcube")).toBeVisible();
     await expect(page.getByTestId("licence-row-notice")).toBeVisible();
     await expect(page.getByTestId("about-group-engine")).toBeVisible();
     await expect(page.getByTestId("licence-row-occt")).toBeVisible();
@@ -528,7 +528,7 @@ test.describe("About Partcraft: licences", () => {
   });
 });
 
-test.describe("About Partcraft: reload", () => {
+test.describe("About HalfCube: reload", () => {
   test("a reload keeps the Info tab, the Lizenzen list and a component's page, in the address", async ({ app }) => {
     const { page } = app;
     await openAbout(app, "en");
@@ -539,25 +539,25 @@ test.describe("About Partcraft: reload", () => {
     expect(new URL(page.url()).search).toContain("item=occt");
 
     await page.reload();
-    await expect(page.getByRole("dialog", { name: "About Partcraft" })).toBeVisible({ timeout: 60_000 });
+    await expect(page.getByRole("dialog", { name: "About HalfCube" })).toBeVisible({ timeout: 60_000 });
     await expect(page.getByTestId("about-licence-detail")).toHaveAttribute("data-item", "occt");
     await expect(page.getByTestId("licence-text")).toHaveAttribute("data-state", "ready");
 
     await page.getByTestId("about-back").click();
     await page.reload();
-    await expect(page.getByRole("dialog", { name: "About Partcraft" })).toBeVisible({ timeout: 60_000 });
+    await expect(page.getByRole("dialog", { name: "About HalfCube" })).toBeVisible({ timeout: 60_000 });
     await expect(page.getByTestId("about-licences-list")).toBeVisible();
 
     await page.getByTestId("about-tab-info").click();
     await page.reload();
-    await expect(page.getByRole("dialog", { name: "About Partcraft" })).toBeVisible({ timeout: 60_000 });
+    await expect(page.getByRole("dialog", { name: "About HalfCube" })).toBeVisible({ timeout: 60_000 });
     await expect(page.getByTestId("about-tab-info")).toHaveAttribute("aria-selected", "true");
 
     // Closed means closed: nothing of it comes back.
     await page.keyboard.press("Escape");
     await page.reload();
     await expect(page.getByTestId("status-early")).toBeVisible({ timeout: 60_000 });
-    await expect(page.getByRole("dialog", { name: "About Partcraft" })).toHaveCount(0);
+    await expect(page.getByRole("dialog", { name: "About HalfCube" })).toHaveCount(0);
   });
 });
 
@@ -655,7 +655,7 @@ async function collectPairs(page: Page, state: string): Promise<Pair[]> {
         .trim();
       if (own === "") continue;
       // The wordmark is a logotype, which the contrast rule leaves out (WCAG 1.4.3); its colours are fixed brand colours.
-      if (el.closest("[role='img'][aria-label='Partcraft']")) continue;
+      if (el.closest("[role='img'][aria-label='HalfCube']")) continue;
       const cs = getComputedStyle(el);
       const rect = el.getBoundingClientRect();
       if (cs.visibility === "hidden" || cs.display === "none" || rect.width === 0 || rect.height === 0 || cs.clip === "rect(0px, 0px, 0px, 0px)") continue;
@@ -687,10 +687,10 @@ async function collectPairs(page: Page, state: string): Promise<Pair[]> {
 
 for (const theme of THEMES) {
   for (const mode of MODES) {
-    test(`About Partcraft contrast: ${theme} ${mode}`, async ({ app }) => {
+    test(`About HalfCube contrast: ${theme} ${mode}`, async ({ app }) => {
       const { page } = app;
       await app.open(`?screen=main&lang=en&theme=${theme}&mode=${mode}&about=info`);
-      await expect(page.getByRole("dialog", { name: "About Partcraft" })).toBeVisible({ timeout: 60_000 });
+      await expect(page.getByRole("dialog", { name: "About HalfCube" })).toBeVisible({ timeout: 60_000 });
       await page.evaluate(async () => document.fonts.ready);
 
       const pairs: Pair[] = [];

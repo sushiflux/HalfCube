@@ -1,4 +1,4 @@
-// "About Partcraft" (compact layout with a brand strip): one dialog with a dark brand strip on the
+// "About HalfCube" (compact layout with a brand strip): one dialog with a dark brand strip on the
 // left (logo, wordmark, version with channel symbol, labels, copyright and credit line) and two tabs on the right,
 // "Info" and "Lizenzen". The height of the dialog is the height of the Info tab; the Lizenzen tab lies over it with exactly
 // that height and scrolls inside. The credit line closes the strip on the same line as the last row of the right column.
@@ -30,7 +30,7 @@ function BrandStrip() {
   const { t } = useI18n();
   const version = currentVersion();
   return (
-    <aside className="pc-about-strip m-px flex flex-col rounded-l-[5px] px-[22px] pt-[30px] pb-[21px]" data-testid="about-strip">
+    <aside className="hc-about-strip m-px flex flex-col rounded-l-[5px] px-[22px] pt-[30px] pb-[21px]" data-testid="about-strip">
       <Logo size={84} source="large" />
       <Wordmark size={30} className="mt-4" />
       <div className="mono mt-3.5 text-[12px] [overflow-wrap:anywhere] text-[#e7f0f5]" data-testid="about-version">
@@ -38,18 +38,18 @@ function BrandStrip() {
       </div>
       <div className="mt-2.5 flex flex-wrap gap-2">
         {version.channel !== "release" ? (
-          <span className="pc-about-chip" data-kind={version.channel} data-testid="about-channel">
+          <span className="hc-about-chip" data-kind={version.channel} data-testid="about-channel">
             {t(channelKeys[version.channel])}
           </span>
         ) : null}
         {EARLY_ACCESS ? (
-          <span className="pc-about-chip" data-kind="early" data-testid="about-early">
+          <span className="hc-about-chip" data-kind="early" data-testid="about-early">
             {t("about.early")}
           </span>
         ) : null}
       </div>
       {/* The two last rows are as tall as the last row of the right column (32 px, 13 px text, centred), so their text lines meet. */}
-      <div className="pc-about-foot mt-auto pt-3 text-[13px] leading-[1.45]">
+      <div className="hc-about-foot mt-auto pt-3 text-[13px] leading-[1.45]">
         <div className="flex h-[22px] items-center" data-testid="about-copyright">
           {t("about.copyright")}
         </div>

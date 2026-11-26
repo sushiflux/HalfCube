@@ -11,13 +11,13 @@ const bridge: DesktopBridge = {
     chrome: process.versions.chrome ?? "",
     node: process.versions.node ?? "",
   },
-  startEngine: () => ipcRenderer.invoke("partcraft:start-engine") as Promise<StartEngineResult>,
+  startEngine: () => ipcRenderer.invoke("halfcube:start-engine") as Promise<StartEngineResult>,
 };
 
-contextBridge.exposeInMainWorld("partcraftDesktop", bridge);
+contextBridge.exposeInMainWorld("halfCubeDesktop", bridge);
 
-ipcRenderer.on("partcraft:engine-port", (event, generation: number) => {
-  const envelope: EnginePortEnvelope = { partcraft: "engine-port", generation };
+ipcRenderer.on("halfcube:engine-port", (event, generation: number) => {
+  const envelope: EnginePortEnvelope = { halfcube: "engine-port", generation };
   // Same-window hand-over from the isolated world to the page; the port is transferred, not copied.
   window.postMessage(envelope, window.location.origin, event.ports);
 });

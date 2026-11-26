@@ -12,7 +12,7 @@ import { ScrollArea } from "./ScrollArea.tsx";
 const noDetails: readonly ErrorBlock[] = [];
 
 export interface ErrorNoticeProps {
-  /** What failed, specific: "Engine konnte nicht gestartet werden: partcraft-engine.exe fehlt". */
+  /** What failed, specific: "Engine konnte nicht gestartet werden: halfcube-engine.exe fehlt". */
   headline: string;
   /** Error code, shown with the headline and never folded away. */
   code: string;

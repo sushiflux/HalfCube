@@ -1,6 +1,6 @@
 // Contract of sketch.solve and model.sync, run against the native and the WebAssembly engine with the same
 // assertions: every recorded case gives the recorded answer (native recording, so this is also the parity check
-// between the engines), protocol errors name their cause, and the model layer (PartcraftModel with its editors)
+// between the engines), protocol errors name their cause, and the model layer (HalfCubeModel with its editors)
 // works end to end against the real engine, including the replay after an engine crash.
 import { afterAll, beforeAll, expect, it } from "vitest";
 import type { CommandInput } from "../../../../app/src/engine/client.ts";
@@ -10,7 +10,7 @@ import { createEmptyDocument } from "../../../../app/src/document/create.ts";
 import { deg, mm } from "../../../../app/src/document/quantity.ts";
 import type { EngineLink } from "../../../../app/src/model/engine-link.ts";
 import type { ModelView, SketchView } from "../../../../app/src/model/editors.ts";
-import { PartcraftModelImpl } from "../../../../app/src/model/partcraft-model.ts";
+import { HalfCubeModelImpl } from "../../../../app/src/model/halfcube-model.ts";
 import type { SketchData } from "../../../../app/src/document/types.ts";
 import { documentProblems } from "../../../../app/src/document/validate.ts";
 import { chain, document, ENGINE_CASES, rectangle, stress } from "../../../fixtures/engine/cases.ts";
@@ -146,11 +146,11 @@ export function defineModelContract(label: string, where: EngineLocation, skip: 
       expect((unknown as ErrorMessage & Error).message).toMatch(/sketch/);
     });
 
-    it("PartcraftModel: sketch, dimensions, conflict, reference dimension, extrude, undo, redo and replay after a crash", async () => {
+    it("HalfCubeModel: sketch, dimensions, conflict, reference dimension, extrude, undo, redo and replay after a crash", async () => {
       // Its own engine: ModelSync counts revisions from 1, as the app does with the engine it starts.
       const own = await startEngine(where);
       const link = testLink(own);
-      const model = new PartcraftModelImpl(link, createEmptyDocument({ rootName: "Teil", documentId: "doc-contract" }), {
+      const model = new HalfCubeModelImpl(link, createEmptyDocument({ rootName: "Teil", documentId: "doc-contract" }), {
         names: { sketch: (n) => `Skizze${n}`, extrude: (n) => `Extrusion${n}`, body: (n) => `Körper${n}` },
       });
       const sketch = await model.startSketch("xy");
@@ -226,7 +226,7 @@ export function defineModelContract(label: string, where: EngineLocation, skip: 
     it("sketch mode: determined regions with outlines, dragging a point, a point that cannot move, cancel and end as one undo step", async () => {
       const own = await startEngine(where);
       const link = testLink(own);
-      const model = new PartcraftModelImpl(link, createEmptyDocument({ rootName: "Teil", documentId: "doc-drag" }), {
+      const model = new HalfCubeModelImpl(link, createEmptyDocument({ rootName: "Teil", documentId: "doc-drag" }), {
         names: { sketch: (n) => `Skizze${n}`, extrude: (n) => `Extrusion${n}`, body: (n) => `Körper${n}` },
       });
       const sketch = await model.startSketch("xy");
@@ -320,7 +320,7 @@ export function defineModelContract(label: string, where: EngineLocation, skip: 
     it("per loop: a fully dimensioned rectangle with two free circles inside has its outer loop determined and the holes not", async () => {
       const own = await startEngine(where);
       const link = testLink(own);
-      const model = new PartcraftModelImpl(link, createEmptyDocument({ rootName: "Teil", documentId: "doc-loops" }), {
+      const model = new HalfCubeModelImpl(link, createEmptyDocument({ rootName: "Teil", documentId: "doc-loops" }), {
         names: { sketch: (n) => `Skizze${n}`, extrude: (n) => `Extrusion${n}`, body: (n) => `Körper${n}` },
       });
       const sketch = await model.startSketch("xy");
@@ -356,7 +356,7 @@ export function defineModelContract(label: string, where: EngineLocation, skip: 
     it("dimension labels follow their geometry: a drag, a typed value and an undo keep them where they were relative to it", async () => {
       const own = await startEngine(where);
       const link = testLink(own);
-      const model = new PartcraftModelImpl(link, createEmptyDocument({ rootName: "Teil", documentId: "doc-labels" }), {
+      const model = new HalfCubeModelImpl(link, createEmptyDocument({ rootName: "Teil", documentId: "doc-labels" }), {
         names: { sketch: (n) => `Skizze${n}`, extrude: (n) => `Extrusion${n}`, body: (n) => `Körper${n}` },
       });
       const sketch = await model.startSketch("xy");
@@ -429,7 +429,7 @@ export function defineModelContract(label: string, where: EngineLocation, skip: 
     it("distances measure what was clicked - point, line and circle in every pair - as references and as driving dimensions", async () => {
       const own = await startEngine(where);
       const link = testLink(own);
-      const model = new PartcraftModelImpl(link, createEmptyDocument({ rootName: "Teil", documentId: "doc-dimension-segment" }), {
+      const model = new HalfCubeModelImpl(link, createEmptyDocument({ rootName: "Teil", documentId: "doc-dimension-segment" }), {
         names: { sketch: (n) => `Skizze${n}`, extrude: (n) => `Extrusion${n}`, body: (n) => `Körper${n}` },
       });
       const sketch = await model.startSketch("xy");
@@ -490,7 +490,7 @@ export function defineModelContract(label: string, where: EngineLocation, skip: 
     it("an angle measures the sector the label is in - at a fixed rectangle corner 90, never 270 - and the sector survives a drag", async () => {
       const own = await startEngine(where);
       const link = testLink(own);
-      const model = new PartcraftModelImpl(link, createEmptyDocument({ rootName: "Teil", documentId: "doc-angle-sector" }), {
+      const model = new HalfCubeModelImpl(link, createEmptyDocument({ rootName: "Teil", documentId: "doc-angle-sector" }), {
         names: { sketch: (n) => `Skizze${n}`, extrude: (n) => `Extrusion${n}`, body: (n) => `Körper${n}` },
       });
       const sketch = await model.startSketch("xy");
@@ -559,7 +559,7 @@ export function defineModelContract(label: string, where: EngineLocation, skip: 
     it("what is still free (the palette's list): a free rectangle is one fact, the owner's 12 x 55 rectangle only needs its place, a circle without diameter has a free diameter", async () => {
       const own = await startEngine(where);
       const link = testLink(own);
-      const model = new PartcraftModelImpl(link, createEmptyDocument({ rootName: "Teil", documentId: "doc-freedom" }), {
+      const model = new HalfCubeModelImpl(link, createEmptyDocument({ rootName: "Teil", documentId: "doc-freedom" }), {
         names: { sketch: (n) => `Skizze${n}`, extrude: (n) => `Extrusion${n}`, body: (n) => `Körper${n}` },
       });
       const sketch = await model.startSketch("xy");

@@ -2,7 +2,7 @@
 // <case>.json (command, answer header) and <case>.bin (binary payload, if any). The contract tests compare both
 // engines with these recordings; the replay stub (replay.ts) plays them for UI work without an engine.
 //
-//   node tests/fixtures/engine/record.ts [path to partcraft-engine.exe]
+//   node tests/fixtures/engine/record.ts [path to halfcube-engine.exe]
 //
 // Run it again after a change of the engine's results and review the diff.
 import { mkdirSync, writeFileSync } from "node:fs";
@@ -13,7 +13,7 @@ import { repoRoot } from "../../../config/build-info.ts";
 import { ENGINE_CASES } from "./cases.ts";
 import type { RecordedCase } from "./recording.ts";
 
-const exe = process.argv[2] ?? join(repoRoot, "engine", "_build", "windows-release", "bin", "partcraft-engine.exe");
+const exe = process.argv[2] ?? join(repoRoot, "engine", "_build", "windows-release", "bin", "halfcube-engine.exe");
 const dir = join(repoRoot, "tests", "fixtures", "engine");
 mkdirSync(dir, { recursive: true });
 

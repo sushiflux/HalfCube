@@ -133,7 +133,7 @@ function showLogoWindow() {
       focusable: false,
       skipTaskbar: true,
       resizable: false,
-      icon: path.join(__dirname, "assets", "partcraft-icon-512.png"),
+      icon: path.join(__dirname, "assets", "halfcube-icon-512.png"),
       webPreferences: { sandbox: true, contextIsolation: true, nodeIntegration: false },
     });
     win.webContents.setWindowOpenHandler(() => ({ action: "deny" }));

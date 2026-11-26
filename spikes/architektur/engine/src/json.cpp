@@ -4,7 +4,7 @@
 #include <cstdio>
 #include <cstdlib>
 
-namespace pc {
+namespace hc {
 
 const Json* Json::find(std::string_view key) const {
     if (type_ != Type::Object) return nullptr;
@@ -278,4 +278,4 @@ std::string Json::dump() const {
 
 Json Json::parse(std::string_view text) { return Parser(text).parseDocument(); }
 
-} // namespace pc
+} // namespace hc

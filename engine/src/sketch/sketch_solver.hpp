@@ -33,7 +33,7 @@
 #include <string>
 #include <vector>
 
-namespace pc::sketch {
+namespace hc::sketch {
 
 enum class SolveStatus {
     Solved,       // planegcs reached a solution with zero error (GCS::Success)
@@ -121,4 +121,4 @@ std::map<std::string, EntityState> entityStates(const Sketch& sketch, const Solv
 std::string eigenVersion();
 std::string boostVersion();
 
-} // namespace pc::sketch
+} // namespace hc::sketch

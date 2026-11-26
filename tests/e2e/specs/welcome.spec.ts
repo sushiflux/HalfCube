@@ -2,7 +2,7 @@
 // info dialog is our own dialog, Esc closes the top-most dialog only.
 import { expect, test } from "../support/fixtures.ts";
 
-const WELCOME_STORAGE_KEY = "partcraft.welcome.hidden";
+const WELCOME_STORAGE_KEY = "halfcube.welcome.hidden";
 
 test.describe("welcome screen", () => {
   test("appears on the first start, after the loading screen; no browser dialogs are used", async ({ app }) => {

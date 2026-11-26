@@ -6,7 +6,7 @@
 
 #include <typeinfo>
 
-namespace pc {
+namespace hc {
 
 EngineError::EngineError(std::string code, const std::string& message, std::string detail)
     : std::runtime_error(message), code_(std::move(code)), detail_(std::move(detail)) {}
@@ -28,4 +28,4 @@ void throwIfCancelled(const CancelCheck& cancelled, const std::string& what) {
     if (cancelled && cancelled()) throw EngineError(protocol::err::kCancelled, what + " was cancelled.");
 }
 
-} // namespace pc
+} // namespace hc

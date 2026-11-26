@@ -40,7 +40,7 @@
 #include <set>
 #include <sstream>
 
-namespace pc {
+namespace hc {
 
 namespace {
 
@@ -136,8 +136,8 @@ void allowOnly(const Json& step, std::initializer_list<const char*> keys, const 
 Recipe parseRecipe(const Json& j, bool allowDebugSteps) {
     if (!j.isObject()) throw RecipeError("recipe: must be an object");
     const Json* fmtv = j.find("format");
-    if (!fmtv || !fmtv->isString() || fmtv->str() != "partcraft.recipe")
-        throw RecipeError("recipe.format: must be \"partcraft.recipe\"");
+    if (!fmtv || !fmtv->isString() || fmtv->str() != "halfcube.recipe")
+        throw RecipeError("recipe.format: must be \"halfcube.recipe\"");
     const Json* ver = j.find("formatVersion");
     if (!ver || !ver->isNumber() || ver->number() != 0) throw RecipeError("recipe.formatVersion: must be 0");
     for (const auto& kv : j.members())
@@ -715,4 +715,4 @@ RebuildOut Model::rebuild(const Recipe& recipe, const CancelFn& cancelled, const
     return res;
 }
 
-} // namespace pc
+} // namespace hc

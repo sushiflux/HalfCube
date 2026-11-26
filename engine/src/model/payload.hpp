@@ -9,7 +9,7 @@
 #include <cstring>
 #include <vector>
 
-namespace pc::model {
+namespace hc::model {
 
 static_assert(std::endian::native == std::endian::little, "the payload encoding assumes a little-endian target");
 
@@ -50,4 +50,4 @@ private:
     std::vector<std::uint8_t> bytes_;
 };
 
-} // namespace pc::model
+} // namespace hc::model

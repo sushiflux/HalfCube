@@ -11,7 +11,7 @@ $native  = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 $solver  = (Resolve-Path (Join-Path $native '..')).Path
 $deps    = Join-Path $solver '_deps'
 if (-not $OutDir) { $OutDir = Join-Path $solver '_build\own-emscripten' }
-$name = 'partcraft-solvertest-wasm'
+$name = 'halfcube-solvertest-wasm'
 foreach ($p in @('FreeCAD', 'eigen-3.4.0', 'boost-1.92.0', 'nlohmann-json')) {
     if (-not (Test-Path (Join-Path $deps $p))) { throw "missing dependency: $deps\$p (run scripts/fetch-deps.ps1)" }
 }

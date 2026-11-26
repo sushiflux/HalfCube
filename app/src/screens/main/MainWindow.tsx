@@ -1,6 +1,6 @@
 // The main window (focus layout): title row, toolbar with tabs and tool groups, the browser tree on
 // the left, the 3D view with its context bar, axis navigator and navigation bar in the middle, the timeline at the bottom
-// and the status bar. It talks to the model layer only (PartcraftModel, SketchEditor); never to the engine client.
+// and the status bar. It talks to the model layer only (HalfCubeModel, SketchEditor); never to the engine client.
 //
 // Where the user is stays in the URL (screen, open sketch, settings dialog), so a reload (F5) brings them back to the same
 // place; the working document survives in the tab's session storage (autosave.ts).
@@ -194,7 +194,7 @@ export function MainWindow({ session, engineReady, arrived, overlay }: MainWindo
       try {
         enterSketch(await model.startSketch(plane));
       } catch (error) {
-        const failure: Failure = { title: t("main.errors.sketchStartTitle"), code: "PC-MAIN-001", text: t("main.errors.sketchStartText"), error };
+        const failure: Failure = { title: t("main.errors.sketchStartTitle"), code: "HC-MAIN-001", text: t("main.errors.sketchStartText"), error };
         void report(failure);
       }
     },
@@ -210,7 +210,7 @@ export function MainWindow({ session, engineReady, arrived, overlay }: MainWindo
       try {
         enterSketch(await model.editSketch(featureId));
       } catch (error) {
-        void report({ title: t("main.errors.sketchEditTitle"), code: "PC-MAIN-002", error });
+        void report({ title: t("main.errors.sketchEditTitle"), code: "HC-MAIN-002", error });
       }
     },
     [editor, extrude, model, enterSketch, report, t],
@@ -231,7 +231,7 @@ export function MainWindow({ session, engineReady, arrived, overlay }: MainWindo
       extrude.begin(choosePreselect(catalogue, selectedStepId));
     } catch (error) {
       extrude.cancel();
-      void report({ title: t("main.errors.extrudeStartTitle"), code: "PC-MAIN-004", error });
+      void report({ title: t("main.errors.extrudeStartTitle"), code: "HC-MAIN-004", error });
     }
   }, [editor, extrude, catalogue, selectedStepId, report, t]);
 
@@ -243,7 +243,7 @@ export function MainWindow({ session, engineReady, arrived, overlay }: MainWindo
       try {
         extrude.edit(featureId);
       } catch (error) {
-        void report({ title: t("main.errors.extrudeEditTitle"), code: "PC-MAIN-005", error });
+        void report({ title: t("main.errors.extrudeEditTitle"), code: "HC-MAIN-005", error });
       }
     },
     [editor, extrude, report, t],
@@ -256,7 +256,7 @@ export function MainWindow({ session, engineReady, arrived, overlay }: MainWindo
       await editor.finish();
       setEditor(null);
     } catch (error) {
-      void report({ title: t("main.errors.sketchFinishTitle"), code: "PC-MAIN-003", error });
+      void report({ title: t("main.errors.sketchFinishTitle"), code: "HC-MAIN-003", error });
     } finally {
       setFinishing(false);
     }
@@ -283,8 +283,8 @@ export function MainWindow({ session, engineReady, arrived, overlay }: MainWindo
         setRestored(true);
         void report(
           feature && feature.type === "sketch"
-            ? { title: t("main.errors.sketchRestoreFailedTitle"), code: "PC-MAIN-007", text: t("main.errors.sketchRestoreFailedText", { name: feature.name }), error }
-            : { title: t("main.errors.sketchRestoreMissingTitle"), code: "PC-MAIN-006", text: t("main.errors.sketchRestoreMissingText", { id }), error },
+            ? { title: t("main.errors.sketchRestoreFailedTitle"), code: "HC-MAIN-007", text: t("main.errors.sketchRestoreFailedText", { name: feature.name }), error }
+            : { title: t("main.errors.sketchRestoreMissingTitle"), code: "HC-MAIN-006", text: t("main.errors.sketchRestoreMissingText", { id }), error },
         );
       },
     );
@@ -318,7 +318,7 @@ export function MainWindow({ session, engineReady, arrived, overlay }: MainWindo
 
   // Dev channel only: the open editor and the 3D view are reachable for the end-to-end tests next to the model (see main-model.ts).
   useEffect(() => {
-    const hooks = (window as unknown as DevHooks).__partcraft;
+    const hooks = (window as unknown as DevHooks).__halfcube;
     if (hooks) {
       hooks.editor = editor;
       hooks.session = sketchSession;
@@ -510,7 +510,7 @@ export function MainWindow({ session, engineReady, arrived, overlay }: MainWindo
       }
       return {
         title: `${name}: ${text}`,
-        code: `PC-STEP-${(problem?.code ?? s.state).toUpperCase()}`,
+        code: `HC-STEP-${(problem?.code ?? s.state).toUpperCase()}`,
         ...(problem ? { error: new Error(problem.message) } : {}),
       };
     });

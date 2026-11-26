@@ -1,6 +1,6 @@
 // What the URL remembers, so a reload (F5) keeps the user exactly where they were: past the welcome screen (`screen=main`),
 // the open sketch (`sketch=f1`), the open settings dialog with its tab (`settings=display|sketch`) and the open "About
-// Partcraft" view with its tab and chosen component (`about=info|licenses`, `item=occt`). The dev-only
+// HalfCube" view with its tab and chosen component (`about=info|licenses`, `item=occt`). The dev-only
 // parameters (theme, mode, lang, demo ...) are left untouched. Parsing and building are pure functions; only patchUrl
 // touches the address bar, with replaceState, so the back button does not collect a step for every click.
 
@@ -16,7 +16,7 @@ export interface UrlState {
   /** Id of the sketch step being edited. */
   sketch?: string;
   settings?: SettingsTab;
-  /** The "About Partcraft" view is open on this tab. */
+  /** The "About HalfCube" view is open on this tab. */
   about?: AboutTab;
   /** Id of the component whose licence is shown; only meaningful together with about=licenses. */
   item?: string;

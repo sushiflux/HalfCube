@@ -7,10 +7,10 @@ import { parseChannel, parseVersionFile, type BuildInfo } from "../app/src/versi
 
 export const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
-/** Reads version.txt (line 2) and PARTCRAFT_CHANNEL. Fails loudly when either is invalid. */
+/** Reads version.txt (line 2) and HALFCUBE_CHANNEL. Fails loudly when either is invalid. */
 export function readBuildInfo(root: string = repoRoot, env: NodeJS.ProcessEnv = process.env): BuildInfo {
   const id = parseVersionFile(readFileSync(join(root, "version.txt"), "utf8"));
-  return { id, channel: parseChannel(env.PARTCRAFT_CHANNEL) };
+  return { id, channel: parseChannel(env.HALFCUBE_CHANNEL) };
 }
 
 export type DevPortName = "web-dev" | "web-preview" | "e2e-cdp";

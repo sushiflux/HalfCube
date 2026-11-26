@@ -6,7 +6,7 @@ import { encodeFrame, FrameDecoder } from "../../app/src/engine/frame.ts";
 import type { EngineTransport, ExitInfo } from "../../app/src/engine/transport.ts";
 
 export interface NativeTransportOptions {
-  /** Path of partcraft-engine(.exe). The OCCT libraries lie next to it. */
+  /** Path of halfcube-engine(.exe). The OCCT libraries lie next to it. */
   exe: string;
   args?: string[];
   /** Keep at most this many characters of stderr for problem reports. */

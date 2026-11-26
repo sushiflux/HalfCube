@@ -221,7 +221,7 @@ describe("G1: Electron window shows the body from the native engine process", ()
       const mine = engineProcesses().filter((p) => !before.has(p.pid));
       assert.equal(mine.length, 1, `engine processes started by this window: ${JSON.stringify(mine)}`);
       assert.deepEqual(enginesOf(l.mainPid!).map((e) => e.pid), [mine[0]!.pid], "the engine descends from the launched Electron process");
-      assert.match(mine[0]!.commandLine, /partcraft-engine\.exe/);
+      assert.match(mine[0]!.commandLine, /halfcube-engine\.exe/);
       t.diagnostic(`engine pid ${mine[0]!.pid}, parent ${mine[0]!.parentPid}: ${mine[0]!.commandLine}`);
 
       // Something is really drawn: body pixels, edge lines.
@@ -236,14 +236,14 @@ describe("G1: Electron window shows the body from the native engine process", ()
         require: typeof (globalThis as { require?: unknown }).require,
         process: typeof (globalThis as { process?: unknown }).process,
         module: typeof (globalThis as { module?: unknown }).module,
-        bridge: Object.keys((window as unknown as { partcraftDesktop?: object }).partcraftDesktop ?? {}),
+        bridge: Object.keys((window as unknown as { halfCubeDesktop?: object }).halfCubeDesktop ?? {}),
         origin: location.origin,
         isolated: crossOriginIsolated,
       }));
       t.diagnostic(JSON.stringify(caps));
       assert.deepEqual([caps.require, caps.process, caps.module], ["undefined", "undefined", "undefined"]);
       assert.deepEqual([...caps.bridge].sort(), ["kind", "startEngine", "versions"]);
-      assert.equal(caps.origin, "app://partcraft");
+      assert.equal(caps.origin, "app://halfcube");
       assert.deepEqual(l.pageErrors, []);
       assert.deepEqual(l.consoleErrors, []);
     } finally {
@@ -313,9 +313,9 @@ describe("Icons: the project's logo is the window icon and the page favicon", ()
       assert.equal(res.status(), 200);
       assert.equal(res.headers()["content-type"], "image/png");
       const body = await res.body();
-      assert.ok(body.equals(asset("partcraft-icon-64.png")), "the served icon is the shipped logo icon");
+      assert.ok(body.equals(asset("halfcube-icon-64.png")), "the served icon is the shipped logo icon");
       // The icon is a resampled copy of the project's logo: the same drawing, only smaller.
-      const big = asset("partcraft-icon-512.png");
+      const big = asset("halfcube-icon-512.png");
       assert.ok((await iconDistance(page, body, big, 64)) < 6, "the 64 px icon shows the same picture as the 512 px one");
       assert.deepEqual(l.consoleErrors, [], "no 404 for the favicon or anything else");
       evidence("web-icon-favicon.png", body);
@@ -330,7 +330,7 @@ describe("Icons: the project's logo is the window icon and the page favicon", ()
       evidence("desktop-icon-from-os.png", png);
       const st = await imageStats(l.page, png);
       t.diagnostic(`window icon ${st.width}x${st.height}`);
-      const d = await iconDistance(l.page, png, asset("partcraft-icon-512.png"), Math.min(st.width, 64));
+      const d = await iconDistance(l.page, png, asset("halfcube-icon-512.png"), Math.min(st.width, 64));
       t.diagnostic(`mean colour difference to the logo: ${d.toFixed(2)}`);
       assert.ok(d < 14, `the window icon shows the logo (difference ${d})`);
       // Control: the check can tell the logo from another picture (a plain blue square, like a generic default icon).
@@ -519,7 +519,7 @@ function paramSuite(target: Target) {
         new MutationObserver(read).observe(document.body, { subtree: true, childList: true, characterData: true });
       });
       const res = await page.evaluate(() =>
-        (window as unknown as { __partcraftSpike: { burst(n: string, v: number[]): Promise<{ stale: number; shown: number }> } }).__partcraftSpike.burst("holeDiameter", [21, 22, 23, 24, 20]),
+        (window as unknown as { __halfcubeSpike: { burst(n: string, v: number[]): Promise<{ stale: number; shown: number }> } }).__halfcubeSpike.burst("holeDiameter", [21, 22, 23, 24, 20]),
       );
       await waitReady(page);
       const seen = await page.evaluate(() => (window as unknown as { __versions: number[] }).__versions);

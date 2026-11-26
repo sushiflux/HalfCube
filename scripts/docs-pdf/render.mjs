@@ -182,8 +182,8 @@ body { margin: 0; font-family: var(--sans); font-size: 9.6pt; line-height: 1.6; 
 strong, b { font-weight: 650; }
 .wm { font-weight: ${wm.weightSmall}; letter-spacing: ${wm.trackingSmall}; }
 .wm.big { font-weight: ${wm.weightLarge}; letter-spacing: ${wm.trackingLarge}; }
-.wm-light .wm-a { color: ${wm.light.part}; } .wm-light .wm-b { color: ${wm.light.craft}; }
-.wm-dark .wm-a { color: ${wm.dark.part}; } .wm-dark .wm-b { color: ${wm.dark.craft}; }
+.wm-light .wm-a { color: ${wm.light.half}; } .wm-light .wm-b { color: ${wm.light.cube}; }
+.wm-dark .wm-a { color: ${wm.dark.half}; } .wm-dark .wm-b { color: ${wm.dark.cube}; }
 
 /* ---------- Cover ---------- */
 .cover { page: cover; width: 210mm; height: 296.5mm; break-after: page; position: relative; overflow: hidden;

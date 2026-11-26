@@ -1,6 +1,6 @@
 // Native engine process: protocol frames on stdin/stdout (layout in protocol.hpp), diagnostics on stderr.
 //
-//   partcraft-engine [--debug-commands]
+//   halfcube-engine [--debug-commands]
 //
 // Only the parent process holds the pipe ends, so no other process or user can reach the engine; there is no
 // network port. A reader thread answers ping and cancel at once while the main thread computes.
@@ -69,12 +69,12 @@ void putU32(uint8_t* p, uint32_t v) {
 }
 uint32_t getU32(const uint8_t* p) { return uint32_t(p[0]) | uint32_t(p[1]) << 8 | uint32_t(p[2]) << 16 | uint32_t(p[3]) << 24; }
 
-class FrameOutput : public pc::Output {
+class FrameOutput : public hc::Output {
 public:
     explicit FrameOutput(int fd) : fd_(fd) {}
     void send(const std::string& header, const std::vector<uint8_t>* payload) override {
-        uint8_t prefix[pc::protocol::kFramePrefixBytes];
-        putU32(prefix, pc::protocol::kFrameMagic);
+        uint8_t prefix[hc::protocol::kFramePrefixBytes];
+        putU32(prefix, hc::protocol::kFrameMagic);
         putU32(prefix + 4, static_cast<uint32_t>(header.size()));
         putU32(prefix + 8, payload ? static_cast<uint32_t>(payload->size()) : 0u);
         putU32(prefix + 12, 0);
@@ -84,7 +84,7 @@ public:
                         (!payload || payload->empty() || writeAll(fd_, payload->data(), payload->size()));
         if (!ok) {
             // The parent closed the pipe: nobody is listening any more.
-            std::fprintf(stderr, "partcraft-engine: writing to the parent failed, exiting\n");
+            std::fprintf(stderr, "halfcube-engine: writing to the parent failed, exiting\n");
             std::_Exit(0);
         }
     }
@@ -101,7 +101,7 @@ int main(int argc, char** argv) {
     for (int i = 1; i < argc; ++i) {
         if (std::strcmp(argv[i], "--debug-commands") == 0) debug = true;
         else {
-            std::fprintf(stderr, "partcraft-engine: unknown argument \"%s\"\nusage: partcraft-engine [--debug-commands]\n", argv[i]);
+            std::fprintf(stderr, "halfcube-engine: unknown argument \"%s\"\nusage: halfcube-engine [--debug-commands]\n", argv[i]);
             return 64;
         }
     }
@@ -124,21 +124,21 @@ int main(int argc, char** argv) {
 #endif
 
     FrameOutput out(frameFd);
-    pc::EngineOptions opt;
+    hc::EngineOptions opt;
     opt.debugCommands = debug;
     opt.platform = platform;
     opt.pingWhileBusy = true;
     opt.cancelWhileBusy = true;
-    pc::Engine engine(out, opt);
+    hc::Engine engine(out, opt);
 
     std::thread reader([&engine] {
         std::vector<uint8_t> header, payload;
         for (;;) {
-            uint8_t prefix[pc::protocol::kFramePrefixBytes];
+            uint8_t prefix[hc::protocol::kFramePrefixBytes];
             if (!readAll(0, prefix, sizeof prefix)) break;  // end of input: the parent is gone or closed stdin
             const uint32_t magic = getU32(prefix), hLen = getU32(prefix + 4), pLen = getU32(prefix + 8);
-            if (magic != pc::protocol::kFrameMagic || hLen > pc::protocol::kMaxHeaderBytes || pLen > pc::protocol::kMaxPayloadBytes) {
-                std::fprintf(stderr, "partcraft-engine: broken frame stream (magic 0x%08x, header %u bytes, payload %u bytes), exiting\n",
+            if (magic != hc::protocol::kFrameMagic || hLen > hc::protocol::kMaxHeaderBytes || pLen > hc::protocol::kMaxPayloadBytes) {
+                std::fprintf(stderr, "halfcube-engine: broken frame stream (magic 0x%08x, header %u bytes, payload %u bytes), exiting\n",
                              magic, hLen, pLen);
                 std::fflush(stderr);
                 std::_Exit(2);

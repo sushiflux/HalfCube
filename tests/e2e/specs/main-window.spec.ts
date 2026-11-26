@@ -33,7 +33,7 @@ const words: Record<Lang, { sketchTool: string; body: string; origin: string; pl
 };
 
 interface Hooks {
-  __partcraft?: { model: unknown; editor: { addRectangle(a: unknown, b: unknown): Promise<{ ok: boolean }> } | null };
+  __halfcube?: { model: unknown; editor: { addRectangle(a: unknown, b: unknown): Promise<{ ok: boolean }> } | null };
 }
 
 /** Opens the main window past the welcome screen and waits until the engine answers (the sketch tool is enabled then). */
@@ -110,7 +110,7 @@ for (const lang of ["en", "de"] as const) {
     expectNothingMoved(start, await snapshot(page, targets), "sketch open");
 
     // Unfolding the sketch in the timeline moves nothing either (the timeline has a fixed height).
-    const drawn = await page.evaluate(() => (window as unknown as Hooks).__partcraft?.editor?.addRectangle({ x: 0, y: 0 }, { x: 40, y: 25 }));
+    const drawn = await page.evaluate(() => (window as unknown as Hooks).__halfcube?.editor?.addRectangle({ x: 0, y: 0 }, { x: 40, y: 25 }));
     expect(drawn?.ok).toBe(true);
     const unfolded = await snapshot(page, targets);
     expectNothingMoved(start, unfolded, "sketch drawn");
@@ -149,10 +149,10 @@ test("a sketch shows in the browser tree and as ONE timeline step; a plus unfold
   await expect(page.getByTestId("timeline-position")).toContainText("step 1 of 1");
   // Inside a sketch undo reaches back only to the start of the sketch: nothing to undo yet.
   await expect(page.getByTestId("undo")).toBeDisabled();
-  expect(await page.evaluate(() => (window as unknown as Hooks).__partcraft?.editor !== null)).toBe(true);
+  expect(await page.evaluate(() => (window as unknown as Hooks).__halfcube?.editor !== null)).toBe(true);
 
   // Draw a rectangle through the same function the sketch tools call: it appears as ONE inner step of the sketch.
-  const drawn = await page.evaluate(() => (window as unknown as Hooks).__partcraft?.editor?.addRectangle({ x: 0, y: 0 }, { x: 40, y: 25 }));
+  const drawn = await page.evaluate(() => (window as unknown as Hooks).__halfcube?.editor?.addRectangle({ x: 0, y: 0 }, { x: 40, y: 25 }));
   expect(drawn?.ok).toBe(true);
   await expect(page.getByTestId("timeline-sub-steps-f1")).toHaveCount(0);
   await page.getByTestId("timeline-expand-f1").click();
@@ -268,12 +268,12 @@ test("the settings dialog: choices apply at once, are stored and survive a reloa
   await expect(page.getByTestId("sketch-colour-green")).toHaveAttribute("aria-checked", "true");
   await page.getByTestId("sketch-fill-fill").click();
   await page.getByTestId("sketch-colour-blue").click();
-  expect(await page.evaluate(() => [localStorage.getItem("partcraft.settings.sketchFill"), localStorage.getItem("partcraft.settings.sketchColour")])).toEqual(["fill", "blue"]);
+  expect(await page.evaluate(() => [localStorage.getItem("halfcube.settings.sketchFill"), localStorage.getItem("halfcube.settings.sketchColour")])).toEqual(["fill", "blue"]);
   // The look of the input fields at the geometry: the dimension line is the default, the label is the other choice.
   await expect(page.getByTestId("field-look-dimension")).toHaveAttribute("aria-checked", "true");
   await expect(page.getByTestId("field-look-tag")).toHaveAttribute("aria-checked", "false");
   await page.getByTestId("field-look-tag").click();
-  expect(await page.evaluate(() => localStorage.getItem("partcraft.settings.fieldLook"))).toBe("tag");
+  expect(await page.evaluate(() => localStorage.getItem("halfcube.settings.fieldLook"))).toBe("tag");
 
   // Language: the whole window switches at once.
   await page.getByTestId("settings-tab-display").click();
@@ -306,9 +306,9 @@ test("the wheel zoom direction is a setting: the default zooms out when the whee
   const { page } = app;
   await openMain(app, "");
   const distance = async (): Promise<number> => {
-    await page.waitForFunction(() => Boolean((window as unknown as { __partcraft?: { viewport: unknown } }).__partcraft?.viewport), undefined, { timeout: 60_000 });
+    await page.waitForFunction(() => Boolean((window as unknown as { __halfcube?: { viewport: unknown } }).__halfcube?.viewport), undefined, { timeout: 60_000 });
     return page.evaluate(async () => {
-      const vp = (window as unknown as { __partcraft: { viewport: { getView(): { distance: number }; whenIdle(): Promise<void> } } }).__partcraft.viewport;
+      const vp = (window as unknown as { __halfcube: { viewport: { getView(): { distance: number }; whenIdle(): Promise<void> } } }).__halfcube.viewport;
       await vp.whenIdle();
       return vp.getView().distance;
     });
@@ -339,7 +339,7 @@ test("the wheel zoom direction is a setting: the default zooms out when the whee
   await expect(page.getByTestId("wheel-zoom-down-out")).toHaveText("Wheel down: zoom out");
   await page.getByTestId("wheel-zoom-down-in").click();
   await expect(page.getByTestId("wheel-zoom-down-in")).toHaveAttribute("aria-checked", "true");
-  expect(await page.evaluate(() => localStorage.getItem("partcraft.settings.wheelZoom"))).toBe("down-in");
+  expect(await page.evaluate(() => localStorage.getItem("halfcube.settings.wheelZoom"))).toBe("down-in");
   await page.keyboard.press("Escape");
   await expect(page.getByTestId("settings-dialog")).toHaveCount(0);
 
@@ -357,7 +357,7 @@ test("the wheel zoom direction is a setting: the default zooms out when the whee
   await page.reload();
   await expect(page.getByTestId("loading-screen")).toHaveCount(0, { timeout: 60_000 });
   await expect(page.getByTestId("tool-sketch")).toBeEnabled({ timeout: 60_000 });
-  expect(await page.evaluate(() => localStorage.getItem("partcraft.settings.wheelZoom"))).toBe("down-in");
+  expect(await page.evaluate(() => localStorage.getItem("halfcube.settings.wheelZoom"))).toBe("down-in");
   const r0 = await distance();
   const r1 = await wheel(200);
   expect(r1, "wheel down still zooms in after a reload").toBeLessThan(r0);
@@ -411,7 +411,7 @@ test("a reload keeps the open sketch with its steps and the working document", a
   const { page } = app;
   await openMain(app, "lang=en");
   await startSketchOnTop(page);
-  const drawn = await page.evaluate(() => (window as unknown as Hooks).__partcraft?.editor?.addRectangle({ x: 0, y: 0 }, { x: 30, y: 20 }));
+  const drawn = await page.evaluate(() => (window as unknown as Hooks).__halfcube?.editor?.addRectangle({ x: 0, y: 0 }, { x: 30, y: 20 }));
   expect(drawn?.ok).toBe(true);
   await expect.poll(() => page.url()).toContain("sketch=f1");
 
@@ -445,7 +445,7 @@ test("an address that names a sketch the document does not have says so in our o
     const dialog = page.getByTestId("failure-dialog");
     await expect(dialog).toBeVisible({ timeout: 30_000 });
     await expect(dialog).toContainText(words[lang].title);
-    await expect(dialog).toContainText("PC-MAIN-006");
+    await expect(dialog).toContainText("HC-MAIN-006");
     await expect(dialog).toContainText(words[lang].text);
     // The technical English line is behind the details and names the same id, so it can be copied.
     await expect(dialog).toContainText("The sketch \"f99\" from the address is not in the document.");

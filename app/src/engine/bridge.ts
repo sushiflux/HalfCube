@@ -3,16 +3,16 @@
 import type { ExitInfo } from "./transport.ts";
 
 /** IPC channel: the page asks the main process to (re)start its engine. */
-export const IPC_START_ENGINE = "partcraft:start-engine";
+export const IPC_START_ENGINE = "halfcube:start-engine";
 /** Channel on which the preload script receives the engine's MessagePort from the main process. */
-export const IPC_ENGINE_PORT = "partcraft:engine-port";
+export const IPC_ENGINE_PORT = "halfcube:engine-port";
 /** IPC channel (synchronous, preload only): the validated setup choices of the installer. */
-export const IPC_SETUP_CHOICES = "partcraft:setup-choices";
+export const IPC_SETUP_CHOICES = "halfcube:setup-choices";
 
 /** IPC channel: the page asks the main process to open an https address in the system browser. */
-export const IPC_OPEN_EXTERNAL = "partcraft:open-external";
+export const IPC_OPEN_EXTERNAL = "halfcube:open-external";
 /** IPC channel: the page asks the main process to open the Chromium licence file that ships with Electron. */
-export const IPC_OPEN_CHROMIUM_LICENCES = "partcraft:open-chromium-licences";
+export const IPC_OPEN_CHROMIUM_LICENCES = "halfcube:open-chromium-licences";
 
 export type StartEngineResult =
   | { ok: true; generation: number }
@@ -23,14 +23,14 @@ export interface EngineBridge {
   /**
    * Asks the main process to (re)start the native engine of this window. A previous engine of the window is killed,
    * a new one spawned, and its MessagePort is then delivered through
-   * window.postMessage({ partcraft: "engine-port", generation }, origin, [port]) by the preload script.
+   * window.postMessage({ halfcube: "engine-port", generation }, origin, [port]) by the preload script.
    */
   startEngine(): Promise<StartEngineResult>;
 }
 
 /** Message the preload script posts to the page together with the transferred MessagePort. */
 export interface EnginePortEnvelope {
-  partcraft: "engine-port";
+  halfcube: "engine-port";
   generation: number;
 }
 

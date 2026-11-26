@@ -1,4 +1,4 @@
-namespace Partcraft.Setup.Ui;
+namespace HalfCube.Setup.Ui;
 
 /// <summary>
 /// A text area of a fixed size that always holds its text COMPLETELY: it wraps, and a text taller than the area scrolls inside it
@@ -11,7 +11,7 @@ namespace Partcraft.Setup.Ui;
 /// </para>
 /// Understands a little Markdown for the licence text: "#"/"##" headings, "- " bullets, **bold** markers are removed.
 /// </summary>
-public sealed class PcScrollText : PcControl
+public sealed class HcScrollText : HcControl
 {
     private const TextFormatFlags MeasureFlags = TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix;
     private const TextFormatFlags DrawFlags = TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix | TextFormatFlags.Left | TextFormatFlags.Top | TextFormatFlags.SingleLine;
@@ -32,7 +32,7 @@ public sealed class PcScrollText : PcControl
     private bool _markdown;
     private Func<Palette, Color> _color = p => p.TextSecondary;
 
-    public PcScrollText()
+    public HcScrollText()
     {
         SetStyle(ControlStyles.Selectable, true);
         TabStop = false;

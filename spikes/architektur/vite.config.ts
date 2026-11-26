@@ -7,7 +7,7 @@ import react from "@vitejs/plugin-react";
 import { defineConfig, type Plugin } from "vite";
 
 const spikeDir = dirname(fileURLToPath(import.meta.url));
-const wasmDir = resolve(spikeDir, process.env.PC_ENGINE_WASM_DIR ?? "_build/engine-wasm");
+const wasmDir = resolve(spikeDir, process.env.HC_ENGINE_WASM_DIR ?? "_build/engine-wasm");
 
 // Dev ports come from the project's fixed block (spike web dev server and preview server).
 const DEV_PORT = 5310;
@@ -23,8 +23,8 @@ const isolationHeaders = {
 
 /** Files served under /engine/ in dev and copied to <outDir>/engine/ in the build. */
 const engineFileMap: Record<string, string> = {
-  "partcraft-engine.mjs": join(wasmDir, "partcraft-engine.mjs"),
-  "partcraft-engine.wasm": join(wasmDir, "partcraft-engine.wasm"),
+  "halfcube-engine.mjs": join(wasmDir, "halfcube-engine.mjs"),
+  "halfcube-engine.wasm": join(wasmDir, "halfcube-engine.wasm"),
   "engine-worker.mjs": join(spikeDir, "client/engine-worker.mjs"),
 };
 
@@ -32,7 +32,7 @@ const mime: Record<string, string> = { ".mjs": "text/javascript", ".wasm": "appl
 
 function engineFiles(): Plugin {
   return {
-    name: "partcraft-engine-files",
+    name: "halfcube-engine-files",
     configureServer(server) {
       server.middlewares.use("/engine/", (req, res, next) => {
         const name = (req.url ?? "").split("?")[0]!.replace(/^\//, "");

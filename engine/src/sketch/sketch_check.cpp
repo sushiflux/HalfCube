@@ -6,7 +6,7 @@
 #include <cmath>
 #include <numbers>
 
-namespace pc::sketch {
+namespace hc::sketch {
 
 namespace {
 
@@ -208,4 +208,4 @@ ResidualReport checkConstraints(const Sketch& s) {
     return report;
 }
 
-} // namespace pc::sketch
+} // namespace hc::sketch

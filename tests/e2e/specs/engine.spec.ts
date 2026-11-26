@@ -74,7 +74,7 @@ test("the engine starts and passes the kernel and solver self-tests of the norma
   expect(result.crossOriginIsolated, "cross-origin isolation (needed for SharedArrayBuffer in the engine worker)").toBe(true);
   expect(result.startup.problem).toBeUndefined();
   expect(result.startup.phase).toBe("ready");
-  expect(result.startup.engine).toBe("partcraft-engine");
+  expect(result.startup.engine).toBe("halfcube-engine");
   expect(result.startup.protocol).toBe(3);
   expect(result.startup.steps.map((s) => `${s.id}:${s.state}`)).toEqual(["engine:done", "kernel:done", "solver:done"]);
   // The loading screen follows these lines: one step after the other, never two at once.

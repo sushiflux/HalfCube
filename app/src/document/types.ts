@@ -1,4 +1,4 @@
-// Types of the stored Partcraft document. They are generated from the protocol source (documentTypes in
+// Types of the stored HalfCube document. They are generated from the protocol source (documentTypes in
 // protocol/engine-protocol.json), so the document the UI holds and the one the engine reads are the same type.
 export type {
   Body,
@@ -10,7 +10,7 @@ export type {
   GeometricConstraint,
   OriginPlaneRef,
   Parameter,
-  PartcraftDocument,
+  HalfCubeDocument,
   PlaneRef,
   ProfileRef,
   Quantity,

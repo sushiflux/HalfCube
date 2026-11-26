@@ -16,7 +16,7 @@ export interface Preferences {
   readonly persistent: boolean;
 }
 
-const keyPrefix = "partcraft.";
+const keyPrefix = "halfcube.";
 
 /** `getStorage` may throw or return undefined: both mean "no storage". */
 export function createPreferences(getStorage: () => PreferenceStorage | undefined): Preferences {

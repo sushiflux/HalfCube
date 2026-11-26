@@ -52,7 +52,7 @@ export class FrameDecoder {
       const magic = view.getUint32(0, true);
       if (magic !== FRAME_MAGIC) {
         const bytes = Array.from(prefix.subarray(0, 4), (b) => b.toString(16).padStart(2, "0")).join(" ");
-        throw new Error(`The frame stream is broken: expected the magic bytes 50 43 45 31 ("PCE1"), got ${bytes}.`);
+        throw new Error(`The frame stream is broken: expected the magic bytes 48 43 45 31 ("HCE1"), got ${bytes}.`);
       }
       const headerBytes = view.getUint32(4, true);
       const payloadBytes = view.getUint32(8, true);

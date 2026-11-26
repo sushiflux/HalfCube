@@ -7,7 +7,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 const { createPdfHost } = require("./pdfjs-host.cjs");
 
-const job = JSON.parse(fs.readFileSync(process.env.PARTCRAFT_JOB_FILE, "utf8"));
+const job = JSON.parse(fs.readFileSync(process.env.HALFCUBE_JOB_FILE, "utf8"));
 app.disableHardwareAcceleration();
 app.setPath("userData", job.userData);
 

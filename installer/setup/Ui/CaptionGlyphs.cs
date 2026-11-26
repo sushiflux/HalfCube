@@ -1,6 +1,6 @@
 using System.Drawing.Drawing2D;
 
-namespace Partcraft.Setup.Ui;
+namespace HalfCube.Setup.Ui;
 
 /// <summary>
 /// The window-command glyphs (minimise, maximise, restore, close, light/dark) of the setup windows, drawn like the Windows caption buttons.

@@ -17,7 +17,7 @@
 #include <string>
 #include <vector>
 
-namespace pc::sketch {
+namespace hc::sketch {
 
 struct FreedomFact {
     // position, rotation, length, direction, radius, point (see the protocol type FreedomFact)
@@ -38,4 +38,4 @@ struct FreedomReport {
 // reported as analysed = false.
 FreedomReport analyseFreedom(const Sketch& solved);
 
-} // namespace pc::sketch
+} // namespace hc::sketch

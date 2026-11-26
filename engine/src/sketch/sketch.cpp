@@ -1,6 +1,6 @@
 #include "sketch/sketch.hpp"
 
-namespace pc::sketch {
+namespace hc::sketch {
 
 namespace {
 
@@ -68,4 +68,4 @@ const Arc* Sketch::arc(const std::string& id) const { return findById(arcs, id);
 bool Sketch::isPoint(const std::string& id) const { return id == kOrigin || point(id) != nullptr; }
 bool Sketch::isLine(const std::string& id) const { return id == kAxisU || id == kAxisV || line(id) != nullptr; }
 
-} // namespace pc::sketch
+} // namespace hc::sketch

@@ -2,7 +2,7 @@ Microsoft Visual C++ Runtime (application-local files)
 
 Copyright © Microsoft Corporation. All rights reserved.
 
-The desktop program ships these Microsoft files unmodified, in the folder of the engine program (partcraft-engine.exe),
+The desktop program ships these Microsoft files unmodified, in the folder of the engine program (halfcube-engine.exe),
 because the engine and the Open CASCADE libraries use the Visual C++ runtime:
 
   vcruntime140.dll
@@ -17,5 +17,5 @@ the "Distributable Code" section of the Microsoft Software License Terms for Vis
 "REDIST list" at https://aka.ms/vs/17/redistribution. Microsoft's description:
 https://learn.microsoft.com/en-us/cpp/windows/redistributing-visual-cpp-files
 
-These files are Microsoft's property and stay under Microsoft's terms. They are not part of Partcraft's own license and are
+These files are Microsoft's property and stay under Microsoft's terms. They are not part of HalfCube's own license and are
 not covered by it.

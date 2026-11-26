@@ -1,9 +1,9 @@
 using System.Diagnostics;
 using System.Globalization;
 using System.Security.Principal;
-using Partcraft.Setup.Localization;
+using HalfCube.Setup.Localization;
 
-namespace Partcraft.Setup;
+namespace HalfCube.Setup;
 
 /// <summary>The choices of the setup window (or the defaults of a headless test install).</summary>
 internal sealed record InstallRequest(string InstallDir, bool StartMenu, bool DesktopShortcut, string Language, bool Dark);
@@ -51,7 +51,7 @@ internal sealed class InstallEngine(SetupLayout layout, Payload payload, Payload
         if (IsElevated()) throw new InstallException(SetupTexts.ErrElevated());
         // The check gets the path as it was given: a relative one is never fully qualified and never accepted
         if (CheckFolder(request.InstallDir) is { } problem) throw new InstallException(problem);
-        var temp = Path.Combine(Path.GetTempPath(), "Partcraft-Setup-" + Guid.NewGuid().ToString("N"));
+        var temp = Path.Combine(Path.GetTempPath(), "HalfCube-Setup-" + Guid.NewGuid().ToString("N"));
         var neededTarget = info.InstalledBytes + 100L * 1024 * 1024;
         var neededTemp = info.SetupBytes + 50L * 1024 * 1024;
         var sameDrive = string.Equals(Path.GetPathRoot(target), Path.GetPathRoot(temp), StringComparison.OrdinalIgnoreCase);
@@ -220,7 +220,7 @@ internal sealed class InstallEngine(SetupLayout layout, Payload payload, Payload
     }
 
     /// <summary>
-    /// <c>%APPDATA%\Partcraft\setup-choices.json</c>: what the user chose in the setup, for the app's first start
+    /// <c>%APPDATA%\HalfCube\setup-choices.json</c>: what the user chose in the setup, for the app's first start
     /// (<c>{ "version": 1, "language": "de"|"en", "colorMode": "light"|"dark" }</c>). Written through a temporary file so the app never
     /// reads half a file.
     /// </summary>
@@ -321,8 +321,8 @@ internal readonly record struct RemoveProgress(float Value, int Step, Msg? Detai
 
 /// <summary>
 /// The removal, without UI: runs the installation's own <c>Update.exe --uninstall --silent</c> (the command Velopack registers as the
-/// quiet uninstall string) and measures the shrinking program folder. Velopack closes a running Partcraft, runs the app's uninstall
-/// hook, removes the shortcuts and the Apps entry and deletes the folder. Projects and settings in %APPDATA%\Partcraft are not touched.
+/// quiet uninstall string) and measures the shrinking program folder. Velopack closes a running HalfCube, runs the app's uninstall
+/// hook, removes the shortcuts and the Apps entry and deletes the folder. Projects and settings in %APPDATA%\HalfCube are not touched.
 /// </summary>
 internal sealed class UninstallEngine(SetupLayout layout)
 {
@@ -337,7 +337,7 @@ internal sealed class UninstallEngine(SetupLayout layout)
         var installed = layout.FindInstalled() ?? throw new InstallException(UninstallTexts.ErrNotFound());
         var folder = installed.Folder;
         var total = Math.Max(1L, await Task.Run(() => InstallEngine.FolderSize(folder), ct));
-        var logFile = Path.Combine(Path.GetTempPath(), "Partcraft-Uninstall-" + Guid.NewGuid().ToString("N") + ".log");
+        var logFile = Path.Combine(Path.GetTempPath(), "HalfCube-Uninstall-" + Guid.NewGuid().ToString("N") + ".log");
         progress.Report(new RemoveProgress(0.02f, 0));
 
         var start = new ProcessStartInfo(installed.Updater)

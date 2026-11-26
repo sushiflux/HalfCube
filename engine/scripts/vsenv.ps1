@@ -18,7 +18,7 @@ if (-not ($env:VSCMD_VER -and (Get-Command cl.exe -ErrorAction SilentlyContinue)
         $i = $line.IndexOf('=')
         if ($i -gt 0) { Set-Item -Path ("Env:" + $line.Substring(0, $i)) -Value $line.Substring($i + 1) }
     }
-    $script:PcVsRoot = $vsRoot
+    $script:HcVsRoot = $vsRoot
 }
 if (-not (Get-Command cmake -ErrorAction SilentlyContinue) -or -not (Get-Command ninja -ErrorAction SilentlyContinue)) {
     $vswhere = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio\Installer\vswhere.exe'

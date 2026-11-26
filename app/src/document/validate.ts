@@ -2,7 +2,7 @@
 // order (the order of the type description), so the same document always gives the same text: stable files,
 // readable diffs, and an engine cache key that does not depend on how an object was built.
 import { DOCUMENT_SCHEMA } from "./generated/document-schema.ts";
-import type { PartcraftDocument } from "./types.ts";
+import type { HalfCubeDocument } from "./types.ts";
 
 interface Schema {
   $ref?: string;
@@ -19,7 +19,7 @@ interface Schema {
 }
 
 const DEFS = (DOCUMENT_SCHEMA as unknown as { $defs: Record<string, Schema> }).$defs;
-const ROOT: Schema = { $ref: "#/$defs/PartcraftDocument" };
+const ROOT: Schema = { $ref: "#/$defs/HalfCubeDocument" };
 
 function resolve(schema: Schema): Schema {
   let s = schema;
@@ -98,7 +98,7 @@ export function documentProblems(doc: unknown): string[] {
 }
 
 /** Throws with all violations when the document does not match the schema. */
-export function assertValidDocument(doc: unknown): asserts doc is PartcraftDocument {
+export function assertValidDocument(doc: unknown): asserts doc is HalfCubeDocument {
   const problems = documentProblems(doc);
   if (problems.length) {
     throw new Error(`The document is not valid (${problems.length} problem${problems.length === 1 ? "" : "s"}): ${problems.join(" ")}`);
@@ -127,11 +127,11 @@ function canonical(value: unknown, schema: Schema): unknown {
 }
 
 /** The document with its keys in the order of the type description (a new object; the input is not changed). */
-export function canonicalDocument(doc: PartcraftDocument): PartcraftDocument {
-  return canonical(doc, ROOT) as PartcraftDocument;
+export function canonicalDocument(doc: HalfCubeDocument): HalfCubeDocument {
+  return canonical(doc, ROOT) as HalfCubeDocument;
 }
 
 /** JSON text of the document with the fixed key order (history.json, autosave). */
-export function serializeDocument(doc: PartcraftDocument, indent = 2): string {
+export function serializeDocument(doc: HalfCubeDocument, indent = 2): string {
   return JSON.stringify(canonicalDocument(doc), null, indent);
 }

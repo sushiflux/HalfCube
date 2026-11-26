@@ -113,13 +113,13 @@ export function LoadingScreen({ progress, onAction, onHandoverDone }: LoadingScr
     : t("common.stepOf", { current: Math.min(index + 1, total), total });
 
   return (
-    <div ref={root} className="pc-stage" aria-busy={!complete && !error} data-testid="loading-screen">
-      <div ref={bg} className="pc-stage-bg" />
-      <div className="pc-stage-inner">
-      <div className="pc-halo" data-fade />
+    <div ref={root} className="hc-stage" aria-busy={!complete && !error} data-testid="loading-screen">
+      <div ref={bg} className="hc-stage-bg" />
+      <div className="hc-stage-inner">
+      <div className="hc-halo" data-fade />
 
-      <div ref={logo} className="pc-logo">
-        <svg viewBox={`0 0 ${logoViewBox} ${logoViewBox}`} role="img" aria-label="Partcraft" className="pc-logo-intro">
+      <div ref={logo} className="hc-logo">
+        <svg viewBox={`0 0 ${logoViewBox} ${logoViewBox}`} role="img" aria-label="HalfCube" className="hc-logo-intro">
           <defs>
             <mask id={maskId} maskUnits="userSpaceOnUse" x="0" y="0" width={logoViewBox} height={logoViewBox} style={{ maskType: "alpha" }}>
               <image href={logoSources.large} width={logoViewBox} height={logoViewBox} />
@@ -132,26 +132,26 @@ export function LoadingScreen({ progress, onAction, onHandoverDone }: LoadingScr
           </defs>
           <image href={logoSources.large} width={logoViewBox} height={logoViewBox} />
           <g mask={`url(#${maskId})`}>
-            <rect className="pc-sweep" x="0" y="0" width="520" height={logoViewBox} fill={`url(#${gradientId})`} />
+            <rect className="hc-sweep" x="0" y="0" width="520" height={logoViewBox} fill={`url(#${gradientId})`} />
           </g>
         </svg>
       </div>
 
-      <div className="pc-word" data-fade>
+      <div className="hc-word" data-fade>
         <Wordmark size="calc(68 * var(--u))" small={false} />
       </div>
-      <div className="pc-tag" data-fade>
+      <div className="hc-tag" data-fade>
         {t("loading.earlyAccess")}
       </div>
 
-      <div className="pc-vers mono" data-fade>
+      <div className="hc-vers mono" data-fade>
         {currentVersion().display}
       </div>
 
-      <div className="pc-slot" data-fade>
-        <div className="pc-slot-load" data-hidden={error ? "true" : "false"} aria-hidden={error ? true : undefined}>
+      <div className="hc-slot" data-fade>
+        <div className="hc-slot-load" data-hidden={error ? "true" : "false"} aria-hidden={error ? true : undefined}>
           <div
-            className="pc-track"
+            className="hc-track"
             role="progressbar"
             aria-label={t("loading.progress")}
             aria-valuemin={0}
@@ -159,27 +159,27 @@ export function LoadingScreen({ progress, onAction, onHandoverDone }: LoadingScr
             aria-valuenow={percent}
           >
             <div
-              className="pc-fill"
+              className="hc-fill"
               style={{
                 width: `${(fraction * 100).toFixed(2)}%`,
                 ["--head" as string]: fraction > 0.002 && fraction < 0.999 ? 1 : 0,
               }}
             />
           </div>
-          <div key={lineKey} className="pc-stepline pc-fadein" role="status">
+          <div key={lineKey} className="hc-stepline hc-fadein" role="status">
             {total > 0 ? <StepIcon state={stepIcon} /> : null}
             <span>{lineText}</span>
           </div>
-          <div className="pc-stepsub mono">{total > 0 ? `${counter}${detail}` : ""}</div>
+          <div className="hc-stepsub mono">{total > 0 ? `${counter}${detail}` : ""}</div>
         </div>
         {error ? (
-          <div className="pc-slot-error">
+          <div className="hc-slot-error">
             <ErrorNotice
               headline={error.headline}
               code={error.code}
               details={error.details}
               actions={actionButtons(error.actions, onAction)}
-              detailsMaxHeight="var(--pc-details-max)"
+              detailsMaxHeight="var(--hc-details-max)"
               defaultOpen={false}
               className="mx-auto"
             />

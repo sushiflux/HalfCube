@@ -651,7 +651,7 @@ void Ctx;
 
 const doc = {
   format: 1,
-  title: 'Partcraft solver test: solver-neutral case catalogue',
+  title: 'HalfCube solver test: solver-neutral case catalogue',
   units: 'millimetres and radians; right-handed, y up; arcs run counter-clockwise from start to end',
   tolerances: { length: 1e-6, angle: 1e-6, curvature: 1e-5 },
   cases,

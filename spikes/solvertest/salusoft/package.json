@@ -1,5 +1,5 @@
 {
-  "name": "partcraft-solvertest-salusoft",
+  "name": "halfcube-solvertest-salusoft",
   "version": "0.0.0",
   "private": true,
   "description": "Solver test runner for @salusoft89/planegcs (throwaway spike, not part of the product)",

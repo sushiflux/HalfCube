@@ -70,7 +70,7 @@ export class EngineHost {
     // The UI went away (reload, window closed): the engine has nobody to serve.
     port1.on("close", () => this.end(r, null));
     port1.start();
-    target.postMessage("partcraft:engine-port", generation, [port2]);
+    target.postMessage("halfcube:engine-port", generation, [port2]);
     this.opts.log?.(`engine ${generation} started (pid ${transport.pid})`);
     return { ok: true, generation };
   }

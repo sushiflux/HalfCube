@@ -8,7 +8,7 @@ export type QuantityKind = "length" | "angle";
 export type QuantityErrorCode =
   | "empty" // nothing typed
   | "notANumber" // no number at the start, or a malformed one ("1.2.3", "1,2.5")
-  | "unknownUnit" // a unit Partcraft does not know ("40 yd")
+  | "unknownUnit" // a unit HalfCube does not know ("40 yd")
   | "wrongUnit" // a known unit of the other kind ("30 mm" for an angle)
   | "notPositive" // zero or negative where only positive values make sense (lengths of lines, diameters)
   | "zero" // zero where only the sign is free (extrude distance)

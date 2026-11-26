@@ -2,7 +2,7 @@
 // testable. One component for now (the root); the structure already has the component as its top row, so more of them
 // slot in later. Origin planes and axes are fixed: they are not stored in the document.
 import type { StepStatus } from "../../engine/generated/protocol.ts";
-import type { PartcraftDocument, OriginPlane } from "../../document/types.ts";
+import type { HalfCubeDocument, OriginPlane } from "../../document/types.ts";
 
 export type TreeRowKind = "component" | "origin" | "plane" | "axis" | "folder" | "sketch" | "body";
 export type StepState = "ok" | "warning" | "error" | "skipped";
@@ -33,7 +33,7 @@ export interface TreeText {
 }
 
 export interface TreeInput {
-  doc: PartcraftDocument;
+  doc: HalfCubeDocument;
   steps: readonly StepStatus[];
   /** Ids of folders and rows that are open. Rows that are not listed are closed. */
   expanded: ReadonlySet<string>;

@@ -1,7 +1,7 @@
 // Fixtures of the suite. One spec runs unchanged against both targets:
 //   browser   the web build in a Chromium browser. Default: the official Playwright Docker image, reached with
-//             Playwright's remote connection (PARTCRAFT_E2E_BROWSER=docker, PARTCRAFT_E2E_WS). Marked fallback:
-//             an installed Chrome, Brave or Edge, headless (PARTCRAFT_E2E_BROWSER=local).
+//             Playwright's remote connection (HALFCUBE_E2E_BROWSER=docker, HALFCUBE_E2E_WS). Marked fallback:
+//             an installed Chrome, Brave or Edge, headless (HALFCUBE_E2E_BROWSER=local).
 //   electron  the real Electron program, window inactive, own user data folder.
 // `app` is the page under test plus the few things that differ between the targets.
 import { existsSync, mkdirSync, rmSync } from "node:fs";
@@ -44,14 +44,14 @@ interface BrowserHandle {
 
 function localBrowserPath(): string {
   const candidates = [
-    process.env.PARTCRAFT_E2E_CHROME,
+    process.env.HALFCUBE_E2E_CHROME,
     "C:/Program Files/Google/Chrome/Application/chrome.exe",
     "C:/Program Files/BraveSoftware/Brave-Browser/Application/brave.exe",
     "C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe",
   ].filter((c): c is string => typeof c === "string" && c !== "");
   const found = candidates.find((c) => existsSync(c));
   if (!found) {
-    throw new Error(`PARTCRAFT_E2E_BROWSER=local needs an installed Chrome, Brave or Edge (or PARTCRAFT_E2E_CHROME). Looked for: ${candidates.join("; ")}`);
+    throw new Error(`HALFCUBE_E2E_BROWSER=local needs an installed Chrome, Brave or Edge (or HALFCUBE_E2E_CHROME). Looked for: ${candidates.join("; ")}`);
   }
   return found;
 }
@@ -94,7 +94,7 @@ export const test = base.extend<{ app: AppUnderTest }, { target: Target; browser
       let browser: Browser;
       let where: string;
       if (mode === "docker") {
-        const ws = process.env.PARTCRAFT_E2E_WS ?? "ws://127.0.0.1:3100/";
+        const ws = process.env.HALFCUBE_E2E_WS ?? "ws://127.0.0.1:3100/";
         browser = await chromium.connect(ws, { timeout: 30_000 });
         where = "official Playwright Docker image";
       } else {
@@ -166,7 +166,7 @@ export const test = base.extend<{ app: AppUnderTest }, { target: Target; browser
         readClipboard: () => page.evaluate(() => navigator.clipboard.readText()),
         crashEngine: () =>
           page.evaluate(async () => {
-            const session = (window as unknown as { __partcraftSession?: { client: { request(c: unknown): { reply: Promise<unknown> } } } }).__partcraftSession;
+            const session = (window as unknown as { __halfcubeSession?: { client: { request(c: unknown): { reply: Promise<unknown> } } } }).__halfcubeSession;
             if (!session) return false;
             await session.client.request({ type: "diagnostics.crash", mode: "intdiv" }).reply.catch(() => undefined);
             return true;
@@ -183,7 +183,7 @@ export const test = base.extend<{ app: AppUnderTest }, { target: Target; browser
     const description = await electron.evaluate(() => `electron ${process.versions.electron} (chrome ${process.versions.chrome})`);
     testInfo.annotations.push({ type: "target", description });
     watch(page);
-    const origin = "app://partcraft";
+    const origin = "app://halfcube";
     const resize = (width: number, height: number) =>
       electron.evaluate(
         ({ BrowserWindow }, size) => {

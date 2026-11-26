@@ -2,8 +2,8 @@
 # Runs inside the emscripten/emsdk container started by engine/scripts/build-wasm.ps1 (or by CI directly).
 # Expects:  /work/src        repository subset: engine/ (sources, cmake, _deps without occt-src), version.txt,
 #                            third_party/manifest.json
-#           /work/occt-src   OCCT sources, unless /work/occt-install/.partcraft-occt exists (prebuilt static OCCT)
-# Produces: /work/out/partcraft-engine.mjs, partcraft-engine.wasm, licenses/..., build logs and times.
+#           /work/occt-src   OCCT sources, unless /work/occt-install/.halfcube-occt exists (prebuilt static OCCT)
+# Produces: /work/out/halfcube-engine.mjs, halfcube-engine.wasm, licenses/..., build logs and times.
 # Environment: JOBS (default 8), TEST_COMMANDS=1 builds the test commands diagnostics.crash and diagnostics.hang.
 set -euo pipefail
 JOBS="${JOBS:-8}"
@@ -24,7 +24,7 @@ echo "generator: $GEN"
 #                           WebAssembly and does not link with -fwasm-exceptions.
 OCCT_CXX_FLAGS="-include mutex -fwasm-exceptions -UOCC_CONVERT_SIGNALS"
 OCCT_STAMP="OCCT 8.0.2 static wasm; flags: $OCCT_CXX_FLAGS"
-if [ -f /work/occt-install/.partcraft-occt ] && [ "$(cat /work/occt-install/.partcraft-occt)" = "$OCCT_STAMP" ]; then
+if [ -f /work/occt-install/.halfcube-occt ] && [ "$(cat /work/occt-install/.halfcube-occt)" = "$OCCT_STAMP" ]; then
   echo "using the prebuilt OCCT in /work/occt-install"
   echo "occt_build_s=0.0" > /work/out/occt-times.txt
 else
@@ -44,7 +44,7 @@ else
   ( cd /work/occt-build && "${BUILD_TOOL[@]}" ) > /work/out/occt-build.log 2>&1 || { tail -60 /work/out/occt-build.log; exit 1; }
   ( cd /work/occt-build && cmake --install . ) > /work/out/occt-install.log
   t1=$(date +%s.%N)
-  echo "$OCCT_STAMP" > /work/occt-install/.partcraft-occt
+  echo "$OCCT_STAMP" > /work/occt-install/.halfcube-occt
   awk "BEGIN{printf \"occt_build_s=%.1f\n\", $t1-$t0}" | tee /work/out/occt-times.txt
   # Proof that the signal macro really ends up undefined: -U must come after OCCT's own -D on the command line.
   flags=$(find /work/occt-build -path '*TKernel*' -name flags.make | head -1)
@@ -56,13 +56,13 @@ TEST=OFF; [ "${TEST_COMMANDS:-0}" = 1 ] && TEST=ON
 t2=$(date +%s.%N)
 emcmake cmake -S /work/src/engine -B /work/engine-build -G "$GEN" -DCMAKE_BUILD_TYPE=Release \
   -DOpenCASCADE_DIR="$CFG" -DCMAKE_FIND_ROOT_PATH_MODE_PACKAGE=BOTH \
-  -DPARTCRAFT_BUILD_TESTS=OFF -DPARTCRAFT_TEST_COMMANDS=$TEST > /work/out/engine-configure.log \
+  -DHALFCUBE_BUILD_TESTS=OFF -DHALFCUBE_TEST_COMMANDS=$TEST > /work/out/engine-configure.log \
   || { cat /work/out/engine-configure.log; exit 1; }
 ( cd /work/engine-build && "${BUILD_TOOL[@]}" ) > /work/out/engine-build.log 2>&1 || { cat /work/out/engine-build.log; exit 1; }
 t3=$(date +%s.%N)
 awk "BEGIN{printf \"engine_build_s=%.1f\n\", $t3-$t2}" | tee /work/out/engine-times.txt
 
-cp /work/engine-build/bin/partcraft-engine.mjs /work/engine-build/bin/partcraft-engine.wasm /work/out/
+cp /work/engine-build/bin/halfcube-engine.mjs /work/engine-build/bin/halfcube-engine.wasm /work/out/
 
 # Licence texts of the Emscripten runtime parts linked into the module (listed in third_party/manifest.json).
 EM=/emsdk/upstream/emscripten
@@ -72,6 +72,6 @@ cp "$EM/LICENSE" "$lic/emscripten/LICENSE"
 for part in libcxx libcxxabi libunwind compiler-rt; do cp "$EM/system/lib/$part/LICENSE.TXT" "$lic/$part/LICENSE.TXT"; done
 cp "$EM/system/lib/libc/musl/COPYRIGHT" "$lic/musl/COPYRIGHT"
 
-stat -c "%s %n" /work/out/partcraft-engine.mjs /work/out/partcraft-engine.wasm
-gzip -9 -c /work/out/partcraft-engine.wasm | wc -c | awk '{print "wasm_gzip_bytes=" $1}'
+stat -c "%s %n" /work/out/halfcube-engine.mjs /work/out/halfcube-engine.wasm
+gzip -9 -c /work/out/halfcube-engine.wasm | wc -c | awk '{print "wasm_gzip_bytes=" $1}'
 echo done

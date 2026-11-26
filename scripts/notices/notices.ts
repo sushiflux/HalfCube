@@ -1,4 +1,4 @@
-// Builds the third-party list of the info view ("Über Partcraft", tab Lizenzen) from the real components.
+// Builds the third-party list of the info view ("Über HalfCube", tab Lizenzen) from the real components.
 //
 // Inputs (all read, nothing invented):
 //   third_party/notices.sources.json   hand-maintained facts: groups, purposes, labels, pinned values with cross-checks
@@ -276,9 +276,9 @@ export function scanCopyrights(texts: Iterable<string>): string[] {
 function occtToolkits(ctx: Context): string[] {
   const cmake = ctx.text("engine/CMakeLists.txt", "OCCT toolkits");
   if (cmake === null) return [];
-  const match = /set\(\s*PC_OCCT_LIBS\s+([^)]*)\)/.exec(cmake);
+  const match = /set\(\s*HC_OCCT_LIBS\s+([^)]*)\)/.exec(cmake);
   const names = match?.[1]?.split(/\s+/).filter(Boolean) ?? [];
-  if (names.length === 0) ctx.add("engine/CMakeLists.txt: no set(PC_OCCT_LIBS ...) found, the OCCT toolkits cannot be read.");
+  if (names.length === 0) ctx.add("engine/CMakeLists.txt: no set(HC_OCCT_LIBS ...) found, the OCCT toolkits cannot be read.");
   return names;
 }
 
@@ -709,7 +709,7 @@ export interface ThirdPartyEntry {
   copyright: string[];
   /** URL of the source code. */
   source: string;
-  /** One short line: what Partcraft uses it for. */
+  /** One short line: what HalfCube uses it for. */
   purpose: { de: string; en: string };
   platforms: ("desktop" | "browser")[];
   /** Path relative to the app's public root, e.g. "licenses/occt.txt"; null when the component ships no text of its own. */

@@ -1,6 +1,6 @@
 using System.Drawing.Imaging;
 
-namespace Partcraft.Setup.Ui;
+namespace HalfCube.Setup.Ui;
 
 /// <summary>
 /// Renders a control with its children in their real stacking order. <see cref="Control.DrawToBitmap"/> paints child controls in

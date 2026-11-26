@@ -60,7 +60,7 @@ export function TitleBar({ arrived, documentName, unsaved, canUndo, canRedo, und
         <BarButton label={t("main.title.undo")} tip={!canUndo && undoLimit ? undoLimit : t("main.title.undo")} glyph="undo" onClick={onUndo} disabled={!canUndo} testId="undo" />
         <BarButton label={t("main.title.redo")} glyph="redo" onClick={onRedo} disabled={!canRedo} testId="redo" />
         <span aria-hidden="true" className="mx-1.5 h-5 w-px bg-line" />
-        {/* The one entry of the help area so far; it opens "About Partcraft" directly (a menu with a single entry would only cost a click). */}
+        {/* The one entry of the help area so far; it opens "About HalfCube" directly (a menu with a single entry would only cost a click). */}
         <BarButton label={t("main.title.about")} glyph="info" onClick={() => aboutStore.open()} testId="about-button" />
         <BarButton label={t("main.title.settings")} glyph="settings" onClick={onSettings} testId="settings-button" />
       </div>

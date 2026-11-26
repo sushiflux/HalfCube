@@ -7,7 +7,7 @@
 #include <map>
 #include <string>
 
-namespace pc::sketch {
+namespace hc::sketch {
 
 // Current value of a dimension constraint (Distance, LineAngle, Radius, Diameter) in the given geometry.
 // Throws SketchError for other constraint types or unknown references.
@@ -23,4 +23,4 @@ struct ResidualReport {
 // on its circle.
 ResidualReport checkConstraints(const Sketch& sketch);
 
-} // namespace pc::sketch
+} // namespace hc::sketch

@@ -20,7 +20,7 @@
 #include <utility>
 #include <vector>
 
-namespace pc::model {
+namespace hc::model {
 
 struct ProfileFace {
     TopoDS_Face face;
@@ -99,4 +99,4 @@ MeshedBody meshBody(const BodyShape& body, const std::string& bodyId, const std:
 inline constexpr double kMeshDeflection = 0.05;
 inline constexpr double kMeshAngleDeg = 20.0;
 
-} // namespace pc::model
+} // namespace hc::model

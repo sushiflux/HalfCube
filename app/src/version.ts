@@ -50,7 +50,7 @@ export function parseVersionFile(content: string): string {
   return parseVersionId(line);
 }
 
-/** Channel from the value of PARTCRAFT_CHANNEL. Missing or empty means dev. */
+/** Channel from the value of HALFCUBE_CHANNEL. Missing or empty means dev. */
 export function parseChannel(raw: string | undefined): Channel {
   const value = (raw ?? "").trim().toLowerCase();
   if (value === "") return "dev";

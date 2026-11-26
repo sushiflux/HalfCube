@@ -13,10 +13,10 @@ import type { BodyResult, EngineMessage, Recipe } from "../protocol/protocol.ts"
 export const root = new URL("../", import.meta.url);
 const fromRoot = (p: string) => fileURLToPath(new URL(p, root));
 
-/** Native engine; override with PC_ENGINE_EXE. */
-export const engineExe = process.env.PC_ENGINE_EXE ?? fromRoot("_build/engine-win/partcraft-engine.exe");
-/** WebAssembly engine module; override with PC_ENGINE_WASM (path of partcraft-engine.mjs). */
-export const engineWasm = process.env.PC_ENGINE_WASM ?? fromRoot("_build/engine-wasm/partcraft-engine.mjs");
+/** Native engine; override with HC_ENGINE_EXE. */
+export const engineExe = process.env.HC_ENGINE_EXE ?? fromRoot("_build/engine-win/halfcube-engine.exe");
+/** WebAssembly engine module; override with HC_ENGINE_WASM (path of halfcube-engine.mjs). */
+export const engineWasm = process.env.HC_ENGINE_WASM ?? fromRoot("_build/engine-wasm/halfcube-engine.mjs");
 export const workerScript = new URL("client/engine-worker.mjs", root);
 
 export type Kind = "native" | "wasm";

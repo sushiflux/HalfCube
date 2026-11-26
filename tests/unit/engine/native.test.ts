@@ -100,8 +100,8 @@ describeUnless(skipUnlessNativeTesting, "native engine specifics", () => {
   });
 
   it("reports a missing program with the path", async () => {
-    const missing = new NativeTransport({ exe: "C:\\does-not-exist\\partcraft-engine.exe" });
-    await expect(missing.start()).rejects.toThrow(/The engine could not be started \(C:\\does-not-exist\\partcraft-engine\.exe\): spawn .* ENOENT/);
+    const missing = new NativeTransport({ exe: "C:\\does-not-exist\\halfcube-engine.exe" });
+    await expect(missing.start()).rejects.toThrow(/The engine could not be started \(C:\\does-not-exist\\halfcube-engine\.exe\): spawn .* ENOENT/);
   });
 });
 

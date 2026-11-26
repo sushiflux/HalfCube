@@ -1913,11 +1913,11 @@ test.describe("extrude command", () => {
     noErrors(app);
   });
 
-  // Screenshots for the review (only with PARTCRAFT_U3A_SHOTS=1): rest, hover, selection, preview and arrow in light and dark.
+  // Screenshots for the review (only with HALFCUBE_U3A_SHOTS=1): rest, hover, selection, preview and arrow in light and dark.
   test("screenshots of the states", async ({ app }) => {
-    test.skip(process.env.PARTCRAFT_U3A_SHOTS !== "1" || app.target !== "browser", "set PARTCRAFT_U3A_SHOTS=1 to write the screenshots (browser project)");
+    test.skip(process.env.HALFCUBE_U3A_SHOTS !== "1" || app.target !== "browser", "set HALFCUBE_U3A_SHOTS=1 to write the screenshots (browser project)");
     const { page } = app;
-    const dir = process.env.PARTCRAFT_SHOTS_DIR ?? join(process.cwd(), "_build", "screenshots");
+    const dir = process.env.HALFCUBE_SHOTS_DIR ?? join(process.cwd(), "_build", "screenshots");
     mkdirSync(dir, { recursive: true });
     for (const [mode, name] of [["light", "hell"], ["dark", "dunkel"]] as const) {
       await openExtrudeDemo(app, { mode, distance: 0, panel: false });
@@ -1951,13 +1951,13 @@ test.describe("extrude command", () => {
   });
 });
 
-// Screenshots of the origin planes and axes for the review (only with PARTCRAFT_SHOTS=<name>, Electron project): a typical case:
+// Screenshots of the origin planes and axes for the review (only with HALFCUBE_SHOTS=<name>, Electron project): a typical case:
 // a new sketch with an existing body and sketch in the view. The names read ebenen-<name>-... and achsen-<name>-... (name: vorher, nachher).
 test("screenshots of the origin planes and axes", async ({ app }) => {
-  const name = process.env.PARTCRAFT_SHOTS ?? "";
-  test.skip(name === "" || app.target !== "electron", "set PARTCRAFT_SHOTS=vorher|nachher to write the screenshots (Electron project)");
+  const name = process.env.HALFCUBE_SHOTS ?? "";
+  test.skip(name === "" || app.target !== "electron", "set HALFCUBE_SHOTS=vorher|nachher to write the screenshots (Electron project)");
   const { page } = app;
-  const dir = process.env.PARTCRAFT_SHOTS_DIR ?? join(process.cwd(), "_build", "screenshots");
+  const dir = process.env.HALFCUBE_SHOTS_DIR ?? join(process.cwd(), "_build", "screenshots");
   mkdirSync(dir, { recursive: true });
   const host = page.getByTestId("viewport-host");
   for (const [mode, label] of [["light", "hell"], ["dark", "dunkel"]] as const) {

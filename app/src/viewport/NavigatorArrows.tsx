@@ -50,7 +50,7 @@ function TurnGlyph({ direction }: { direction: TurnDirection }) {
   const head = `${cx - r},${cy + 3.2} ${cx - r - 4.4},${cy - 2.2} ${cx - r + 4.4},${cy - 2.2}`;
   const body = (
     <>
-      <g className="pc-arrow-halo" style={{ stroke: "var(--c-viewport)", fill: "var(--c-viewport)" }}>
+      <g className="hc-arrow-halo" style={{ stroke: "var(--c-viewport)", fill: "var(--c-viewport)" }}>
         <path d={arc} fill="none" strokeWidth={4.6} strokeLinecap="round" />
         <polygon points={head} strokeWidth={3} strokeLinejoin="round" />
       </g>
@@ -73,7 +73,7 @@ function ChevronGlyph({ direction }: { direction: TipDirection }) {
   return (
     <svg viewBox="0 0 24 24" width={22} height={22} aria-hidden="true">
       <g transform={`rotate(${rotate} 12 12)`}>
-        <path className="pc-arrow-halo" d={d} fill="none" strokeWidth={5.4} strokeLinecap="round" strokeLinejoin="round" style={{ stroke: "var(--c-viewport)" }} />
+        <path className="hc-arrow-halo" d={d} fill="none" strokeWidth={5.4} strokeLinecap="round" strokeLinejoin="round" style={{ stroke: "var(--c-viewport)" }} />
         <path d={d} fill="none" stroke="currentColor" strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round" />
       </g>
     </svg>
@@ -146,7 +146,7 @@ export function NavigatorArrows({ viewport, goal, box }: NavigatorArrowsProps) {
                 aria-keyshortcuts={spec.kind === "turn" ? `Shift+Arrow${spec.direction === "left" ? "Left" : "Right"}` : `Control+Shift+Arrow${spec.direction[0]!.toUpperCase()}${spec.direction.slice(1)}`}
                 tabIndex={current === null ? -1 : 0}
                 onClick={() => (spec.kind === "turn" ? viewport.turnView(spec.direction) : viewport.tipView(spec.direction))}
-                className="group grid size-full hover:[&_.pc-arrow-halo]:opacity-0 cursor-pointer place-items-center rounded-ctl text-muted transition-colors hover:bg-primary-soft hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-primary active:scale-95 motion-reduce:transition-none motion-reduce:active:scale-100"
+                className="group grid size-full hover:[&_.hc-arrow-halo]:opacity-0 cursor-pointer place-items-center rounded-ctl text-muted transition-colors hover:bg-primary-soft hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-primary active:scale-95 motion-reduce:transition-none motion-reduce:active:scale-100"
               >
                 {spec.kind === "turn" ? <TurnGlyph direction={spec.direction} /> : <ChevronGlyph direction={spec.direction} />}
               </button>

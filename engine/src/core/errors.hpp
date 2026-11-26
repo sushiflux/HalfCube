@@ -5,7 +5,7 @@
 #include <stdexcept>
 #include <string>
 
-namespace pc {
+namespace hc {
 
 // A failure with a stable protocol error code (protocol::err::*) and a complete message written by the engine.
 // detail carries raw technical text (exception type and text) when there is one.
@@ -31,4 +31,4 @@ using CancelCheck = std::function<bool()>;
 // Throws EngineError with code "cancelled" when cancelled() is true. what names the interrupted work.
 void throwIfCancelled(const CancelCheck& cancelled, const std::string& what);
 
-} // namespace pc
+} // namespace hc

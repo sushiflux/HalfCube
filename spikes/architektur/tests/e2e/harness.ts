@@ -3,10 +3,10 @@
 // sees (page text, canvas pixels, real mouse events) and what the operating system shows (engine processes).
 //
 // Environment:
-//   PC_BROWSER_EXE      Chromium-based browser for the web page (default: first of Chrome, Edge, Brave found)
-//   PC_E2E_EVIDENCE     folder for screenshots and logs (default: _build/e2e-evidence)
-//   PC_E2E_HEADED=1     show the browser window (default: headless)
-//   PC_E2E_WINDOW       Electron window in test runs: "inactive" (default: shown without taking the focus) or "hidden"
+//   HC_BROWSER_EXE      Chromium-based browser for the web page (default: first of Chrome, Edge, Brave found)
+//   HC_E2E_EVIDENCE     folder for screenshots and logs (default: _build/e2e-evidence)
+//   HC_E2E_HEADED=1     show the browser window (default: headless)
+//   HC_E2E_WINDOW       Electron window in test runs: "inactive" (default: shown without taking the focus) or "hidden"
 //                      (never shown; Playwright screenshots of a hidden Electron window time out, so most tests need "inactive")
 import { spawn, spawnSync, type ChildProcess } from "node:child_process";
 import { existsSync, mkdirSync, writeFileSync } from "node:fs";
@@ -16,7 +16,7 @@ import { fileURLToPath } from "node:url";
 import { _electron, chromium, type Browser, type BrowserContext, type ElectronApplication, type Page } from "playwright-core";
 
 export const root = fileURLToPath(new URL("../../", import.meta.url));
-export const evidenceDir = process.env.PC_E2E_EVIDENCE ?? join(root, "_build/e2e-evidence");
+export const evidenceDir = process.env.HC_E2E_EVIDENCE ?? join(root, "_build/e2e-evidence");
 export const PREVIEW_PORT = 5311;
 export const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
@@ -60,7 +60,7 @@ export function enginesOf(ancestor: number): ProcInfo[] {
 /** Native engine processes, with their parents (Windows). */
 export function engineProcesses(): ProcInfo[] {
   const ps =
-    "Get-CimInstance Win32_Process -Filter \"Name='partcraft-engine.exe'\" | " +
+    "Get-CimInstance Win32_Process -Filter \"Name='halfcube-engine.exe'\" | " +
     "ForEach-Object { \"$($_.ProcessId)|$($_.ParentProcessId)|$($_.CommandLine)\" }";
   const r = spawnSync("powershell", ["-NoProfile", "-Command", ps], { encoding: "utf8" });
   return r.stdout
@@ -137,8 +137,8 @@ export async function launchDesktop(opts: LaunchOptions = {}): Promise<Launched>
     env: {
       ...(process.env as Record<string, string>),
       // The window must never take the focus away from whoever is working on this machine.
-      PC_SPIKE_TEST_WINDOW: process.env.PC_E2E_WINDOW ?? "inactive",
-      ...(opts.query ? { PC_SPIKE_QUERY: opts.query } : {}),
+      HC_SPIKE_TEST_WINDOW: process.env.HC_E2E_WINDOW ?? "inactive",
+      ...(opts.query ? { HC_SPIKE_QUERY: opts.query } : {}),
       ...opts.env,
     },
   });
@@ -161,8 +161,8 @@ const browserCandidates = [
 ];
 
 export function browserExe(): string {
-  const exe = process.env.PC_BROWSER_EXE ?? browserCandidates.find((p) => existsSync(p));
-  if (!exe) throw new Error("Set PC_BROWSER_EXE to a Chromium-based browser for the web tests.");
+  const exe = process.env.HC_BROWSER_EXE ?? browserCandidates.find((p) => existsSync(p));
+  if (!exe) throw new Error("Set HC_BROWSER_EXE to a Chromium-based browser for the web tests.");
   return exe;
 }
 
@@ -197,7 +197,7 @@ export async function launchWeb(opts: LaunchOptions = {}): Promise<Launched> {
   await startPreview();
   const browser = await chromium.launch({
     executablePath: browserExe(),
-    headless: process.env.PC_E2E_HEADED !== "1",
+    headless: process.env.HC_E2E_HEADED !== "1",
     args: opts.args ?? [],
   });
   sharedBrowser = browser;

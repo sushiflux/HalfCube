@@ -78,12 +78,12 @@ export function buildScenario(name: string, lang: Language): Scenario | undefine
   ];
 
   const engineMissing = (): LoadingError => ({
-    headline: L("Engine konnte nicht gestartet werden: partcraft-engine.exe fehlt", "The engine could not be started: partcraft-engine.exe is missing"),
-    code: "PC-ENGINE-001",
+    headline: L("Engine konnte nicht gestartet werden: halfcube-engine.exe fehlt", "The engine could not be started: halfcube-engine.exe is missing"),
+    code: "HC-ENGINE-001",
     details: [
-      { kind: "text", text: L("Partcraft startet die Engine als eigenen Prozess, damit ein Absturz der Geometrieberechnung nie die Oberfläche mitreißt. Die Programmdatei der Engine wurde nicht gefunden:", "Partcraft runs the engine as a separate process so a crash in the geometry never takes the interface down with it. The engine program file was not found:") },
-      { kind: "code", text: "%LOCALAPPDATA%\\Partcraft\\current\\resources\\engine\\partcraft-engine.exe" },
-      { kind: "text", text: L("Häufige Ursache: Ein Virenschutz hat die Datei in die Quarantäne verschoben. Stelle sie dort wieder her oder installiere Partcraft neu – deine Projekte und Einstellungen bleiben dabei erhalten.", "Common cause: a virus scanner moved the file to quarantine. Restore it there or reinstall Partcraft – your projects and settings are kept.") },
+      { kind: "text", text: L("HalfCube startet die Engine als eigenen Prozess, damit ein Absturz der Geometrieberechnung nie die Oberfläche mitreißt. Die Programmdatei der Engine wurde nicht gefunden:", "HalfCube runs the engine as a separate process so a crash in the geometry never takes the interface down with it. The engine program file was not found:") },
+      { kind: "code", text: "%LOCALAPPDATA%\\HalfCube\\current\\resources\\engine\\halfcube-engine.exe" },
+      { kind: "text", text: L("Häufige Ursache: Ein Virenschutz hat die Datei in die Quarantäne verschoben. Stelle sie dort wieder her oder installiere HalfCube neu – deine Projekte und Einstellungen bleiben dabei erhalten.", "Common cause: a virus scanner moved the file to quarantine. Restore it there or reinstall HalfCube – your projects and settings are kept.") },
       { kind: "code", text: `${sys(false)}` },
     ],
     actions: [
@@ -94,9 +94,9 @@ export function buildScenario(name: string, lang: Language): Scenario | undefine
 
   const downloadFailed = (): LoadingError => ({
     headline: L(`Engine konnte nicht geladen werden: Download bei ${number(lang, 18.4)} von ${number(lang, 41.2)} MB abgebrochen`, `The engine could not be loaded: download stopped at ${number(lang, 18.4)} of ${number(lang, 41.2)} MB`),
-    code: "PC-ENGINE-002",
+    code: "HC-ENGINE-002",
     details: [
-      { kind: "text", text: L("Die Datei partcraft-engine.wasm kam nicht vollständig an. Der Browser meldet:", "The file partcraft-engine.wasm did not arrive completely. The browser reports:") },
+      { kind: "text", text: L("Die Datei halfcube-engine.wasm kam nicht vollständig an. Der Browser meldet:", "The file halfcube-engine.wasm did not arrive completely. The browser reports:") },
       { kind: "code", text: "net::ERR_CONNECTION_RESET" },
       { kind: "text", text: L("Prüfe die Internetverbindung und lade die Seite neu. Deine im Browser gespeicherten Projekte sind davon nicht betroffen.", "Check the internet connection and reload the page. Your projects stored in the browser are not affected.") },
     ],
@@ -107,15 +107,15 @@ export function buildScenario(name: string, lang: Language): Scenario | undefine
     case "start":
       return { steps: desktopStart };
     case "start-error":
-      return { steps: desktopStart, fail: { step: 0, fraction: 0, detail: "partcraft-engine.exe", error: engineMissing() } };
+      return { steps: desktopStart, fail: { step: 0, fraction: 0, detail: "halfcube-engine.exe", error: engineMissing() } };
     case "start-browser":
       return { steps: browserStart };
     case "start-browser-error":
       return { steps: browserStart, fail: { step: 0, fraction: 18.4 / 41.2, error: downloadFailed() } };
     case "panel-open":
       return {
-        title: L("Gehäuse.pcraft wird geöffnet", "Opening Gehäuse.pcraft"),
-        subtitle: L("Dokumente\\Partcraft\\Gehäuse.pcraft · 112,6 MB", "Documents\\Partcraft\\Gehäuse.pcraft · 112.6 MB"),
+        title: L("Gehäuse.hcube wird geöffnet", "Opening Gehäuse.hcube"),
+        subtitle: L("Dokumente\\HalfCube\\Gehäuse.hcube · 112,6 MB", "Documents\\HalfCube\\Gehäuse.hcube · 112.6 MB"),
         note: L("Abbrechen lässt alles, wie es war.", "Cancel leaves everything as it was."),
         cancellable: true,
         loop: true,
@@ -134,11 +134,11 @@ export function buildScenario(name: string, lang: Language): Scenario | undefine
           step: 1,
           fraction: 0,
           error: {
-            headline: L("Gehäuse.pcraft konnte nicht geöffnet werden: keine Partcraft-Datei", "Gehäuse.pcraft could not be opened: not a Partcraft file"),
-            code: "PC-FILE-003",
+            headline: L("Gehäuse.hcube konnte nicht geöffnet werden: keine HalfCube-Datei", "Gehäuse.hcube could not be opened: not a HalfCube file"),
+            code: "HC-FILE-003",
             details: [
-              { kind: "text", text: L("In der Datei fehlt manifest.json. Partcraft erkennt Projekte an ihrem Inhalt, nicht an der Endung; diese Datei ist beschädigt oder ein anderes ZIP-Archiv mit der Endung .pcraft.", "The file has no manifest.json. Partcraft recognises projects by their content, not by the extension; this file is damaged or another ZIP archive named .pcraft.") },
-              { kind: "code", text: L("Dokumente\\Partcraft\\Gehäuse.pcraft", "Documents\\Partcraft\\Gehäuse.pcraft") },
+              { kind: "text", text: L("In der Datei fehlt manifest.json. HalfCube erkennt Projekte an ihrem Inhalt, nicht an der Endung; diese Datei ist beschädigt oder ein anderes ZIP-Archiv mit der Endung .hcube.", "The file has no manifest.json. HalfCube recognises projects by their content, not by the extension; this file is damaged or another ZIP archive named .hcube.") },
+              { kind: "code", text: L("Dokumente\\HalfCube\\Gehäuse.hcube", "Documents\\HalfCube\\Gehäuse.hcube") },
               { kind: "text", text: L("Es wurde nichts verändert; geöffnete Projekte bleiben, wie sie waren.", "Nothing was changed; open projects stay as they were.") },
             ],
             actions: [
@@ -165,7 +165,7 @@ export function buildScenario(name: string, lang: Language): Scenario | undefine
     case "panel-restart":
       return {
         title: L("Engine wird neu gestartet", "Restarting the engine"),
-        subtitle: L("Modell wird wiederhergestellt · Gehäuse.pcraft", "Restoring the model · Gehäuse.pcraft"),
+        subtitle: L("Modell wird wiederhergestellt · Gehäuse.hcube", "Restoring the model · Gehäuse.hcube"),
         note: L("Deine Änderungen bleiben erhalten; die Zeitleiste wird neu berechnet.", "Your changes are kept; the timeline is computed again."),
         loop: true,
         steps: [

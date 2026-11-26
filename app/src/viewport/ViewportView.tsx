@@ -86,7 +86,7 @@ export function ViewportView({ className, navigationPreset = "mouse", wheelZoom 
           <ErrorNotice
             className="max-w-xl"
             headline={t("viewport.unavailableTitle")}
-            code="PC-VIEW-001"
+            code="HC-VIEW-001"
             defaultOpen
             details={[
               { kind: "text", text: t("viewport.unavailableText") },

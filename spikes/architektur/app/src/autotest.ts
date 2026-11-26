@@ -138,7 +138,7 @@ export function installAutotest(ctx: Ctx) {
     const nav = performance.getEntriesByType("navigation")[0] as PerformanceNavigationTiming | undefined;
     const report: Record<string, unknown> = {
       userAgent: navigator.userAgent,
-      desktop: window.partcraftDesktop?.versions ?? null,
+      desktop: window.halfCubeDesktop?.versions ?? null,
       crossOriginIsolated: window.crossOriginIsolated,
       engine: snap0.hello?.engine ?? null,
       capabilities: snap0.hello?.capabilities ?? null,
@@ -217,7 +217,7 @@ export function installAutotest(ctx: Ctx) {
 
     phase = "watchdog";
     // Desktop only: a hung engine is found by the main process's watchdog.
-    if (session.kind === "native" && window.partcraftDesktop) {
+    if (session.kind === "native" && window.halfCubeDesktop) {
       const crashes = session.snapshot().crashes;
       const n = session.timings.length;
       const t0 = performance.now();
@@ -272,7 +272,7 @@ export function installAutotest(ctx: Ctx) {
     return report;
   }
 
-  (window as unknown as { __partcraftSpike: unknown }).__partcraftSpike = {
+  (window as unknown as { __halfcubeSpike: unknown }).__halfcubeSpike = {
     run,
     /** Starts run() in the background; poll status(). */
     start(setParamRuns: number) {

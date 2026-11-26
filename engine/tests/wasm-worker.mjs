@@ -1,6 +1,6 @@
 // Node worker thread that hosts the WebAssembly engine for engine/tests/drive-engine.mjs (the browser uses its
 // own module worker in the app). It follows the module contract of protocol/engine-protocol.json:
-// createEngineModule({ onEngineMessage, cancelFlags }), _pc_init, _pc_handle, _malloc, _free, HEAPU8.
+// createEngineModule({ onEngineMessage, cancelFlags }), _hc_init, _hc_handle, _malloc, _free, HEAPU8.
 //
 // From the driver: { kind: "init", moduleUrl, cancelFlags: Int32Array | null }, { kind: "msg", header }
 // To the driver:   { kind: "ready", instantiateMs }, { kind: "msg", header, payload }, { kind: "fatal", message },
@@ -27,7 +27,7 @@ async function init(msg) {
       print: (text) => post({ kind: "log", stream: "stdout", text }),
       printErr: (text) => post({ kind: "log", stream: "stderr", text }),
     });
-    mod._pc_init(msg.cancelFlags ? 1 : 0);
+    mod._hc_init(msg.cancelFlags ? 1 : 0);
   } catch (e) {
     dead = true;
     post({ kind: "fatal", message: `The WebAssembly engine could not be loaded from ${msg.moduleUrl}: ${describe(e)}` });
@@ -43,7 +43,7 @@ function handle(msg) {
   const hp = mod._malloc(Math.max(header.byteLength, 1));
   mod.HEAPU8.set(header, hp);
   try {
-    mod._pc_handle(hp, header.byteLength, 0, 0);
+    mod._hc_handle(hp, header.byteLength, 0, 0);
   } catch (e) {
     // A trap or abort escapes every C++ catch; the module state is undefined from now on.
     dead = true;

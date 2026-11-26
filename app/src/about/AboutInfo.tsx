@@ -1,4 +1,4 @@
-// The "Info" tab of "About Partcraft": the early-access note, the licence in short, the links, the one line that names the
+// The "Info" tab of "About HalfCube": the early-access note, the licence in short, the links, the one line that names the
 // LGPL components with their copyright (LGPL-2.1 section 6: the program shows a copyright notice, so it carries theirs too),
 // and the technical details with "Copy version".
 import { useCallback } from "react";

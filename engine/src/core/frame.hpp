@@ -1,5 +1,5 @@
 // Stdio frame format of the native transport (layout in protocol::kFramePrefixBytes' description):
-//   u32 magic "PCE1", u32 header bytes, u32 payload bytes, u32 reserved (0), header (UTF-8 JSON), payload.
+//   u32 magic "HCE1", u32 header bytes, u32 payload bytes, u32 reserved (0), header (UTF-8 JSON), payload.
 // All integers little-endian, independent of the host byte order.
 #pragma once
 
@@ -9,7 +9,7 @@
 #include <string_view>
 #include <vector>
 
-namespace pc::frame {
+namespace hc::frame {
 
 struct Prefix {
     std::uint32_t magic = 0;
@@ -29,4 +29,4 @@ std::string checkPrefix(const Prefix& prefix);
 // Whole frame in one buffer (tests and small messages).
 std::vector<std::uint8_t> encode(std::string_view header, const std::vector<std::uint8_t>* payload);
 
-} // namespace pc::frame
+} // namespace hc::frame

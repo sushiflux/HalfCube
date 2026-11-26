@@ -1,7 +1,7 @@
 # Builds the WebAssembly engine in a throwaway emscripten/emsdk container, linking the static OCCT 8.0.2 that the
 # kernel test built with native wasm exceptions (-KeepOcct of spikes\kerntest\occt\scripts\docker-wasm.ps1).
 # Usage: powershell -ExecutionPolicy Bypass -File build-wasm.ps1 [-OcctInstall <dir>] [-OutDir <dir>]
-# Output: partcraft-engine.mjs + partcraft-engine.wasm in -OutDir (default spikes\architektur\_build\engine-wasm).
+# Output: halfcube-engine.mjs + halfcube-engine.wasm in -OutDir (default spikes\architektur\_build\engine-wasm).
 # Only the container and volume named below are created and removed.
 param([string]$OcctInstall, [string]$OutDir, [string]$Image = 'emscripten/emsdk:7.0.1', [int]$Jobs = 8, [int]$MinFreeGB = 10)
 $ErrorActionPreference = 'Stop'
@@ -15,7 +15,7 @@ if (-not (Test-Path $OcctInstall)) {
     throw "Static WebAssembly OCCT missing: $OcctInstall. Build it with spikes\kerntest\occt\scripts\docker-wasm.ps1 -OutDir <dir> -KeepOcct -WasmExceptions -Extra '-UOCC_CONVERT_SIGNALS'."
 }
 
-$name = 'partcraft-arch-engine-wasm'
+$name = 'halfcube-arch-engine-wasm'
 Assert-FreeSpace $MinFreeGB
 Remove-KtContainer $name
 docker volume create $name | Out-Null
@@ -30,7 +30,7 @@ try {
     New-Item -ItemType Directory -Force -Path $OutDir | Out-Null
     docker cp "${name}:/work/out/." $OutDir
     if ($code -ne 0) { throw "wasm-build.sh failed ($code)" }
-    Write-Host "built $OutDir\partcraft-engine.mjs"
+    Write-Host "built $OutDir\halfcube-engine.mjs"
 }
 finally {
     Remove-KtContainer $name

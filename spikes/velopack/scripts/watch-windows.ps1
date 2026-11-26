@@ -39,7 +39,7 @@ $sw = [Diagnostics.Stopwatch]::StartNew()
 while ($sw.Elapsed.TotalSeconds -lt 120) {
   $pids = New-Object 'System.Collections.Generic.HashSet[uint32]'
   foreach ($q in Get-Process -ErrorAction SilentlyContinue) {
-    if (($q.Path -and $q.Path -like '*PartcraftVelopackTest*') -or $q.Id -eq $p.Id -or $q.ProcessName -like 'Setup-*') { [void]$pids.Add([uint32]$q.Id) }
+    if (($q.Path -and $q.Path -like '*HalfCubeVelopackTest*') -or $q.Id -eq $p.Id -or $q.ProcessName -like 'Setup-*') { [void]$pids.Add([uint32]$q.Id) }
   }
   foreach ($line in [Win]::ForPids($pids)) { $seen[$line] = 1 }
   if ($p.HasExited -and $pids.Count -eq 0) { break }

@@ -6,7 +6,7 @@
 #include "core/errors.hpp"
 #include "generated/protocol.hpp"
 
-namespace pc::kernel {
+namespace hc::kernel {
 
 protocol::KernelSelftestResult runSelftest(const CancelCheck& cancelled);
 
@@ -15,4 +15,4 @@ double selftestBlockVolume();
 double selftestHoleVolume();
 double selftestFilletVolume();
 
-} // namespace pc::kernel
+} // namespace hc::kernel

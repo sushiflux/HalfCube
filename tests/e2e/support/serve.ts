@@ -21,7 +21,7 @@ const mimeTypes: Record<string, string> = {
   ".txt": "text/plain; charset=utf-8",
 };
 
-if (process.env.PARTCRAFT_E2E_SKIP_BUILD !== "1") await prepare();
+if (process.env.HALFCUBE_E2E_SKIP_BUILD !== "1") await prepare();
 
 const server = createServer((request, response) => {
   void (async () => {

@@ -5,7 +5,7 @@
 #include <cstdio>
 #include <stdexcept>
 
-namespace pc::frame {
+namespace hc::frame {
 
 namespace {
 
@@ -41,7 +41,7 @@ Prefix decodePrefix(const std::uint8_t* bytes) {
 std::string checkPrefix(const Prefix& p) {
     char buf[200];
     if (p.magic != protocol::kFrameMagic) {
-        std::snprintf(buf, sizeof buf, "frame magic is 0x%08x instead of 0x%08x (\"PCE1\")", static_cast<unsigned>(p.magic),
+        std::snprintf(buf, sizeof buf, "frame magic is 0x%08x instead of 0x%08x (\"HCE1\")", static_cast<unsigned>(p.magic),
                       static_cast<unsigned>(protocol::kFrameMagic));
         return buf;
     }
@@ -75,4 +75,4 @@ std::vector<std::uint8_t> encode(std::string_view header, const std::vector<std:
     return out;
 }
 
-} // namespace pc::frame
+} // namespace hc::frame

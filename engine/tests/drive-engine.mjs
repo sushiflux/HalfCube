@@ -2,8 +2,8 @@
 // Drives a built engine through its message interface and checks every answer against the generated JSON Schema
 // (protocol/engine-protocol.schema.json). No dependencies besides Node.
 //
-//   node engine/tests/drive-engine.mjs --native <partcraft-engine.exe> [--out result.json]
-//   node engine/tests/drive-engine.mjs --wasm <folder with partcraft-engine.mjs> [--out result.json]
+//   node engine/tests/drive-engine.mjs --native <halfcube-engine.exe> [--out result.json]
+//   node engine/tests/drive-engine.mjs --wasm <folder with halfcube-engine.mjs> [--out result.json]
 //   node engine/tests/drive-engine.mjs --compare <a.json> <b.json>
 //
 // Runs hello, ping, error cases, both self-tests, cancel and shutdown. Engines built with test commands also get
@@ -20,7 +20,7 @@ const repo = resolve(here, "..", "..");
 const schema = JSON.parse(readFileSync(join(repo, "protocol", "engine-protocol.schema.json"), "utf8"));
 const PROTOCOL_VERSION = Number(schema.$id.split(":").pop());
 const PROTOCOL_ID = JSON.parse(readFileSync(join(repo, "protocol", "engine-protocol.json"), "utf8")).constants.find((c) => c.name === "protocolId").value;
-const FRAME_MAGIC = 0x31454350;
+const FRAME_MAGIC = 0x31454348;
 
 // ------------------------------------------------------------------------------------ minimal JSON Schema check
 
@@ -105,7 +105,7 @@ class NativeEngine {
 
 class WasmEngine {
   constructor(dir, withCancelFlags = true) {
-    this.moduleUrl = pathToFileURL(join(dir, "partcraft-engine.mjs")).href;
+    this.moduleUrl = pathToFileURL(join(dir, "halfcube-engine.mjs")).href;
     this.cancelFlags = withCancelFlags ? new Int32Array(new SharedArrayBuffer(4)) : null;
     this.worker = new Worker(join(here, "wasm-worker.mjs"));
     this.stderr = "";

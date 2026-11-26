@@ -1,7 +1,7 @@
 // What the extrude command puts over the 3D view: the hint while it asks for an area, and the dialog with the notice for a problem
 // under it. The notice is laid over the view (absolute, under the dialog), so a problem appearing or going away moves nothing.
 import { useMemo } from "react";
-import type { PartcraftDocument } from "../../document/types.ts";
+import type { HalfCubeDocument } from "../../document/types.ts";
 import { useI18n } from "../../i18n/runtime.ts";
 import { ErrorNotice } from "../../ui/ErrorNotice.tsx";
 import { Glyph } from "../../ui/Glyph.tsx";
@@ -34,7 +34,7 @@ export interface ExtrudePanelProps {
   state: ExtrudeState;
   profileLabel: string | null;
   /** The document: a failure names its steps and shapes ("Skizze1", "Rechteck 1") with it. */
-  doc: PartcraftDocument;
+  doc: HalfCubeDocument;
 }
 
 export function ExtrudePanel({ command, state, profileLabel, doc }: ExtrudePanelProps) {

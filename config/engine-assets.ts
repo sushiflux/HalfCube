@@ -1,10 +1,10 @@
 // Vite plugin that makes the WebAssembly engine part of the web build and of the dev server.
-//   build: copies engine/_build/wasm/{partcraft-engine.mjs, partcraft-engine.wasm, licenses/} to <outDir>/engine/
+//   build: copies engine/_build/wasm/{halfcube-engine.mjs, halfcube-engine.wasm, licenses/} to <outDir>/engine/
 //   dev:   serves the same files under /engine/ (the browser engine worker loads them from there)
-// With PARTCRAFT_WASM_TESTING=1 the testing variant (diagnostics.crash and diagnostics.hang) from
+// With HALFCUBE_WASM_TESTING=1 the testing variant (diagnostics.crash and diagnostics.hang) from
 // engine/_build/wasm-testing/ is added as engine-testing/; product builds never contain it.
-// PARTCRAFT_WASM_DIR / PARTCRAFT_WASM_TESTING_DIR point at other folders. A missing engine is a warning, because the
-// desktop build does not need it; with PARTCRAFT_REQUIRE_ENGINE=1 (release builds) it fails the build.
+// HALFCUBE_WASM_DIR / HALFCUBE_WASM_TESTING_DIR point at other folders. A missing engine is a warning, because the
+// desktop build does not need it; with HALFCUBE_REQUIRE_ENGINE=1 (release builds) it fails the build.
 import { copyFileSync, cpSync, createReadStream, existsSync, mkdirSync, statSync } from "node:fs";
 import { basename, join, resolve } from "node:path";
 import type { Plugin } from "vite";
@@ -20,12 +20,12 @@ export interface EngineVariant {
 
 export function engineVariants(repoRoot: string, env: NodeJS.ProcessEnv = process.env): EngineVariant[] {
   const variants: EngineVariant[] = [
-    { folder: "engine", source: resolve(env.PARTCRAFT_WASM_DIR ?? join(repoRoot, "engine", "_build", "wasm")) },
+    { folder: "engine", source: resolve(env.HALFCUBE_WASM_DIR ?? join(repoRoot, "engine", "_build", "wasm")) },
   ];
-  if (env.PARTCRAFT_WASM_TESTING === "1") {
+  if (env.HALFCUBE_WASM_TESTING === "1") {
     variants.push({
       folder: "engine-testing",
-      source: resolve(env.PARTCRAFT_WASM_TESTING_DIR ?? join(repoRoot, "engine", "_build", "wasm-testing")),
+      source: resolve(env.HALFCUBE_WASM_TESTING_DIR ?? join(repoRoot, "engine", "_build", "wasm-testing")),
     });
   }
   return variants;
@@ -38,9 +38,9 @@ const SERVED_FILES: Record<string, string> = {
 
 export function engineAssets(repoRoot: string): Plugin {
   const variants = engineVariants(repoRoot);
-  const required = process.env.PARTCRAFT_REQUIRE_ENGINE === "1";
+  const required = process.env.HALFCUBE_REQUIRE_ENGINE === "1";
   return {
-    name: "partcraft-engine-assets",
+    name: "halfcube-engine-assets",
 
     configureServer(server) {
       server.middlewares.use((req, res, next) => {

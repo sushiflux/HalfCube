@@ -1,9 +1,9 @@
 /* Tooltip of Tip.tsx: drawn from data-tip, above everything, never taking layout space. */
-.pc-tip {
+.hc-tip {
   position: relative;
   display: inline-flex;
 }
-.pc-tip::after {
+.hc-tip::after {
   content: attr(data-tip);
   position: absolute;
   z-index: 60;
@@ -22,33 +22,33 @@
   opacity: 0;
   pointer-events: none;
 }
-.pc-tip[data-tip=""]::after {
+.hc-tip[data-tip=""]::after {
   display: none;
 }
-.pc-tip[data-side="bottom"]::after {
+.hc-tip[data-side="bottom"]::after {
   top: calc(100% + 6px);
 }
-.pc-tip[data-side="top"]::after {
+.hc-tip[data-side="top"]::after {
   bottom: calc(100% + 6px);
 }
-.pc-tip[data-align="center"]::after {
+.hc-tip[data-align="center"]::after {
   left: 50%;
   transform: translateX(-50%);
 }
-.pc-tip[data-align="start"]::after {
+.hc-tip[data-align="start"]::after {
   left: 0;
 }
-.pc-tip[data-align="end"]::after {
+.hc-tip[data-align="end"]::after {
   right: 0;
 }
-.pc-tip:hover::after,
-.pc-tip:focus-within::after {
+.hc-tip:hover::after,
+.hc-tip:focus-within::after {
   opacity: 1;
   transition: opacity 0.1s linear 0.45s;
 }
 @media (prefers-reduced-motion: reduce) {
-  .pc-tip:hover::after,
-  .pc-tip:focus-within::after {
+  .hc-tip:hover::after,
+  .hc-tip:focus-within::after {
     transition: none;
   }
 }

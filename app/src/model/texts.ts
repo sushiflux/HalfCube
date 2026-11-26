@@ -3,7 +3,7 @@
 import type { Problem } from "../engine/generated/protocol.ts";
 import type { Translate } from "../i18n/core.ts";
 import type { QuantityKind, QuantityParse } from "../document/quantity.ts";
-import type { FeatureNames } from "./partcraft-model.ts";
+import type { FeatureNames } from "./halfcube-model.ts";
 
 export function featureNames(t: Translate): FeatureNames & { root: string } {
   return {

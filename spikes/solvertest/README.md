@@ -95,7 +95,7 @@ Each track adds its exact commands to its own sub-folder README; pointers:
 - `salusoft/README.md` (track 1)
 - `native/README.md` (track 2, MSVC, uses `spikes/kerntest/occt/scripts/vsenv.ps1`)
 - `native/README.md`, Emscripten section (track 3, Docker image `emscripten/emsdk:7.0.1`, containers named
-  `partcraft-solvertest-*` and removed afterwards, no WSL)
+  `halfcube-solvertest-*` and removed afterwards, no WSL)
 
 ## Rules for everything in here
 

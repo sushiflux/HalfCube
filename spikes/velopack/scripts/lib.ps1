@@ -1,7 +1,7 @@
 # Helpers for the Velopack test: run a program hidden, watch it (and the processes it starts) for visible windows,
 # and report exit code, duration and whether anything was shown.
 function Get-RelatedProcesses {
-  Get-Process -ErrorAction SilentlyContinue | Where-Object { $_.Path -and $_.Path -like '*PartcraftVelopackTest*' -or $_.ProcessName -like 'Setup-*' }
+  Get-Process -ErrorAction SilentlyContinue | Where-Object { $_.Path -and $_.Path -like '*HalfCubeVelopackTest*' -or $_.ProcessName -like 'Setup-*' }
 }
 
 function Invoke-Watched {

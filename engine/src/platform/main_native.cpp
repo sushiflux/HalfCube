@@ -1,6 +1,6 @@
 // Native engine process: protocol frames on stdin/stdout (layout in core/frame.hpp), diagnostics on stderr.
 //
-//   partcraft-engine
+//   halfcube-engine
 //
 // Only the parent process holds the pipe ends, so no other process or user can reach the engine; there is no
 // network port. A reader thread answers hello, ping and cancel at once while the main thread computes.
@@ -67,20 +67,20 @@ bool writeAll(int fd, const std::uint8_t* p, std::size_t n) {
     return true;
 }
 
-class FrameOutput : public pc::Output {
+class FrameOutput : public hc::Output {
 public:
     explicit FrameOutput(int fd) : fd_(fd) {}
 
     void send(const std::string& header, const std::vector<std::uint8_t>* payload) override {
         const std::size_t payloadBytes = payload ? payload->size() : 0;
-        const auto prefix = pc::frame::encodePrefix(static_cast<std::uint32_t>(header.size()), static_cast<std::uint32_t>(payloadBytes));
+        const auto prefix = hc::frame::encodePrefix(static_cast<std::uint32_t>(header.size()), static_cast<std::uint32_t>(payloadBytes));
         std::lock_guard<std::mutex> lk(m_);
         const bool ok = writeAll(fd_, prefix.data(), prefix.size()) &&
                         writeAll(fd_, reinterpret_cast<const std::uint8_t*>(header.data()), header.size()) &&
                         (payloadBytes == 0 || writeAll(fd_, payload->data(), payloadBytes));
         if (!ok) {
             // The parent closed the pipe: nobody is listening any more.
-            std::fprintf(stderr, "partcraft-engine: writing to the parent process failed, exiting\n");
+            std::fprintf(stderr, "halfcube-engine: writing to the parent process failed, exiting\n");
             std::fflush(stderr);
             std::_Exit(0);
         }
@@ -95,7 +95,7 @@ private:
 
 int main(int argc, char** argv) {
     if (argc > 1) {
-        std::fprintf(stderr, "partcraft-engine: unknown argument \"%s\"\nusage: partcraft-engine (frames on stdin/stdout)\n", argv[1]);
+        std::fprintf(stderr, "halfcube-engine: unknown argument \"%s\"\nusage: halfcube-engine (frames on stdin/stdout)\n", argv[1]);
         return 64;
     }
 
@@ -115,20 +115,20 @@ int main(int argc, char** argv) {
 #endif
 
     FrameOutput out(frameFd);
-    pc::EngineOptions options;
+    hc::EngineOptions options;
     options.pingWhileBusy = true;
     options.cancelWhileBusy = true;
-    pc::Engine engine(out, options);
+    hc::Engine engine(out, options);
 
     std::thread reader([&engine] {
         std::vector<std::uint8_t> header, payload;
         for (;;) {
-            std::uint8_t prefixBytes[pc::frame::kPrefixBytes];
+            std::uint8_t prefixBytes[hc::frame::kPrefixBytes];
             if (!readAll(0, prefixBytes, sizeof prefixBytes)) break;  // end of input: the parent closed stdin or is gone
-            const pc::frame::Prefix prefix = pc::frame::decodePrefix(prefixBytes);
-            const std::string problem = pc::frame::checkPrefix(prefix);
+            const hc::frame::Prefix prefix = hc::frame::decodePrefix(prefixBytes);
+            const std::string problem = hc::frame::checkPrefix(prefix);
             if (!problem.empty()) {
-                std::fprintf(stderr, "partcraft-engine: the input is not a valid frame stream (%s), exiting\n", problem.c_str());
+                std::fprintf(stderr, "halfcube-engine: the input is not a valid frame stream (%s), exiting\n", problem.c_str());
                 std::fflush(stderr);
                 std::_Exit(2);
             }

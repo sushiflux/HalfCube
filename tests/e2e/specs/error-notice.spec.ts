@@ -12,10 +12,10 @@ const words: Record<Lang, { show: string; hide: string; copy: string; copied: st
 };
 
 // The gallery's example error is German in both languages (it is example content, not UI text).
-const HEADLINE_START = "Gehäuse.pcraft konnte nicht geöffnet werden";
-const CODE = "PC-FILE-003";
+const HEADLINE_START = "Gehäuse.hcube konnte nicht geöffnet werden";
+const CODE = "HC-FILE-003";
 const DETAIL_TEXT = "In der Datei fehlt manifest.json.";
-const DETAIL_CODE = "C:\\Users\\Name\\Documents\\Partcraft\\Gehäuse.pcraft";
+const DETAIL_CODE = "C:\\Users\\Name\\Documents\\HalfCube\\Gehäuse.hcube";
 const DETAIL_LAST = "Es wurde nichts verändert; geöffnete Projekte bleiben, wie sie waren.";
 
 for (const lang of ["en", "de"] as const) {
@@ -97,7 +97,7 @@ for (const lang of ["en", "de"] as const) {
 test("error notice: the arrow and the copy button work by keyboard", async ({ app }) => {
   const { page } = app;
   await app.open("?demo=gallery&lang=en");
-  const notice = page.locator('[data-error-code="PC-FILE-003"]');
+  const notice = page.locator('[data-error-code="HC-FILE-003"]');
   const toggle = notice.getByRole("button", { name: "Show details" });
   await toggle.focus();
   await page.keyboard.press("Enter");

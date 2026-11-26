@@ -4,7 +4,7 @@
 #include "diagnostics/test_commands.hpp"
 #include "kernel/kernel_selftest.hpp"
 #include "model/model.hpp"
-#include "partcraft/build_info.hpp"
+#include "halfcube/build_info.hpp"
 #include "sketch/sketch_solver.hpp"
 #include "sketch/solver_selftest.hpp"
 
@@ -16,11 +16,11 @@
 #include <emscripten/version.h>
 #endif
 
-#ifndef PC_BUILD_TYPE
-#define PC_BUILD_TYPE "unknown"
+#ifndef HC_BUILD_TYPE
+#define HC_BUILD_TYPE "unknown"
 #endif
 
-namespace pc {
+namespace hc {
 
 namespace err = protocol::err;
 namespace cmd = protocol::cmd;
@@ -62,7 +62,7 @@ const char* fieldErrorCode(const std::string& type, const protocol::FieldError& 
     return err::kBadMessage;
 }
 
-// A document from a newer Partcraft is refused before its fields are read, so the user learns the real reason
+// A document from a newer HalfCube is refused before its fields are read, so the user learns the real reason
 // instead of a field error about something this engine does not know yet.
 void checkDocumentFormat(const std::string& type, const Json& msg) {
     if (type != cmd::kModelSync) return;
@@ -74,7 +74,7 @@ void checkDocumentFormat(const std::string& type, const Json& msg) {
     if (value > static_cast<std::int64_t>(protocol::kDocumentFormat))
         throw EngineError(err::kUnsupportedDocument,
                           "The document has format version " + std::to_string(value) + ", this engine reads up to version " +
-                              std::to_string(protocol::kDocumentFormat) + ". It was saved by a newer Partcraft; update Partcraft to open it.");
+                              std::to_string(protocol::kDocumentFormat) + ". It was saved by a newer HalfCube; update HalfCube to open it.");
 }
 
 std::string compilerText() {
@@ -165,7 +165,7 @@ void Engine::receive(std::string_view header, std::vector<std::uint8_t> payload)
     if (info->testOnly && !build::kTestCommands) {
         sendError(id, err::kTestCommandsDisabled,
                   "Command \"" + type + "\" is a test command; this engine was built without test commands "
-                  "(CMake option PARTCRAFT_TEST_COMMANDS=ON enables them).", {}, type);
+                  "(CMake option HALFCUBE_TEST_COMMANDS=ON enables them).", {}, type);
         return;
     }
     try {
@@ -212,7 +212,7 @@ void Engine::handleHello(std::int64_t id, const Json& msg) {
         sendError(id, err::kProtocolMismatch,
                   "The engine speaks protocol version " + std::to_string(protocol::kVersion) + ", the client \"" + c.client +
                       "\" asked for version " + std::to_string(c.protocol) +
-                      ". User interface and engine come from different builds; reinstall Partcraft.",
+                      ". User interface and engine come from different builds; reinstall HalfCube.",
                   {}, cmd::kHello);
         return;
     }
@@ -222,7 +222,7 @@ void Engine::handleHello(std::int64_t id, const Json& msg) {
                   "The engine speaks protocol \"" + std::string(protocol::kProtocolId) + "\" (version " + std::to_string(protocol::kVersion) +
                       "), the client \"" + c.client + "\" named protocol " +
                       (c.protocolId ? "\"" + *c.protocolId + "\"" : std::string("nothing (no protocolId in hello)")) + " (version " +
-                      std::to_string(c.protocol) + "). User interface and engine come from different builds; reinstall Partcraft.",
+                      std::to_string(c.protocol) + "). User interface and engine come from different builds; reinstall HalfCube.",
                   {}, cmd::kHello);
         return;
     }
@@ -231,7 +231,7 @@ void Engine::handleHello(std::int64_t id, const Json& msg) {
     r.protocolId = std::string(protocol::kProtocolId);
     r.engine.version = build::kVersion;
     r.engine.versionFull = build::kVersionFull;
-    r.engine.buildType = PC_BUILD_TYPE;
+    r.engine.buildType = HC_BUILD_TYPE;
     r.engine.platform = build::kPlatform;
     r.engine.os = build::kOs;
     r.engine.compiler = compilerText();
@@ -307,7 +307,7 @@ bool Engine::runNext(bool wait) {
         sendError(p.id, fieldErrorCode(p.type, e), e.what(), {}, p.type);
     } catch (...) {
         const std::string detail = describeCurrentException();
-        std::fprintf(stderr, "partcraft-engine: command \"%s\" (id %lld) failed: %s\n", p.type.c_str(),
+        std::fprintf(stderr, "halfcube-engine: command \"%s\" (id %lld) failed: %s\n", p.type.c_str(),
                      static_cast<long long>(p.id), detail.c_str());
         std::fflush(stderr);
         sendError(p.id, err::kInternal,
@@ -361,7 +361,7 @@ void Engine::execute(const Pending& p) {
         replyWithPayload(id, answer.message, answer.payload);
         return;
     }
-#if defined(PARTCRAFT_TEST_COMMANDS)
+#if defined(HALFCUBE_TEST_COMMANDS)
     if (p.type == cmd::kDiagnosticsCrash) {
         protocol::DiagnosticsCrashCommand c;
         protocol::parse(p.msg, c);
@@ -378,4 +378,4 @@ void Engine::execute(const Pending& p) {
     throw EngineError(err::kInternal, "Command \"" + p.type + "\" was accepted but has no handler in this engine build.");
 }
 
-} // namespace pc
+} // namespace hc

@@ -7,7 +7,7 @@
 import type { Reply } from "../engine/client.ts";
 import type { StepStatus } from "../engine/generated/protocol.ts";
 import type { DocumentStore } from "../document/store.ts";
-import type { Body, ExtrudeFeature, PartcraftDocument } from "../document/types.ts";
+import type { Body, ExtrudeFeature, HalfCubeDocument } from "../document/types.ts";
 import { appendFeature, bodyOf, extrudeFeature, replaceFeature, sketchFeature, withBody } from "./doc-edit.ts";
 import type { EditOutcome, ExtrudeEditor, ExtrudeParams, ExtrudeView } from "./editors.ts";
 import type { EngineLink } from "./engine-link.ts";
@@ -127,7 +127,7 @@ export class ExtrudeEditorImpl implements ExtrudeEditor {
   }
 
   /** The document with this step: appended (new) or replaced in place (editing). */
-  private build(committed: PartcraftDocument): PartcraftDocument {
+  private build(committed: HalfCubeDocument): HalfCubeDocument {
     const feature = this.feature();
     const withStep = this.start.editing && extrudeFeature(committed, feature.id) ? replaceFeature(committed, feature) : appendFeature(committed, feature);
     return bodyOf(withStep, this.start.body.id) ? withStep : withBody(withStep, this.start.body);

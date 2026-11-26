@@ -13,7 +13,7 @@
 #include <set>
 #include <unordered_map>
 
-namespace pc::sketch {
+namespace hc::sketch {
 
 namespace {
 
@@ -496,4 +496,4 @@ FreedomReport analyseFreedom(const Sketch& solved) {
     return report;
 }
 
-} // namespace pc::sketch
+} // namespace hc::sketch

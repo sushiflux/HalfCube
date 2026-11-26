@@ -8,17 +8,17 @@
 // addresses in the system browser (external-ipc.ts).
 //
 // Environment (all optional):
-//   PARTCRAFT_DEV_URL    load the UI from the Vite dev server instead, e.g. http://127.0.0.1:5313/ (unpackaged only)
-//   PARTCRAFT_WINDOW     "inactive": show the window without taking the focus; it can never be activated (tests).
+//   HALFCUBE_DEV_URL    load the UI from the Vite dev server instead, e.g. http://127.0.0.1:5313/ (unpackaged only)
+//   HALFCUBE_WINDOW     "inactive": show the window without taking the focus; it can never be activated (tests).
 //                        "minimized": show it minimized, without taking the focus and with a taskbar button; it cannot be
 //                        activated until the user restores it, then it is a normal window. Unset: a normal window that is
 //                        shown and focused.
-//   PARTCRAFT_WINDOW_DISPLAY  "secondary": open the window on the secondary display (landscape first, then the largest;
+//   HALFCUBE_WINDOW_DISPLAY  "secondary": open the window on the secondary display (landscape first, then the largest;
 //                        the primary one when there is only one display); "primary": on the primary display. Applied
 //                        before the window is shown, so it never appears elsewhere first. Unset: the system decides.
-//   PARTCRAFT_USER_DATA  folder for the settings and caches of this run (default: Electron's per-user folder)
-//   PARTCRAFT_ENGINE_EXE path of another engine program (unpackaged only; default: see engine-path.ts)
-//   PARTCRAFT_SETUP_CHOICES_FILE  another first-start file than the one in the roaming Partcraft folder (unpackaged only)
+//   HALFCUBE_USER_DATA  folder for the settings and caches of this run (default: Electron's per-user folder)
+//   HALFCUBE_ENGINE_EXE path of another engine program (unpackaged only; default: see engine-path.ts)
+//   HALFCUBE_SETUP_CHOICES_FILE  another first-start file than the one in the roaming HalfCube folder (unpackaged only)
 import { app, BrowserWindow, protocol, screen, session } from "electron";
 import { existsSync } from "node:fs";
 import { readFile, stat } from "node:fs/promises";
@@ -47,7 +47,7 @@ type WindowMode = "normal" | "inactive" | "minimized";
 function readWindowMode(raw: string | undefined): WindowMode {
   if (raw === undefined || raw === "") return "normal";
   if (raw === "inactive" || raw === "minimized") return raw;
-  log(`PARTCRAFT_WINDOW must be "inactive" or "minimized", got "${raw}".`);
+  log(`HALFCUBE_WINDOW must be "inactive" or "minimized", got "${raw}".`);
   app.exit(1);
   return "normal";
 }
@@ -55,7 +55,7 @@ function readWindowMode(raw: string | undefined): WindowMode {
 function readDevUrl(raw: string | undefined): string | undefined {
   if (!raw || app.isPackaged) return undefined;
   if (!/^http:\/\/127\.0\.0\.1:\d+\/?$/.test(raw)) {
-    log(`PARTCRAFT_DEV_URL must look like http://127.0.0.1:<port>/, got "${raw}".`);
+    log(`HALFCUBE_DEV_URL must look like http://127.0.0.1:<port>/, got "${raw}".`);
     app.exit(1);
     return undefined;
   }
@@ -65,19 +65,19 @@ function readDevUrl(raw: string | undefined): string | undefined {
 function readWindowDisplay(raw: string | undefined): DisplayTarget | undefined {
   const target = parseDisplayTarget(raw);
   if (target !== null) return target;
-  log(`PARTCRAFT_WINDOW_DISPLAY must be "primary" or "secondary", got "${raw}".`);
+  log(`HALFCUBE_WINDOW_DISPLAY must be "primary" or "secondary", got "${raw}".`);
   app.exit(1);
   return undefined;
 }
 
-const windowMode = readWindowMode(process.env.PARTCRAFT_WINDOW);
-const windowDisplay = readWindowDisplay(process.env.PARTCRAFT_WINDOW_DISPLAY);
-const devUrl = readDevUrl(process.env.PARTCRAFT_DEV_URL);
+const windowMode = readWindowMode(process.env.HALFCUBE_WINDOW);
+const windowDisplay = readWindowDisplay(process.env.HALFCUBE_WINDOW_DISPLAY);
+const devUrl = readDevUrl(process.env.HALFCUBE_DEV_URL);
 
 // The lock belongs to the user data folder, so set the folder first.
 app.setName(branding.name);
-if (process.env.PARTCRAFT_USER_DATA) app.setPath("userData", resolve(process.env.PARTCRAFT_USER_DATA));
-// Chromium caches go to the local Partcraft folder (see sessionDataDir), not to the roaming profile.
+if (process.env.HALFCUBE_USER_DATA) app.setPath("userData", resolve(process.env.HALFCUBE_USER_DATA));
+// Chromium caches go to the local HalfCube folder (see sessionDataDir), not to the roaming profile.
 const sessionDir = sessionDataDir({ packaged: app.isPackaged, platform: process.platform, env: process.env, productName: branding.name });
 if (sessionDir) app.setPath("sessionData", sessionDir);
 
@@ -139,7 +139,7 @@ function isOwnUrl(raw: string): boolean {
 
 const defaultSize = { width: 1440, height: 900 };
 
-/** The display and the rectangle for the window when PARTCRAFT_WINDOW_DISPLAY is set (needs the app to be ready). */
+/** The display and the rectangle for the window when HALFCUBE_WINDOW_DISPLAY is set (needs the app to be ready). */
 function planPlacement(): { display: DisplayInfo; rect: Rect } | undefined {
   if (!windowDisplay) return undefined;
   const display = chooseDisplay(screen.getAllDisplays(), screen.getPrimaryDisplay().id, windowDisplay);

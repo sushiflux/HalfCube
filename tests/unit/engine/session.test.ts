@@ -18,7 +18,7 @@ function setup(options: Partial<EngineSessionOptions> = {}, onNewTransport?: (t:
       return t;
     },
     restartDelayMs: 0,
-    appVersion: "Partcraft v2026.1.2.3.4 (</>)",
+    appVersion: "HalfCube v2026.1.2.3.4 (</>)",
     ...options,
   });
   const seen: EngineStatus[] = [];
@@ -30,7 +30,7 @@ const crashInfo: ExitInfo = {
   kind: "exit",
   message: "The engine process ended with exit code 3221225477 (0xC0000005, access violation).",
   code: 0xc0000005,
-  diagnostics: "partcraft-engine: something printed before dying",
+  diagnostics: "halfcube-engine: something printed before dying",
 };
 
 const stepStates = (s: EngineStatus) => s.steps.map((x) => `${x.id}:${x.state}`).join(" ");
@@ -42,7 +42,7 @@ describe("EngineSession startup", () => {
     const final = await session.start();
     expect(final.phase).toBe("ready");
     expect(final.progress).toBe(1);
-    expect(final.engine?.engine.name).toBe("partcraft-engine");
+    expect(final.engine?.engine.name).toBe("halfcube-engine");
     expect(final.selftests.kernel?.passed).toBe(true);
     expect(final.selftests.solver?.passed).toBe(true);
     expect(final.problem).toBeNull();
@@ -95,7 +95,7 @@ describe("EngineSession startup", () => {
 
   it("fails with the full cause when the engine cannot be started", async () => {
     const { session } = setup({}, (t) => {
-      t.startError = new Error("The engine could not be started (C:\\app\\engine\\partcraft-engine.exe): spawn ENOENT");
+      t.startError = new Error("The engine could not be started (C:\\app\\engine\\halfcube-engine.exe): spawn ENOENT");
     });
     const final = await session.start();
     expect(final.phase).toBe("failed");
@@ -104,7 +104,7 @@ describe("EngineSession startup", () => {
     expect(p.code).toBe("engine_start_failed");
     expect(p.step).toBe("engine");
     expect(p.message).toContain("spawn ENOENT");
-    for (const part of ["Partcraft engine problem", "Program: Partcraft v2026.1.2.3.4 (</>)", "Code: engine_start_failed", "Step: start of the engine", "Cause: The engine could not be started", "--- Raw error text ---"]) {
+    for (const part of ["HalfCube engine problem", "Program: HalfCube v2026.1.2.3.4 (</>)", "Code: engine_start_failed", "Step: start of the engine", "Cause: The engine could not be started", "--- Raw error text ---"]) {
       expect(p.details).toContain(part);
     }
     expect(final.history).toEqual([p]);
@@ -129,7 +129,7 @@ describe("EngineSession startup", () => {
     expect(final.problem).toMatchObject({ code: "engine_refused", step: "engine" });
     expect(final.problem!.message).toBe(
       `The engine refused the handshake (protocol_mismatch): This program speaks protocol "${PROTOCOL_ID}" (version ${PROTOCOL_VERSION}), ` +
-        `the engine answered with protocol "0123456789abcdef" (version ${PROTOCOL_VERSION}). User interface and engine come from different builds; reinstall Partcraft.`,
+        `the engine answered with protocol "0123456789abcdef" (version ${PROTOCOL_VERSION}). User interface and engine come from different builds; reinstall HalfCube.`,
     );
   });
 
@@ -147,7 +147,7 @@ describe("EngineSession startup", () => {
     expect(final.problem!.message).toBe("Kernel self-test failed: step hole: volume 1 differs from the expected 2");
     expect(final.problem!.details).toContain("--- Kernel self-test result ---");
     expect(final.problem!.details).toContain('"expectedFaceCount": 8');
-    expect(final.problem!.details).toContain("Engine: partcraft-engine v2026.11.5.13.12369");
+    expect(final.problem!.details).toContain("Engine: halfcube-engine v2026.11.5.13.12369");
     expect(final.selftests.kernel?.passed).toBe(false);
   });
 

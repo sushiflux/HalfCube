@@ -16,7 +16,7 @@ describe("preferences", () => {
     const storage = fakeStorage();
     const prefs = createPreferences(() => storage);
     prefs.set("welcome.hide", "1");
-    expect(storage.data.get("partcraft.welcome.hide")).toBe("1");
+    expect(storage.data.get("halfcube.welcome.hide")).toBe("1");
     expect(prefs.get("welcome.hide")).toBe("1");
     expect(prefs.persistent).toBe(true);
     prefs.remove("welcome.hide");
@@ -55,10 +55,10 @@ describe("preferences", () => {
     const prefs = createPreferences(() => (broken ? undefined : storage));
     prefs.set("a", "memory");
     broken = false;
-    storage.data.set("partcraft.a", "stale");
+    storage.data.set("halfcube.a", "stale");
     expect(prefs.get("a")).toBe("memory");
     prefs.set("a", "fresh");
     expect(prefs.get("a")).toBe("fresh");
-    expect(storage.data.get("partcraft.a")).toBe("fresh");
+    expect(storage.data.get("halfcube.a")).toBe("fresh");
   });
 });

@@ -1,4 +1,4 @@
-// Whether "About Partcraft" is open, on which tab, and which component's licence it shows. The state lives in the address
+// Whether "About HalfCube" is open, on which tab, and which component's licence it shows. The state lives in the address
 // (`?about=licenses&item=occt`), so a reload (F5) keeps the view, on the desktop too. One store for the whole window: the
 // status bar, the title bar and the welcome screen only call `open`, and the one dialog in the app shell reads it.
 import { useSyncExternalStore } from "react";

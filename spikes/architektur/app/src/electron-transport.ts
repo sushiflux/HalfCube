@@ -12,7 +12,7 @@ function listenForPorts() {
   listening = true;
   window.addEventListener("message", (e: MessageEvent) => {
     const d = e.data as Partial<EnginePortEnvelope> | null;
-    if (e.source !== window || !d || d.partcraft !== "engine-port" || typeof d.generation !== "number") return;
+    if (e.source !== window || !d || d.halfcube !== "engine-port" || typeof d.generation !== "number") return;
     const port = e.ports[0];
     if (!port) return;
     const w = waiters.get(d.generation);

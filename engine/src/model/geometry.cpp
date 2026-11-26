@@ -41,7 +41,7 @@
 #include <numbers>
 #include <tuple>
 
-namespace pc::model {
+namespace hc::model {
 
 namespace {
 
@@ -456,4 +456,4 @@ MeshedBody meshBody(const BodyShape& body, const std::string& bodyId, const std:
     return out;
 }
 
-} // namespace pc::model
+} // namespace hc::model

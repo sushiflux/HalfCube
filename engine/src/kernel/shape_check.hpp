@@ -8,7 +8,7 @@
 #include <optional>
 #include <string>
 
-namespace pc::kernel {
+namespace hc::kernel {
 
 struct ShapeFacts {
     bool valid = false;  // BRepCheck_Analyzer::IsValid
@@ -31,4 +31,4 @@ struct Expectation {
 // Always required: valid, finite and positive volume, and the expected number of solids.
 std::string checkPlausible(const ShapeFacts& facts, const Expectation& expected, const std::string& operation);
 
-} // namespace pc::kernel
+} // namespace hc::kernel

@@ -14,7 +14,7 @@ param(
 $ErrorActionPreference = 'Stop'
 $root = (Resolve-Path "$PSScriptRoot\..").Path
 . "$PSScriptRoot\lib.ps1"
-$packId = 'PartcraftVelopackTest'
+$packId = 'HalfCubeVelopackTest'
 $work = Join-Path $root "_build\run-$VelopackVersion-$Feed"
 $feedDir = Join-Path $work 'feed'
 $evidence = Join-Path $work 'evidence'
@@ -54,7 +54,7 @@ $server = $null
 try {
   if (Test-Path $regKey) { throw "$packId is already installed, refusing to run" }
   Remove-Item $userDataDir -Recurse -Force -ErrorAction SilentlyContinue
-  Remove-Item (Join-Path $env:LOCALAPPDATA 'velopackelopack_PartcraftVelopackTest.log') -Force -ErrorAction SilentlyContinue
+  Remove-Item (Join-Path $env:LOCALAPPDATA 'velopack\velopack_HalfCubeVelopackTest.log') -Force -ErrorAction SilentlyContinue
   $elevated = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
   Add-Result 'precondition' (-not $elevated) "test app not installed, user-data folder empty, elevated shell: $elevated"
 
@@ -81,8 +81,8 @@ try {
   Add-Result '2 uninstall entry (HKCU)' ($reg.DisplayVersion -eq '1.0.0') ("DisplayVersion {0}, Publisher {1}, QuietUninstallString {2}" -f $reg.DisplayVersion, $reg.Publisher, $reg.QuietUninstallString)
   $hklm = Test-Path "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$packId"
   Add-Result '2 no machine-wide entry' (-not $hklm) 'no HKLM uninstall key'
-  $lnkStart = Test-Path "$env:APPDATA\Microsoft\Windows\Start Menu\Programs\Partcraft Velopack Test.lnk"
-  $lnkDesk = Test-Path ([Environment]::GetFolderPath('Desktop') + '\Partcraft Velopack Test.lnk')
+  $lnkStart = Test-Path "$env:APPDATA\Microsoft\Windows\Start Menu\Programs\HalfCube Velopack Test.lnk"
+  $lnkDesk = Test-Path ([Environment]::GetFolderPath('Desktop') + '\HalfCube Velopack Test.lnk')
   Add-Result '2 shortcuts' $lnkStart "Start menu: $lnkStart, Desktop: $lnkDesk (vpk default Desktop,StartMenuRoot)"
   $running = (Get-RelatedProcesses | Measure-Object).Count -gt 0
   $hookOnly = (Select-String -Path $logFile -Pattern 'hook after-install' -Quiet) -and -not (Select-String -Path $logFile -Pattern ' start args=' -Quiet)
@@ -91,7 +91,7 @@ try {
   # 3. first run of the installed app, info only
   $exe = "$installDir\current\$packId.exe"
   $r = Invoke-Watched -File $exe -ArgList @('--action=info') -Label 'installed 1.0.0 info'
-  $seen = Select-String -Path $logFile -Pattern 'appId=PartcraftVelopackTest version=1.0.0 portable=false' -Quiet
+  $seen = Select-String -Path $logFile -Pattern 'appId=HalfCubeVelopackTest version=1.0.0 portable=false' -Quiet
   Add-Result '3 installed app reports its version' (($r.ExitCode -eq 0) -and $seen) 'appId, version 1.0.0, portable=false (see test.log)'
   Copy-Item $userFile (Join-Path $evidence 'user-file-before-update.txt')
 
@@ -128,7 +128,7 @@ try {
   $regNow = (Get-ItemProperty $regKey).DisplayVersion
   $sq = Get-Content "$installDir\current\sq.version" -Raw
   Add-Result '5 update 1.0.0 to 1.0.1' ($done -and $regNow -eq '1.0.1' -and $sq -match '<version>1.0.1</version>') ("windows: {0}; registry {1}; restarted into 1.0.1 and found no further update; feed {2}" -f $r.VisibleWindows, $regNow, $feedArg)
-  $usedDelta = Select-String -Path (Join-Path $env:LOCALAPPDATA 'velopack\velopack_PartcraftVelopackTest.log') -Pattern 'Successfully applied 1 delta patches' -Quiet
+  $usedDelta = Select-String -Path (Join-Path $env:LOCALAPPDATA 'velopack\velopack_HalfCubeVelopackTest.log') -Pattern 'Successfully applied 1 delta patches' -Quiet
   Add-Result '5 update used the delta package' $usedDelta 'velopack log: delta patches applied'
   $hooks = (Select-String -Path $logFile -Pattern 'hook before-update 1.0.0' -Quiet) -and (Select-String -Path $logFile -Pattern 'hook after-update 1.0.1' -Quiet) -and (Select-String -Path $logFile -Pattern 'hook restarted 1.0.1' -Quiet)
   Add-Result '5 hooks ran' $hooks 'before-update (old version), after-update and restarted (new version)'
@@ -141,7 +141,7 @@ try {
 
   # 7. optional read-only checks against GitHub (HTTPS): a public repository without releases, and a name that does not exist
   if ($GithubCheck) {
-    foreach ($url in @('https://github.com/sushiflux/Partcraft', 'https://github.com/sushiflux/no-such-repository-for-the-velopack-test')) {
+    foreach ($url in @('https://github.com/sushiflux/HalfCube', 'https://github.com/sushiflux/no-such-repository-for-the-velopack-test')) {
       $r = Invoke-Watched -File $exe -ArgList @('--action=check', "--feed=$url") -Label "github check $url"
       $line = (Select-String -Path $logFile -Pattern 'update check|error' | Select-Object -Last 1).Line
       Add-Result "7 HTTPS check $url" $true "exit $($r.ExitCode): $line"
@@ -155,13 +155,13 @@ try {
   [void](Wait-Idle -TimeoutSec 60); Start-Sleep -Seconds 4
   $gone = -not (Test-Path $installDir)
   Add-Result '8 silent uninstall removes program files' ($gone -and $r.ExitCode -eq 0) "exit $($r.ExitCode), $($r.Seconds) s, windows: $($r.VisibleWindows), install dir exists: $(-not $gone), command: $q"
-  $lnk = (Test-Path "$env:APPDATA\Microsoft\Windows\Start Menu\Programs\Partcraft Velopack Test.lnk") -or (Test-Path ([Environment]::GetFolderPath('Desktop') + '\Partcraft Velopack Test.lnk'))
+  $lnk = (Test-Path "$env:APPDATA\Microsoft\Windows\Start Menu\Programs\HalfCube Velopack Test.lnk") -or (Test-Path ([Environment]::GetFolderPath('Desktop') + '\HalfCube Velopack Test.lnk'))
   Add-Result '8 shortcuts removed' (-not $lnk) 'no Start menu or Desktop shortcut left'
   Add-Result '8 uninstall entry removed' (-not (Test-Path $regKey)) 'HKCU key gone'
   $kept = (Test-Path $userFile) -and ((Get-Content $userFile -Raw) -match 'seen by 1.0.1') -and (Select-String -Path $logFile -Pattern 'hook before-uninstall 1.0.1' -Quiet)
   Add-Result '8 user-data file survived the uninstall' $kept 'user-file.txt still there, before-uninstall hook ran'
   Copy-Item $logFile (Join-Path $evidence 'test.log')
-  Copy-Item (Join-Path $env:LOCALAPPDATA 'velopack\velopack_PartcraftVelopackTest.log') (Join-Path $evidence 'velopack-app.log')
+  Copy-Item (Join-Path $env:LOCALAPPDATA 'velopack\velopack_HalfCubeVelopackTest.log') (Join-Path $evidence 'velopack-app.log')
   Copy-Item $userFile (Join-Path $evidence 'user-file-after-uninstall.txt')
 }
 catch {
@@ -176,7 +176,7 @@ finally {
   }
   if (-not $KeepUserData) {
     Remove-Item $userDataDir -Recurse -Force -ErrorAction SilentlyContinue
-    Remove-Item (Join-Path $env:LOCALAPPDATA 'velopack\velopack_PartcraftVelopackTest.log') -Force -ErrorAction SilentlyContinue
+    Remove-Item (Join-Path $env:LOCALAPPDATA 'velopack\velopack_HalfCubeVelopackTest.log') -Force -ErrorAction SilentlyContinue
   }
   $results | Format-Table -AutoSize -Wrap | Out-String -Width 250 | Write-Host
   $results | ConvertTo-Json | Set-Content (Join-Path $evidence 'results.json')

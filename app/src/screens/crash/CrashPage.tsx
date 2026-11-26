@@ -99,7 +99,7 @@ function CalmCrashPage({ report, text }: { report: CrashReport; text: string }) 
         <p className="pcc-kicker">Unexpected error</p>
         <h1>Something went wrong</h1>
         <p className="pcc-lead">
-          Partcraft hit a problem it could not recover from and had to stop showing this screen. Reloading usually
+          HalfCube hit a problem it could not recover from and had to stop showing this screen. Reloading usually
           helps. If it happens again, copy the details and add them to your report on GitHub.
         </p>
         <p className="pcc-message">

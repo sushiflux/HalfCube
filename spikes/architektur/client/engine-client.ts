@@ -71,7 +71,7 @@ export class EngineClient {
     t.onMessage = (h, p) => this.dispatch(h, p);
     t.onExit = (info) => this.handleExit(info);
     await t.start();
-    const r = await this.request({ type: "hello", protocol: PROTOCOL_VERSION, client: this.opts.clientName ?? "partcraft" }).reply;
+    const r = await this.request({ type: "hello", protocol: PROTOCOL_VERSION, client: this.opts.clientName ?? "halfcube" }).reply;
     if (r.message.type !== "helloResult") {
       const text = r.message.type === "error" ? `${r.message.code}: ${r.message.message}` : JSON.stringify(r.message);
       throw new Error(`The engine refused the handshake: ${text}`);

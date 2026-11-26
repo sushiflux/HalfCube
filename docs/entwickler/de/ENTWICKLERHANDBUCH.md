@@ -1,5 +1,5 @@
 ---
-title: "Partcraft"
+title: "HalfCube"
 subtitle: "Entwicklerhandbuch"
 tagline: "Aufbau, Bau und Konventionen für Entwickler"
 status: "Entwurf"
@@ -9,4 +9,4 @@ lang: "de"
 
 # 1 Über dieses Handbuch
 
-Partcraft befindet sich in früher Entwicklung. Es gibt bisher nur das Grundgerüst (Oberfläche, Desktop-Fenster, Startskript); dieses Handbuch ist ein leeres Gerüst und wird gefüllt, sobald die Architektur im Code steht.
+HalfCube befindet sich in früher Entwicklung. Es gibt bisher nur das Grundgerüst (Oberfläche, Desktop-Fenster, Startskript); dieses Handbuch ist ein leeres Gerüst und wird gefüllt, sobald die Architektur im Code steht.

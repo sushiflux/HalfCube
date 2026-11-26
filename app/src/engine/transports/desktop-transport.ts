@@ -14,7 +14,7 @@ function listenForPorts(): void {
   window.addEventListener("message", (event: MessageEvent) => {
     const data = event.data as Partial<EnginePortEnvelope> | null;
     // Only the preload script of this very window may hand over a port.
-    if (event.source !== window || !data || data.partcraft !== "engine-port" || typeof data.generation !== "number") return;
+    if (event.source !== window || !data || data.halfcube !== "engine-port" || typeof data.generation !== "number") return;
     const port = event.ports[0];
     if (!port) return;
     const waiter = waiters.get(data.generation);

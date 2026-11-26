@@ -1,4 +1,4 @@
-// Worker script hosting the WebAssembly engine (partcraft-engine.mjs). Runs as a browser module worker or as a
+// Worker script hosting the WebAssembly engine (halfcube-engine.mjs). Runs as a browser module worker or as a
 // Node worker_thread. Plain JavaScript so it can be loaded without a build step.
 //
 // Messages from the client:  { kind: "init", moduleUrl, debugCommands, cancelFlags: Int32Array | null }
@@ -43,7 +43,7 @@ async function init(msg) {
       print: (text) => post({ kind: "log", stream: "stdout", text }),
       printErr: (text) => post({ kind: "log", stream: "stderr", text }),
     });
-    mod._pc_init(msg.debugCommands ? 1 : 0, msg.cancelFlags ? 1 : 0);
+    mod._hc_init(msg.debugCommands ? 1 : 0, msg.cancelFlags ? 1 : 0);
   } catch (e) {
     dead = true;
     post({ kind: "fatal", message: `The WebAssembly engine could not be loaded from ${msg.moduleUrl}: ${describe(e)}` });
@@ -69,7 +69,7 @@ function handle(msg) {
     mod.HEAPU8.set(new Uint8Array(msg.payload), pp);
   }
   try {
-    mod._pc_handle(hp, header.byteLength, pp, plen);
+    mod._hc_handle(hp, header.byteLength, pp, plen);
   } catch (e) {
     // A trap (for example an integer division by zero or a call through a null pointer) or an abort escapes
     // every C++ catch and ends up here. The module's state is undefined from now on.

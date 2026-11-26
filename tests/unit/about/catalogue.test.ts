@@ -23,19 +23,19 @@ const browser = buildItems(fixture, "browser", "2026.11.6.12.24867");
 
 describe("buildItems: platform filter", () => {
   it("lists the project's own texts first, then the data in its order", () => {
-    expect(desktop.map((i) => i.id)).toEqual(["partcraft", "notice", "occt", "planegcs", "react", "electron", "chromium"]);
+    expect(desktop.map((i) => i.id)).toEqual(["halfcube", "notice", "occt", "planegcs", "react", "electron", "chromium"]);
   });
 
   it("leaves out entries without 'browser' in the browser version, so no desktop-only entry shows up there", () => {
-    expect(browser.map((i) => i.id)).toEqual(["partcraft", "notice", "occt", "planegcs", "react"]);
+    expect(browser.map((i) => i.id)).toEqual(["halfcube", "notice", "occt", "planegcs", "react"]);
     expect(browser.some((i) => i.group === "shell")).toBe(false);
   });
 
-  it("carries the running version on the Partcraft entry and points to the project's two texts", () => {
+  it("carries the running version on the HalfCube entry and points to the project's two texts", () => {
     const own = findItem(desktop, LICENCE_ITEM);
     expect(own?.version).toBe("2026.11.6.12.24867");
-    expect(own?.textFile).toBe("licenses/partcraft-license.txt");
-    expect(findItem(desktop, NOTICE_ITEM)?.textFile).toBe("licenses/partcraft-notice.txt");
+    expect(own?.textFile).toBe("licenses/halfcube-license.txt");
+    expect(findItem(desktop, NOTICE_ITEM)?.textFile).toBe("licenses/halfcube-notice.txt");
   });
 });
 
@@ -153,10 +153,10 @@ describe("the LGPL line (LGPL-2.1 section 6)", () => {
 describe("the licence summary (factual wording)", () => {
   it("has exactly the agreed text in German and English", () => {
     expect(catalogues.de.about.licenceSummary).toBe(
-      "Partcraft wird unter der PolyForm Shield License 1.0.0 bereitgestellt. Sie erlaubt die kostenlose Nutzung, privat und geschäftlich, sowie Änderungen für den eigenen Gebrauch. Ausgenommen ist das Anbieten von Produkten, die mit Partcraft im Wettbewerb stehen. Ohne Gewährleistung.",
+      "HalfCube wird unter der PolyForm Shield License 1.0.0 bereitgestellt. Sie erlaubt die kostenlose Nutzung, privat und geschäftlich, sowie Änderungen für den eigenen Gebrauch. Ausgenommen ist das Anbieten von Produkten, die mit HalfCube im Wettbewerb stehen. Ohne Gewährleistung.",
     );
     expect(catalogues.en.about.licenceSummary).toBe(
-      "Partcraft is provided under the PolyForm Shield License 1.0.0. It permits free use, private and commercial, and changes for your own use. Offering products that compete with Partcraft is excluded. No warranty.",
+      "HalfCube is provided under the PolyForm Shield License 1.0.0. It permits free use, private and commercial, and changes for your own use. Offering products that compete with HalfCube is excluded. No warranty.",
     );
   });
 });

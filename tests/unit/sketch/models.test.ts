@@ -126,7 +126,7 @@ describe("texts of a refused edit", () => {
   it("a contradicting dimension: names what it contradicts, offers the reference dimension, is complete", () => {
     const r = rejectText(t, base({}), true);
     expect(r.offerReference).toBe(true);
-    expect(r.code).toBe("PC-SKETCH-CONFLICTING");
+    expect(r.code).toBe("HC-SKETCH-CONFLICTING");
     const text = r.blocks.map((b) => b.text).join("\n");
     expect(text).toContain("Länge 70 mm wurde nicht übernommen");
     // The sketch's own names: the dimension d3 with its value, the constraint with the shape it holds, never an element id.
@@ -163,9 +163,9 @@ describe("texts of a refused edit", () => {
   });
 
   it("an engine failure and an invalid edit have their own codes", () => {
-    expect(rejectText(t, base({ outcome: { ok: false, reason: "engine", error: new Error("worker gone") } }), true).code).toBe("PC-SKETCH-ENGINE");
+    expect(rejectText(t, base({ outcome: { ok: false, reason: "engine", error: new Error("worker gone") } }), true).code).toBe("HC-SKETCH-ENGINE");
     const invalid = rejectText(t, base({ outcome: { ok: false, reason: "invalid", message: "no such point" } }), true);
-    expect(invalid.code).toBe("PC-SKETCH-INVALID");
+    expect(invalid.code).toBe("HC-SKETCH-INVALID");
     expect(invalid.blocks[0]!.text).toContain("no such point");
   });
 

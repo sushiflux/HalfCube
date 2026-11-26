@@ -31,7 +31,7 @@ export function browserWorkerPort(worker: Worker): WorkerPort {
 
 export interface WorkerTransportOptions {
   createPort: () => WorkerPort;
-  /** Absolute URL of partcraft-engine.mjs (the Emscripten module); partcraft-engine.wasm must lie next to it. */
+  /** Absolute URL of halfcube-engine.mjs (the Emscripten module); halfcube-engine.wasm must lie next to it. */
   moduleUrl: string;
   /**
    * Use a SharedArrayBuffer cancel flag so a running command can be cancelled. Needs SharedArrayBuffer, which browsers

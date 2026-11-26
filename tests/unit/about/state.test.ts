@@ -39,8 +39,8 @@ describe("the About store", () => {
     expect(store.get()).toBeNull();
     store.open();
     expect(store.get()).toEqual({ tab: "info", item: null });
-    store.open({ tab: "licenses", item: "partcraft" });
-    expect(store.get()).toEqual({ tab: "licenses", item: "partcraft" });
+    store.open({ tab: "licenses", item: "halfcube" });
+    expect(store.get()).toEqual({ tab: "licenses", item: "halfcube" });
     expect(saved).toHaveLength(2);
   });
 

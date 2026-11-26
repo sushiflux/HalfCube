@@ -1,6 +1,6 @@
-using Partcraft.Setup.Localization;
+using HalfCube.Setup.Localization;
 
-namespace Partcraft.Setup.Ui;
+namespace HalfCube.Setup.Ui;
 
 /// <summary>
 /// The "Copy" button of an error message with its status slot beside it (rule "error messages are always copyable"). The button copies
@@ -18,10 +18,10 @@ public sealed class CopyBar
     public CopyBar(Func<string> text, float scale, Palette palette, Color surface, string name = "")
     {
         _text = text;
-        Button = new PcButton
+        Button = new HcButton
         {
             Text = CommonTexts.Copy,
-            Kind = PcButtonKind.Secondary,
+            Kind = HcButtonKind.Secondary,
             Glyph = Glyphs.Copy,
             S = scale,
             P = palette,
@@ -29,7 +29,7 @@ public sealed class CopyBar
             Name = "btnCopy" + name,
             AccessibleName = CommonTexts.Copy,
         };
-        Status = new PcText
+        Status = new HcText
         {
             Points = 9f,
             Style = FontStyle.Bold,
@@ -49,9 +49,9 @@ public sealed class CopyBar
         Button.Disposed += (_, _) => _timer.Dispose();
     }
 
-    public PcButton Button { get; }
+    public HcButton Button { get; }
 
-    public PcText Status { get; }
+    public HcText Status { get; }
 
     public IEnumerable<Control> Controls => [Button, Status];
 

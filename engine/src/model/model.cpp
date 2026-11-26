@@ -12,7 +12,7 @@
 #include <set>
 #include <variant>
 
-namespace pc::model {
+namespace hc::model {
 
 namespace {
 
@@ -223,7 +223,7 @@ Answer<protocol::SketchSolveResult> solveSketch(const protocol::SketchSolveComma
 
 Answer<protocol::ModelResult> Model::sync(const protocol::ModelSyncCommand& command, const CancelCheck& cancelled) {
     const auto t0 = Clock::now();
-    const protocol::PartcraftDocument& doc = command.document;
+    const protocol::HalfCubeDocument& doc = command.document;
     checkDocument(doc);
     const std::set<std::string> previewed = command.previewFeatures ? std::set<std::string>(command.previewFeatures->begin(), command.previewFeatures->end())
                                                                     : std::set<std::string>{};
@@ -361,4 +361,4 @@ Answer<protocol::ModelResult> Model::sync(const protocol::ModelSyncCommand& comm
     return out;
 }
 
-} // namespace pc::model
+} // namespace hc::model

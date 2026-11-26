@@ -12,7 +12,7 @@ export type {
   ExtrudeView,
   LineOptions,
   ModelView,
-  PartcraftModel,
+  HalfCubeModel,
   PointInput,
   ProfileView,
   SketchCircleView,
@@ -32,6 +32,6 @@ export { LatestOnly } from "./latest-only.ts";
 export type { LatestOnlyOptions, LatestResult } from "./latest-only.ts";
 export { ModelSync } from "./model-sync.ts";
 export type { ModelPreview } from "./model-sync.ts";
-export { createPartcraftModel, PartcraftModelImpl } from "./partcraft-model.ts";
-export type { FeatureNames, PartcraftModelOptions } from "./partcraft-model.ts";
+export { createHalfCubeModel, HalfCubeModelImpl } from "./halfcube-model.ts";
+export type { FeatureNames, HalfCubeModelOptions } from "./halfcube-model.ts";
 export { elementWord, featureNames, problemText, quantityErrorText } from "./texts.ts";

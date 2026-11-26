@@ -1,5 +1,5 @@
 {
-  "$comment": "Look of the Partcraft documents (theme Präzision, the default theme of the product). Colours come from the logo and the decided colour theme; the wordmark rules are fixed per background and independent of the theme. The brand name is read from branding/branding.json, the logo from branding/source/logo-square.png (shown as it is, never redrawn).",
+  "$comment": "Look of the HalfCube documents (theme Präzision, the default theme of the product). Colours come from the logo and the decided colour theme; the wordmark rules are fixed per background and independent of the theme. The brand name is read from branding/branding.json, the logo from branding/source/logo-square.png (shown as it is, never redrawn).",
   "name": "Präzision",
   "brandingFile": "../../branding/branding.json",
   "logoFile": "../../branding/source/logo-square.png",
@@ -34,9 +34,9 @@
     "decisionSoft": "#f0ebfb"
   },
   "wordmark": {
-    "split": ["Part", "craft"],
-    "light": { "part": "#16476e", "craft": "#1f75ae" },
-    "dark": { "part": "#ffffff", "craft": "#4cd1e0" },
+    "split": ["Half", "Cube"],
+    "light": { "half": "#16476e", "cube": "#1f75ae" },
+    "dark": { "half": "#ffffff", "cube": "#4cd1e0" },
     "weightLarge": 600,
     "weightSmall": 640,
     "trackingLarge": "-0.028em",

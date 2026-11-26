@@ -15,7 +15,7 @@
 #include <string>
 #include <vector>
 
-namespace pc {
+namespace hc {
 
 // A recipe that cannot be used at all (wrong structure, unknown parameter reference, ...). The message names
 // the JSON path of the problem.
@@ -102,4 +102,4 @@ private:
 // FNV-1a 64-bit, used for cache keys.
 uint64_t fnv1a64(const std::string& s, uint64_t seed = 1469598103934665603ull);
 
-} // namespace pc
+} // namespace hc

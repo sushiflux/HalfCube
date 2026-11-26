@@ -1,6 +1,6 @@
 using Microsoft.Win32;
 
-namespace Partcraft.Setup;
+namespace HalfCube.Setup;
 
 /// <summary>What the setup finds on this PC: where Velopack puts the program, whether it is installed already, where the app's data lives.</summary>
 internal sealed class SetupLayout
@@ -12,14 +12,14 @@ internal sealed class SetupLayout
         PackId = packId;
         Title = title;
         // The app's own per-user data folder (Electron's userData, named after the product). Tests redirect it.
-        AppDataDir = Path.Combine(appDataOverride ?? Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Partcraft");
+        AppDataDir = Path.Combine(appDataOverride ?? Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "HalfCube");
     }
 
     public string PackId { get; }
 
     public string Title { get; }
 
-    /// <summary>The folder of settings and projects that stays on uninstall (%APPDATA%\Partcraft).</summary>
+    /// <summary>The folder of settings and projects that stays on uninstall (%APPDATA%\HalfCube).</summary>
     public string AppDataDir { get; }
 
     public string SetupChoicesFile => Path.Combine(AppDataDir, "setup-choices.json");

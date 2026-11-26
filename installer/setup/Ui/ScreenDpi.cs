@@ -1,6 +1,6 @@
 using System.Runtime.InteropServices;
 
-namespace Partcraft.Setup.Ui;
+namespace HalfCube.Setup.Ui;
 
 /// <summary>
 /// DPI of a monitor (or of a point/window on it) for windows that size themselves before their handle exists. The setup is system-DPI

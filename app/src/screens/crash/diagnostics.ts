@@ -95,7 +95,7 @@ export interface CrashReport {
 export function buildCrashReport(report: CrashReport): string {
   const { environment: env } = report;
   const lines = [
-    `Partcraft crashed: ${report.name}: ${report.message}`,
+    `HalfCube crashed: ${report.name}: ${report.message}`,
     "",
     `Version:   ${env.version}`,
     `Channel:   ${env.channel}`,

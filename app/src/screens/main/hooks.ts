@@ -1,15 +1,15 @@
 // React views on the model layer: each hook is one useSyncExternalStore over a store the model layer exposes.
 import { useCallback, useEffect, useMemo, useSyncExternalStore } from "react";
-import type { PartcraftDocument, SketchFeature } from "../../document/types.ts";
-import type { ModelView, PartcraftModel, SketchEditor, SketchView } from "../../model/index.ts";
+import type { HalfCubeDocument, SketchFeature } from "../../document/types.ts";
+import type { ModelView, HalfCubeModel, SketchEditor, SketchView } from "../../model/index.ts";
 import { ExtrudeCommand, type CommittedStep, type ExtrudeState } from "./extrude-command.ts";
 import { ProfileCatalogue, type CatalogueEntry } from "./profile-catalogue.ts";
 
-export function useDocument(model: PartcraftModel): PartcraftDocument {
+export function useDocument(model: HalfCubeModel): HalfCubeDocument {
   return useSyncExternalStore(model.document.subscribe, model.document.getSnapshot);
 }
 
-export function useModelView(model: PartcraftModel): ModelView {
+export function useModelView(model: HalfCubeModel): ModelView {
   return useSyncExternalStore(model.subscribeModel, model.getModelView);
 }
 
@@ -24,7 +24,7 @@ export function useSketchView(editor: SketchEditor | null): SketchView | null {
  * The closed areas of the finished sketches (see profile-catalogue.ts). The open sketch is left out (its data changes with every
  * edit), and so is a sketch without any line or circle. Asked again when the engine becomes ready.
  */
-export function useProfileCatalogue(model: PartcraftModel, doc: PartcraftDocument, openSketchId: string | null, engineReady: boolean): readonly CatalogueEntry[] {
+export function useProfileCatalogue(model: HalfCubeModel, doc: HalfCubeDocument, openSketchId: string | null, engineReady: boolean): readonly CatalogueEntry[] {
   const catalogue = useMemo(() => new ProfileCatalogue((feature) => model.sketchProfiles(feature)), [model]);
   useEffect(() => {
     const finished = doc.timeline.filter(
@@ -36,7 +36,7 @@ export function useProfileCatalogue(model: PartcraftModel, doc: PartcraftDocumen
 }
 
 /** The extrude command of this model and its state. */
-export function useExtrudeCommand(model: PartcraftModel, decimalComma: boolean, onCommitted: (step: CommittedStep) => void): { command: ExtrudeCommand; state: ExtrudeState } {
+export function useExtrudeCommand(model: HalfCubeModel, decimalComma: boolean, onCommitted: (step: CommittedStep) => void): { command: ExtrudeCommand; state: ExtrudeState } {
   const command = useMemo(() => new ExtrudeCommand(model, { decimalComma: false }), [model]);
   useEffect(() => {
     command.configure({ decimalComma, onCommitted });

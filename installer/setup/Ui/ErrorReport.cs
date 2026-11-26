@@ -2,7 +2,7 @@ using System.Globalization;
 using System.Runtime.InteropServices;
 using System.Text;
 
-namespace Partcraft.Setup.Ui;
+namespace HalfCube.Setup.Ui;
 
 /// <summary>
 /// Rule "error messages are always copyable": builds the text a "Copy" button puts on the clipboard (the complete message, then one
@@ -17,12 +17,12 @@ public static class ErrorReport
     /// <summary>The text that was copied last (test aid; also set in a headless run, where the real clipboard is never touched).</summary>
     public static string? LastCopied { get; private set; }
 
-    /// <summary>The complete text for the clipboard: the message as shown, a blank line, then "Partcraft Setup &lt;version&gt; · &lt;time&gt;".</summary>
+    /// <summary>The complete text for the clipboard: the message as shown, a blank line, then "HalfCube Setup &lt;version&gt; · &lt;time&gt;".</summary>
     public static string Build(string message, string? version = null, DateTimeOffset? at = null)
     {
         var text = message.Replace("\r\n", "\n").Replace('\r', '\n').Trim('\n', ' ').Replace("\n", Environment.NewLine);
         var when = (at ?? DateTimeOffset.Now).ToString("yyyy-MM-dd HH:mm:ss zzz", CultureInfo.InvariantCulture);
-        var stamp = new StringBuilder("Partcraft Setup");
+        var stamp = new StringBuilder("HalfCube Setup");
         var v = version ?? AppVersion;
         if (!string.IsNullOrWhiteSpace(v)) stamp.Append(' ').Append(v);
         stamp.Append(" · ").Append(when);

@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <!--
-    The designed Windows setup of Partcraft (WinForms, owner-drawn, light/dark, German/English). It carries Velopack's Setup.exe
+    The designed Windows setup of HalfCube (WinForms, owner-drawn, light/dark, German/English). It carries Velopack's Setup.exe
     (the installer that vpk pack creates) inside itself as an appended ZIP and runs it silently underneath, so the user sees one
     designed window while Velopack does the installing (per user, no administrator rights, update-ready). Published as a
     self-contained, compressed single file; scripts/build-installer.ps1 appends the payload to the end of the exe.
@@ -10,12 +10,12 @@
     <OutputType>WinExe</OutputType>
     <TargetFramework>net11.0-windows</TargetFramework>
     <UseWindowsForms>true</UseWindowsForms>
-    <AssemblyName>Partcraft-Setup</AssemblyName>
-    <RootNamespace>Partcraft.Setup</RootNamespace>
-    <Description>Partcraft Setup</Description>
-    <AssemblyTitle>Partcraft Setup</AssemblyTitle>
+    <AssemblyName>HalfCube-Setup</AssemblyName>
+    <RootNamespace>HalfCube.Setup</RootNamespace>
+    <Description>HalfCube Setup</Description>
+    <AssemblyTitle>HalfCube Setup</AssemblyTitle>
     <Company>SushiFlux</Company>
-    <Product>Partcraft</Product>
+    <Product>HalfCube</Product>
     <Copyright>© 2026 SushiFlux</Copyright>
     <ApplicationIcon>..\..\branding\icons\icon.ico</ApplicationIcon>
     <ApplicationHighDpiMode>SystemAware</ApplicationHighDpiMode>
@@ -44,7 +44,7 @@
   <ItemGroup>
     <!-- The logo and the app icon straight from the branding folder (scaled only, never altered) -->
     <EmbeddedResource Include="..\..\branding\icons\icon-512.png" LogicalName="logo.png" Link="Resources\logo.png" />
-    <EmbeddedResource Include="..\..\branding\icons\icon.ico" LogicalName="partcraft.ico" Link="Resources\partcraft.ico" />
+    <EmbeddedResource Include="..\..\branding\icons\icon.ico" LogicalName="halfcube.ico" Link="Resources\halfcube.ico" />
     <!-- Geist and Geist Mono (SIL Open Font License 1.1, Resources\fonts\OFL.txt), registered for this process only -->
     <EmbeddedResource Include="Resources\fonts\*.ttf" LogicalName="font-%(Filename).ttf" />
     <EmbeddedResource Include="Resources\fonts\OFL.txt" LogicalName="OFL.txt" />

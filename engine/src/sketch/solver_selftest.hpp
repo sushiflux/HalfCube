@@ -15,7 +15,7 @@
 #include <string>
 #include <utility>
 
-namespace pc::sketch {
+namespace hc::sketch {
 
 // The self-test sketch at its (deliberately displaced) start geometry.
 Sketch selftestSketch();
@@ -25,4 +25,4 @@ std::map<std::string, std::pair<double, double>> selftestSolution();
 
 protocol::SolverSelftestResult runSelftest(const CancelCheck& cancelled);
 
-} // namespace pc::sketch
+} // namespace hc::sketch

@@ -8,9 +8,9 @@ import { chromium } from "playwright-core";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const source = process.argv[2];
-const exe = process.argv[3] ?? process.env.PC_BROWSER_EXE;
+const exe = process.argv[3] ?? process.env.HC_BROWSER_EXE;
 if (!source || !exe) {
-  console.error("Usage: node scripts/make-icons.mjs <logo.png> <browser-exe>   (or set PC_BROWSER_EXE)");
+  console.error("Usage: node scripts/make-icons.mjs <logo.png> <browser-exe>   (or set HC_BROWSER_EXE)");
   process.exit(2);
 }
 const sizes = [512, 64];
@@ -47,7 +47,7 @@ try {
     [b64, sizes],
   );
   for (const size of sizes) {
-    const file = join(here, "..", "assets", `partcraft-icon-${size}.png`);
+    const file = join(here, "..", "assets", `halfcube-icon-${size}.png`);
     writeFileSync(file, Buffer.from(out[size], "base64"));
     console.log(`wrote ${file}`);
   }

@@ -1,5 +1,5 @@
 {
-  "format": "partcraft.recipe",
+  "format": "halfcube.recipe",
   "formatVersion": 0,
   "parameters": { "radius": 15, "pitch": 10, "turns": 5, "wireDiameter": 4 },
   "steps": [

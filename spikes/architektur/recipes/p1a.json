@@ -1,5 +1,5 @@
 {
-  "format": "partcraft.recipe",
+  "format": "halfcube.recipe",
   "formatVersion": 0,
   "parameters": {
     "length": 80,

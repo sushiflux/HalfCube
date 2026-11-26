@@ -1,5 +1,5 @@
-# Builds assets/partcraft.ico from the logo PNG: only scaled, never redrawn (PNG-compressed ICO entries).
-param([string]$Source = "$PSScriptRoot\..\assets\partcraft-icon-512.png", [string]$Out = "$PSScriptRoot\..\assets\partcraft.ico")
+# Builds assets/halfcube.ico from the logo PNG: only scaled, never redrawn (PNG-compressed ICO entries).
+param([string]$Source = "$PSScriptRoot\..\assets\halfcube-icon-512.png", [string]$Out = "$PSScriptRoot\..\assets\halfcube.ico")
 Add-Type -AssemblyName System.Drawing
 $src = [System.Drawing.Image]::FromFile((Resolve-Path $Source))
 $sizes = 16, 24, 32, 48, 64, 128, 256

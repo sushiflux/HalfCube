@@ -29,7 +29,7 @@ export interface LoadingAction {
 export interface LoadingError {
   /** What failed, specific. */
   headline: string;
-  /** Error code, e.g. "PC-ENGINE-001". */
+  /** Error code, e.g. "HC-ENGINE-001". */
   code: string;
   /** The detailed description behind the arrow. */
   details: readonly ErrorBlock[];

@@ -1,7 +1,7 @@
 using System.Drawing.Imaging;
-using Partcraft.Setup.Localization;
+using HalfCube.Setup.Localization;
 
-namespace Partcraft.Setup.Ui;
+namespace HalfCube.Setup.Ui;
 
 public enum DialogKind
 {
@@ -12,7 +12,7 @@ public enum DialogKind
 }
 
 /// <summary>A button of <see cref="Dialogs.Show"/>: its text names the action ("Löschen", not "OK").</summary>
-public sealed record DialogButton(string Text, DialogResult Result, PcButtonKind Kind = PcButtonKind.Secondary);
+public sealed record DialogButton(string Text, DialogResult Result, HcButtonKind Kind = HcButtonKind.Secondary);
 
 /// <summary>
 /// The only place that opens message boxes - always our own <see cref="MessageWindow"/>, never Windows' MessageBox (rule "Dialogs:
@@ -47,10 +47,10 @@ public static class Dialogs
     }
 
     public static void Info(IWin32Window? owner, string text) =>
-        Show(owner, DialogKind.Info, text, [new DialogButton(CommonTexts.Ok, DialogResult.OK, PcButtonKind.Primary)], DialogResult.OK);
+        Show(owner, DialogKind.Info, text, [new DialogButton(CommonTexts.Ok, DialogResult.OK, HcButtonKind.Primary)], DialogResult.OK);
 
     public static void Error(IWin32Window? owner, string text) =>
-        Show(owner, DialogKind.Error, text, [new DialogButton(CommonTexts.Close, DialogResult.OK, PcButtonKind.Primary)], DialogResult.OK);
+        Show(owner, DialogKind.Error, text, [new DialogButton(CommonTexts.Close, DialogResult.OK, HcButtonKind.Primary)], DialogResult.OK);
 }
 
 /// <summary>
@@ -81,17 +81,17 @@ public sealed class MessageWindow : Form
         AutoScaleMode = AutoScaleMode.None;
         FormBorderStyle = FormBorderStyle.None;
         ShowInTaskbar = forcedScale is null;
-        Text = "Partcraft";
+        Text = "HalfCube";
         Icon = Branding.GetIcon(32);
         KeyPreview = true;
         DoubleBuffered = true;
         BackColor = _p.Page;
 
         var textWidth = W - Band - 32 - 28;
-        var title = new PcText { Text = TitleFor(kind), Points = 13f, Style = FontStyle.Bold, Display = true, S = _s, P = _p, Surface = _p.Page, Name = "lblTitle" };
+        var title = new HcText { Text = TitleFor(kind), Points = 13f, Style = FontStyle.Bold, Display = true, S = _s, P = _p, Surface = _p.Page, Name = "lblTitle" };
         title.Bounds = R(Band + 32, 26, textWidth, 26);
         // The slot is as tall as the text needs (the text breaks its own lines, so the control itself says how tall that is), up to TextMax
-        var body = new PcScrollText { S = _s, P = _p, Surface = _p.Page, Points = 10f, Name = "txtMessage" };
+        var body = new HcScrollText { S = _s, P = _p, Surface = _p.Page, Points = 10f, Name = "txtMessage" };
         body.Bounds = R(Band + 32, 26 + 26 + 10, textWidth, TextMax);
         body.SetText(text, p => p.TextSecondary);
         var textHeight = Math.Clamp((int)Math.Ceiling(body.ContentHeight / _s) + 4, 24, TextMax);
@@ -101,12 +101,12 @@ public sealed class MessageWindow : Form
         Controls.AddRange([title, body]);
 
         var right = W - 28;
-        var created = new List<PcButton>();
+        var created = new List<HcButton>();
         for (var i = buttons.Count - 1; i >= 0; i--)
         {
             var b = buttons[i];
             var width = Math.Max(120, TextRenderer.MeasureText(b.Text, Fonts.Get(10f, 1f, FontStyle.Bold)).Width + 40);
-            var button = new PcButton { Text = b.Text, Kind = b.Kind, DialogResult = b.Result, S = _s, P = _p, Surface = _p.Page, Name = "btn" + i };
+            var button = new HcButton { Text = b.Text, Kind = b.Kind, DialogResult = b.Result, S = _s, P = _p, Surface = _p.Page, Name = "btn" + i };
             button.Bounds = R(right - width, height - 22 - 42, width, 42);
             right -= width + 12;
             created.Insert(0, button);

@@ -19,15 +19,15 @@
 #include <variant>
 #include <vector>
 
-namespace pc::protocol {
+namespace hc::protocol {
 
 using Json = nlohmann::ordered_json;
 
 // Protocol version; hello must name exactly this one.
 inline constexpr int kVersion = 3;
 
-// First four bytes of every stdio frame: 'P' 'C' 'E' '1' (frame format 1), read as a little-endian u32.
-inline constexpr std::uint32_t kFrameMagic = 0x31454350u;
+// First four bytes of every stdio frame: 'H' 'C' 'E' '1' (frame format 1), read as a little-endian u32.
+inline constexpr std::uint32_t kFrameMagic = 0x31454348u;
 // Frame prefix: u32 magic, u32 header bytes, u32 payload bytes, u32 reserved (0); all little-endian. Header and payload follow.
 inline constexpr std::uint32_t kFramePrefixBytes = 16u;
 // Largest accepted JSON header (16 MiB).
@@ -36,7 +36,7 @@ inline constexpr std::uint32_t kMaxHeaderBytes = 16777216u;
 inline constexpr std::uint32_t kMaxPayloadBytes = 1073741824u;
 // Every buffer inside a payload starts at a multiple of this many bytes from the payload start.
 inline constexpr std::uint32_t kPayloadAlignment = 16u;
-// Format version of the Partcraft document (history.json, the document of model.sync) this engine reads. It changes only when the stored format changes incompatibly; the protocol version changes with every change of the messages.
+// Format version of the HalfCube document (history.json, the document of model.sync) this engine reads. It changes only when the stored format changes incompatibly; the protocol version changes with every change of the messages.
 inline constexpr std::uint32_t kDocumentFormat = 1u;
 // Largest model.sync revision (2^53 - 1, exact in JavaScript numbers).
 inline constexpr std::int64_t kMaxRevision = 9007199254740991;
@@ -49,17 +49,17 @@ inline constexpr std::uint32_t kPingTimeoutMs = 5000u;
 // Identifies this message protocol. hello carries it in both directions and each side refuses a peer that names a different one: the version number alone is the same in unrelated builds, and a program must never talk to an engine whose messages mean something else. It stays the same for the whole protocol line; a breaking change raises the protocol version.
 inline constexpr std::string_view kProtocolId = "d60beafbc03237e2";
 // File name of the native engine without extension (.exe on Windows).
-inline constexpr std::string_view kNativeExecutable = "partcraft-engine";
-// ES module that loads the WebAssembly engine; partcraft-engine.wasm must be served next to it.
-inline constexpr std::string_view kWasmModuleFile = "partcraft-engine.mjs";
+inline constexpr std::string_view kNativeExecutable = "halfcube-engine";
+// ES module that loads the WebAssembly engine; halfcube-engine.wasm must be served next to it.
+inline constexpr std::string_view kWasmModuleFile = "halfcube-engine.mjs";
 // WebAssembly binary of the engine.
-inline constexpr std::string_view kWasmBinaryFile = "partcraft-engine.wasm";
+inline constexpr std::string_view kWasmBinaryFile = "halfcube-engine.wasm";
 // Default export of the ES module: async factory (moduleOverrides) -> module. Overrides used: onEngineMessage(header: string, payload: ArrayBuffer | null), optional cancelFlags (Int32Array, slot 0 = id of the command to cancel), print, printErr.
 inline constexpr std::string_view kWasmModuleFactory = "createEngineModule";
-// Module function _pc_init(hasCancelFlags: 0 | 1): number. Creates the engine once and returns the protocol version.
-inline constexpr std::string_view kWasmInitExport = "_pc_init";
-// Module function _pc_handle(headerPtr, headerBytes, payloadPtr, payloadBytes): void. Handles one message and runs everything it queued before returning; replies arrive synchronously through onEngineMessage. The caller allocates both buffers with _malloc and frees them with _free afterwards.
-inline constexpr std::string_view kWasmHandleExport = "_pc_handle";
+// Module function _hc_init(hasCancelFlags: 0 | 1): number. Creates the engine once and returns the protocol version.
+inline constexpr std::string_view kWasmInitExport = "_hc_init";
+// Module function _hc_handle(headerPtr, headerBytes, payloadPtr, payloadBytes): void. Handles one message and runs everything it queued before returning; replies arrive synchronously through onEngineMessage. The caller allocates both buffers with _malloc and frees them with _free afterwards.
+inline constexpr std::string_view kWasmHandleExport = "_hc_handle";
 
 // Error codes of the "error" message.
 namespace err {
@@ -221,7 +221,7 @@ struct Dimension {
     std::vector<std::string> refs;
     Quantity value;
     bool driving = false;
-    // The automatic name of the dimension is d followed by this number (d3); the pattern d plus a number is reserved for these names, counted over the whole document from 0 in creation order (d0, d1, d2 ...) (see PartcraftDocument.nextParameter). Reference dimensions have one too. Never changed and never reused, not after a deletion, an undo or a reload. Absent in documents from before the names (readers number those dimensions in creation order). Never read by the engine.
+    // The automatic name of the dimension is d followed by this number (d3); the pattern d plus a number is reserved for these names, counted over the whole document from 0 in creation order (d0, d1, d2 ...) (see HalfCubeDocument.nextParameter). Reference dimensions have one too. Never changed and never reused, not after a deletion, an undo or a reload. Absent in documents from before the names (readers number those dimensions in creation order). Never read by the engine.
     std::optional<std::int64_t> number;
     // Angle only. Which of the four angles between two lines is meant: the angle between two rays, one along each line, counted counter-clockwise from the ray of refs[0] to the ray of refs[1], value 0 to 180 degrees. Two flags, one per reference: true when that ray runs against the direction of its line (p1 to p2; the axes run along +u and +v). Absent: the old reading (angle between the two directions).
     std::optional<std::vector<bool>> reverse;
@@ -327,8 +327,8 @@ struct DocumentSettings {
     std::string lengthUnit = "mm";
 };
 
-// A Partcraft document: the timeline with its sketches and extrusions plus the components with their bodies.
-struct PartcraftDocument {
+// A HalfCube document: the timeline with its sketches and extrusions plus the components with their bodies.
+struct HalfCubeDocument {
     // Document format version (constant documentFormat).
     std::int64_t format = 0;
     std::string documentId;
@@ -344,7 +344,7 @@ struct PartcraftDocument {
 
 // What the engine is and how it was built.
 struct EngineInfo {
-    std::string name = "partcraft-engine";
+    std::string name = "halfcube-engine";
     // Short product version of the build (first line of version.txt), e.g. v2026.11.4.
     std::string version;
     // Full build version (second line of version.txt).
@@ -677,7 +677,7 @@ struct ModelSyncCommand {
     static constexpr bool kTestOnly = false;
     // Greater than every revision this engine accepted before (the client keeps counting across engine restarts); otherwise stale_revision.
     std::int64_t revision = 0;
-    PartcraftDocument document;
+    HalfCubeDocument document;
     // commit: the accepted document. preview: a dialog is open, its values are not accepted yet.
     std::string purpose;
     // Steps that are being previewed; bodies they build or change are marked preview.
@@ -879,7 +879,7 @@ inline Json toJsonValue(const Body& v);
 inline Json toJsonValue(const Component& v);
 inline Json toJsonValue(const Parameter& v);
 inline Json toJsonValue(const DocumentSettings& v);
-inline Json toJsonValue(const PartcraftDocument& v);
+inline Json toJsonValue(const HalfCubeDocument& v);
 inline Json toJsonValue(const EngineInfo& v);
 inline Json toJsonValue(const PlanegcsInfo& v);
 inline Json toJsonValue(const ComponentVersions& v);
@@ -1144,7 +1144,7 @@ inline Json toJsonValue(const DocumentSettings& v) {
     return j;
 }
 
-inline void writeFields(Json& j, const PartcraftDocument& v) {
+inline void writeFields(Json& j, const HalfCubeDocument& v) {
     j["format"] = toJsonValue(v.format);
     j["documentId"] = toJsonValue(v.documentId);
     j["settings"] = toJsonValue(v.settings);
@@ -1154,7 +1154,7 @@ inline void writeFields(Json& j, const PartcraftDocument& v) {
     j["components"] = toJsonValue(v.components);
     j["timeline"] = toJsonValue(v.timeline);
 }
-inline Json toJsonValue(const PartcraftDocument& v) {
+inline Json toJsonValue(const HalfCubeDocument& v) {
     Json j = Json::object();
     writeFields(j, v);
     return j;
@@ -1730,7 +1730,7 @@ inline void read(const Json& v, Body& out, std::string_view cmd, const std::stri
 inline void read(const Json& v, Component& out, std::string_view cmd, const std::string& path);
 inline void read(const Json& v, Parameter& out, std::string_view cmd, const std::string& path);
 inline void read(const Json& v, DocumentSettings& out, std::string_view cmd, const std::string& path);
-inline void read(const Json& v, PartcraftDocument& out, std::string_view cmd, const std::string& path);
+inline void read(const Json& v, HalfCubeDocument& out, std::string_view cmd, const std::string& path);
 inline void read(const Json& v, EngineInfo& out, std::string_view cmd, const std::string& path);
 inline void read(const Json& v, PlanegcsInfo& out, std::string_view cmd, const std::string& path);
 inline void read(const Json& v, ComponentVersions& out, std::string_view cmd, const std::string& path);
@@ -2321,7 +2321,7 @@ inline void read(const Json& v, DocumentSettings& out, std::string_view cmd, con
     }
 }
 
-inline void read(const Json& v, PartcraftDocument& out, std::string_view cmd, const std::string& path) {
+inline void read(const Json& v, HalfCubeDocument& out, std::string_view cmd, const std::string& path) {
     requireObject(v, cmd, path);
     rejectUnknownMembers(v, cmd, path, {"format", "documentId", "settings", "nextId", "nextParameter", "parameters", "components", "timeline"});
     if (const Json* p = findField(v, "format")) {
@@ -2387,7 +2387,7 @@ inline void read(const Json& v, EngineInfo& out, std::string_view cmd, const std
     requireObject(v, cmd, path);
     rejectUnknownMembers(v, cmd, path, {"name", "version", "versionFull", "buildType", "platform", "os", "compiler", "testCommands"});
     if (const Json* p = findField(v, "name")) {
-        out.name = readEnum((*p), cmd, path + ".name", {"partcraft-engine"});
+        out.name = readEnum((*p), cmd, path + ".name", {"halfcube-engine"});
     } else {
         throw FieldError(fieldWhat(cmd, path + ".name") + " is missing.", path + ".name");
     }
@@ -3339,4 +3339,4 @@ inline bool validateCommand(std::string_view type, const Json& j) {
     return false;
 }
 
-} // namespace pc::protocol
+} // namespace hc::protocol

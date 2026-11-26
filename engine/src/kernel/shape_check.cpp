@@ -14,7 +14,7 @@
 #include <cstdio>
 #include <sstream>
 
-namespace pc::kernel {
+namespace hc::kernel {
 
 namespace {
 
@@ -109,4 +109,4 @@ std::string checkPlausible(const ShapeFacts& f, const Expectation& e, const std:
     return {};
 }
 
-} // namespace pc::kernel
+} // namespace hc::kernel

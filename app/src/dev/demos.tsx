@@ -136,11 +136,11 @@ export function DemoGallery() {
         </Section>
         <Section title="Error notice">
           <ErrorNotice
-            headline="Gehäuse.pcraft konnte nicht geöffnet werden: keine Partcraft-Datei, weil in der Datei die Datei manifest.json fehlt und der Inhalt sich nicht lesen lässt"
-            code="PC-FILE-003"
+            headline="Gehäuse.hcube konnte nicht geöffnet werden: keine HalfCube-Datei, weil in der Datei die Datei manifest.json fehlt und der Inhalt sich nicht lesen lässt"
+            code="HC-FILE-003"
             details={[
-              { kind: "text", text: "In der Datei fehlt manifest.json. Partcraft erkennt Projekte an ihrem Inhalt, nicht an der Endung; diese Datei ist beschädigt oder ein anderes ZIP-Archiv mit der Endung .pcraft." },
-              { kind: "code", text: "C:\\Users\\Name\\Documents\\Partcraft\\Gehäuse.pcraft" },
+              { kind: "text", text: "In der Datei fehlt manifest.json. HalfCube erkennt Projekte an ihrem Inhalt, nicht an der Endung; diese Datei ist beschädigt oder ein anderes ZIP-Archiv mit der Endung .hcube." },
+              { kind: "code", text: "C:\\Users\\Name\\Documents\\HalfCube\\Gehäuse.hcube" },
               { kind: "text", text: "Es wurde nichts verändert; geöffnete Projekte bleiben, wie sie waren." },
             ]}
             actions={<Button variant="primary">Open another file …</Button>}

@@ -1,6 +1,6 @@
 // Picks the display a window is placed on and computes the window rectangle there. Pure functions without any Electron
 // import, so they are unit-tested directly (tests/unit/engine/display-choice.test.ts). Used only when the environment
-// variable PARTCRAFT_WINDOW_DISPLAY is set (see main.ts); without it the operating system decides where windows open.
+// variable HALFCUBE_WINDOW_DISPLAY is set (see main.ts); without it the operating system decides where windows open.
 
 export interface Rect {
   x: number;
@@ -19,7 +19,7 @@ export interface DisplayInfo {
 
 export type DisplayTarget = "primary" | "secondary";
 
-/** Parses the value of PARTCRAFT_WINDOW_DISPLAY: `undefined` when unset, `null` when the value is not allowed. */
+/** Parses the value of HALFCUBE_WINDOW_DISPLAY: `undefined` when unset, `null` when the value is not allowed. */
 export function parseDisplayTarget(raw: string | undefined): DisplayTarget | undefined | null {
   if (raw === undefined || raw === "") return undefined;
   if (raw === "primary" || raw === "secondary") return raw;

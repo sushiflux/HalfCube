@@ -35,7 +35,7 @@ describe("parseSetupChoices", () => {
 });
 
 describe("readSetupChoices", () => {
-  const dir = mkdtempSync(join(tmpdir(), "partcraft-setup-"));
+  const dir = mkdtempSync(join(tmpdir(), "halfcube-setup-"));
   afterAll(() => rmSync(dir, { recursive: true, force: true }));
   const write = (name: string, content: string | Buffer) => {
     const file = join(dir, name);

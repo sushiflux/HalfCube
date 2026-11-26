@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { createEmptyDocument } from "../../../app/src/document/index.ts";
-import type { PartcraftDocument, SketchFeature } from "../../../app/src/document/types.ts";
+import type { HalfCubeDocument, SketchFeature } from "../../../app/src/document/types.ts";
 import { buildTimeline, problemSteps, sketchSubSteps, type TimelineText } from "../../../app/src/screens/main/timeline-model.ts";
 
 const text: TimelineText = {
@@ -56,7 +56,7 @@ describe("sketchSubSteps", () => {
 });
 
 describe("buildTimeline", () => {
-  const doc = (): PartcraftDocument => ({
+  const doc = (): HalfCubeDocument => ({
     ...createEmptyDocument({ rootName: "Teil" }),
     timeline: [
       feature,
@@ -90,7 +90,7 @@ describe("buildTimeline", () => {
 });
 
 describe("buildTimeline: the extrusion being made", () => {
-  const withSketch = (): PartcraftDocument => ({ ...createEmptyDocument({ rootName: "Teil" }), timeline: [feature] });
+  const withSketch = (): HalfCubeDocument => ({ ...createEmptyDocument({ rootName: "Teil" }), timeline: [feature] });
 
   it("shows a draft step after the sketch while the dialog is open, with the extrude icon, marked as a draft", () => {
     const steps = buildTimeline(withSketch(), [], text, { featureId: "f30", label: "Extrusion1" });
@@ -103,7 +103,7 @@ describe("buildTimeline: the extrusion being made", () => {
 
   it("shows no draft when there is none, and none twice for a step that exists already (editing)", () => {
     expect(buildTimeline(withSketch(), [], text, null)).toHaveLength(1);
-    const existing: PartcraftDocument = {
+    const existing: HalfCubeDocument = {
       ...withSketch(),
       timeline: [
         feature,

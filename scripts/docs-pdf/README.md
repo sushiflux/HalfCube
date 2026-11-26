@@ -7,7 +7,7 @@ Fonts (Geist and Geist Mono, SIL Open Font License, see `fonts/OFL-LICENSE.txt`)
 
 The PDF is printed by a **hidden Electron window** (`show: false`): no window appears, nothing takes the focus, and
 the page has no network access. The Electron runtime comes from the repository's own `node_modules` (or from the
-environment variable `PARTCRAFT_ELECTRON_EXE`).
+environment variable `HALFCUBE_ELECTRON_EXE`).
 
 ## Use
 
@@ -18,14 +18,14 @@ node scripts/docs-pdf/build-docs.mjs [--out-dir <folder>] [--channel <name>]    
 node scripts/docs-pdf/preview.mjs <file.pdf> <outDir> [pages] [scale]            pages as PNG, for looking at them
 ```
 
-`pages` is a list such as `1,2,5-7` or `all`. `--channel` (or `PARTCRAFT_CHANNEL`) adds the channel symbol to the
+`pages` is a list such as `1,2,5-7` or `all`. `--channel` (or `HALFCUBE_CHANNEL`) adds the channel symbol to the
 version, like the program does; without it the version has none.
 
 ## Front matter
 
 ```
 ---
-title: "Partcraft"          brand name in the running header
+title: "HalfCube"          brand name in the running header
 subtitle: "Handbuch"        large title on the cover
 tagline: "..."              optional line under the title
 status: "Entwurf"

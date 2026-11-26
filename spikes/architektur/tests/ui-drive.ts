@@ -6,7 +6,7 @@
 //   node tests/ui-drive.ts --target desktop [--renderer auto|webgl|nogpu] [--out report.json] [--shot dir]
 //   node tests/ui-drive.ts --target web     [--renderer ...] [--headed] [--out ...] [--shot ...]
 //   --query engine=wasm adds page parameters (here: the WebAssembly engine inside the Electron window)
-// The web target needs PC_BROWSER_EXE (path of a Chromium-based browser) and a built page (npm run build:web);
+// The web target needs HC_BROWSER_EXE (path of a Chromium-based browser) and a built page (npm run build:web);
 // the desktop target needs npm run build:ui and the native engine.
 // The DevTools port is the spike's test port on 127.0.0.1; the page server is `vite preview` (127.0.0.1 only).
 import { spawn, spawnSync, type ChildProcess } from "node:child_process";
@@ -115,8 +115,8 @@ async function screenshot(cdp: Cdp, name: string) {
 }
 
 function engineProcesses(): number {
-  const r = spawnSync("tasklist", ["/FI", "IMAGENAME eq partcraft-engine.exe", "/FO", "CSV", "/NH"], { encoding: "utf8" });
-  return (r.stdout.match(/partcraft-engine\.exe/g) ?? []).length;
+  const r = spawnSync("tasklist", ["/FI", "IMAGENAME eq halfcube-engine.exe", "/FO", "CSV", "/NH"], { encoding: "utf8" });
+  return (r.stdout.match(/halfcube-engine\.exe/g) ?? []).length;
 }
 
 async function main() {
@@ -128,14 +128,14 @@ async function main() {
 
   if (target === "desktop") {
     const electronExe = createRequire(import.meta.url)("electron") as unknown as string;
-    startChild(electronExe, [".", `--remote-debugging-port=${CDP_PORT}`], { PC_SPIKE_QUERY: pageQuery });
-    pageMatch = (u) => u.startsWith("app://partcraft/");
+    startChild(electronExe, [".", `--remote-debugging-port=${CDP_PORT}`], { HC_SPIKE_QUERY: pageQuery });
+    pageMatch = (u) => u.startsWith("app://halfcube/");
   } else {
-    const browser = process.env.PC_BROWSER_EXE;
-    if (!browser) throw new Error("Set PC_BROWSER_EXE to a Chromium-based browser for the web target.");
+    const browser = process.env.HC_BROWSER_EXE;
+    if (!browser) throw new Error("Set HC_BROWSER_EXE to a Chromium-based browser for the web target.");
     startChild(process.execPath, [join(root, "node_modules/vite/bin/vite.js"), "preview", "--config", "vite.config.ts"]);
     await waitHttp(`http://127.0.0.1:${PREVIEW_PORT}/`, 20_000);
-    profileDir = mkdtempSync(join(os.tmpdir(), "partcraft-spike-browser-"));
+    profileDir = mkdtempSync(join(os.tmpdir(), "halfcube-spike-browser-"));
     const url = `http://127.0.0.1:${PREVIEW_PORT}/?${pageQuery}`;
     startChild(browser, [
       `--remote-debugging-port=${CDP_PORT}`, `--user-data-dir=${profileDir}`, "--no-first-run", "--no-default-browser-check",
@@ -162,7 +162,7 @@ async function main() {
 
     const t0 = performance.now();
     for (;;) {
-      const ready = await cdp.eval<boolean>("!!window.__partcraftSpike && window.__partcraftSpike.ready()");
+      const ready = await cdp.eval<boolean>("!!window.__halfcubeSpike && window.__halfcubeSpike.ready()");
       if (ready) break;
       if (performance.now() - t0 > 60_000) {
         await screenshot(cdp, "not-ready");
@@ -181,32 +181,32 @@ async function main() {
       catch (e) { externalFetch = "blocked: " + e.message; }
       return {
         require: typeof require, process: typeof process, module: typeof module,
-        bridgeKeys: window.partcraftDesktop ? Object.keys(window.partcraftDesktop) : null,
+        bridgeKeys: window.halfCubeDesktop ? Object.keys(window.halfCubeDesktop) : null,
         crossOriginIsolated: window.crossOriginIsolated, isSecureContext: window.isSecureContext,
         origin: location.origin, externalFetch,
       };
     })()`);
 
     // Real input: click the fillet face (torus) and check the selection and the overlay text.
-    const faces = await cdp.eval<{ faceId: number; surface: string }[]>("window.__partcraftSpike.faces()");
+    const faces = await cdp.eval<{ faceId: number; surface: string }[]>("window.__halfcubeSpike.faces()");
     const torus = faces.find((f) => f.surface === "torus");
     if (torus) {
-      const pt = await cdp.eval<{ x: number; y: number }>(`window.__partcraftSpike.faceClientPoint(${torus.faceId})`);
+      const pt = await cdp.eval<{ x: number; y: number }>(`window.__halfcubeSpike.faceClientPoint(${torus.faceId})`);
       for (const type of ["mouseMoved", "mousePressed", "mouseReleased"]) {
         await cdp.send("Input.dispatchMouseEvent", { type, x: pt.x, y: pt.y, button: "left", buttons: type === "mousePressed" ? 1 : 0, clickCount: 1 });
       }
       await sleep(200);
-      const sel = await cdp.eval<{ faceId: number } | null>("window.__partcraftSpike.selection()");
+      const sel = await cdp.eval<{ faceId: number } | null>("window.__halfcubeSpike.selection()");
       const overlay = await cdp.eval<string>("document.querySelector('[data-testid=pick]')?.innerText ?? ''");
       report.realClick = { expectedFaceId: torus.faceId, point: pt, selection: sel, overlay, ok: sel?.faceId === torus.faceId };
       await screenshot(cdp, "picked");
     }
 
-    await cdp.eval(`window.__partcraftSpike.start(${runs})`);
+    await cdp.eval(`window.__halfcubeSpike.start(${runs})`);
     const tRun = performance.now();
     let lastPhase = "";
     for (;;) {
-      const st = await cdp.eval<{ phase: string; done: boolean; report?: unknown; error?: string }>("window.__partcraftSpike.status()");
+      const st = await cdp.eval<{ phase: string; done: boolean; report?: unknown; error?: string }>("window.__halfcubeSpike.status()");
       if (st.phase !== lastPhase) {
         process.stderr.write(`[ui-drive] ${Math.round(performance.now() - tRun)} ms: ${st.phase}
 `);
@@ -249,7 +249,7 @@ ${await cdp.eval<string>("document.body.innerText")}`);
     for (const c of children) if (c.exitCode === null) c.kill();
     await sleep(500);
     if (profileDir) rmSync(profileDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
-    report.processLog = logLines.filter((l) => l.includes("partcraft-main") || l.includes("err]")).slice(-200);
+    report.processLog = logLines.filter((l) => l.includes("halfcube-main") || l.includes("err]")).slice(-200);
     const text = JSON.stringify(report, null, 2);
     if (outPath) writeFileSync(outPath, text);
     else process.stdout.write(text + "\n");

@@ -3,7 +3,7 @@ import { createPreferences } from "../../../app/src/prefs/preferences.ts";
 import { createSettingsStore, defaultSettings } from "../../../app/src/prefs/settings.ts";
 
 function memoryPreferences(initial: Record<string, string> = {}) {
-  const data = new Map(Object.entries(initial).map(([k, v]) => [`partcraft.${k}`, v]));
+  const data = new Map(Object.entries(initial).map(([k, v]) => [`halfcube.${k}`, v]));
   return {
     data,
     prefs: createPreferences(() => ({
@@ -25,7 +25,7 @@ describe("settings store", () => {
     const store = createSettingsStore(prefs);
     store.set("sketchFill", "fill");
     store.set("sketchColour", "blue");
-    expect(data.get("partcraft.settings.sketchFill")).toBe("fill");
+    expect(data.get("halfcube.settings.sketchFill")).toBe("fill");
     expect(createSettingsStore(prefs).getState()).toMatchObject({ sketchFill: "fill", sketchColour: "blue" });
   });
 
@@ -34,7 +34,7 @@ describe("settings store", () => {
     const store = createSettingsStore(prefs);
     expect(store.getState().wheelZoom).toBe("down-out");
     store.set("wheelZoom", "down-in");
-    expect(data.get("partcraft.settings.wheelZoom")).toBe("down-in");
+    expect(data.get("halfcube.settings.wheelZoom")).toBe("down-in");
     expect(createSettingsStore(prefs).getState().wheelZoom).toBe("down-in");
     store.set("wheelZoom", "sideways" as "down-in");
     expect(store.getState().wheelZoom).toBe("down-in");
@@ -46,7 +46,7 @@ describe("settings store", () => {
     const store = createSettingsStore(prefs);
     expect(store.getState().fieldLook).toBe("dimension");
     store.set("fieldLook", "tag");
-    expect(data.get("partcraft.settings.fieldLook")).toBe("tag");
+    expect(data.get("halfcube.settings.fieldLook")).toBe("tag");
     expect(createSettingsStore(prefs).getState().fieldLook).toBe("tag");
     store.set("fieldLook", "box" as "tag");
     expect(store.getState().fieldLook).toBe("tag");

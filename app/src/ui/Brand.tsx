@@ -36,7 +36,7 @@ export function Logo({
 }
 
 /**
- * Wordmark "Klar": "Part" and "craft" in Geist, weight 600 at large sizes and 640 below about 28 px, letter spacing
+ * Wordmark "Klar": "Half" and "Cube" in Geist, weight 600 at large sizes and 640 below about 28 px, letter spacing
  * -0.028em large and +0.004em small. The two colours are fixed brand colours (light and dark), independent of the
  * colour theme. The same drawing at every size, only scaled.
  */
@@ -55,14 +55,14 @@ export function Wordmark({
     <span
       role="img"
       aria-label={branding.name}
-      className={cx("inline-block font-sans leading-none whitespace-nowrap text-wm-part", className)}
+      className={cx("inline-block font-sans leading-none whitespace-nowrap text-wm-half", className)}
       style={{
         fontSize: size,
         fontWeight: isSmall ? 640 : 600,
         letterSpacing: isSmall ? "0.004em" : "-0.028em",
       }}
     >
-      Part<i className="text-wm-craft not-italic">craft</i>
+      Half<i className="text-wm-cube not-italic">Cube</i>
     </span>
   );
 }

@@ -18,7 +18,7 @@ const rendererParam = params.get("renderer");
 const rendererMode: RendererMode = rendererParam === "webgl" || rendererParam === "nogpu" ? rendererParam : "auto";
 const engineParam = params.get("engine");
 const engineKind: EngineKind =
-  engineParam === "wasm" || engineParam === "native" ? engineParam : window.partcraftDesktop ? "native" : "wasm";
+  engineParam === "wasm" || engineParam === "native" ? engineParam : window.halfCubeDesktop ? "native" : "wasm";
 
 const notices = new NoticeStore();
 const store = new RecipeStore(p1a as Recipe);

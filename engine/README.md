@@ -1,11 +1,11 @@
-# Partcraft engine
+# HalfCube engine
 
 The engine computes geometry (OCCT 8.0.2) and solves sketches (planegcs from FreeCAD 1.1.4). One C++20 code base is
 built twice:
 
-- **Desktop:** `partcraft-engine.exe`, a separate process started by the Electron main process. It talks over
+- **Desktop:** `halfcube-engine.exe`, a separate process started by the Electron main process. It talks over
   stdin/stdout in length-prefixed frames (16-byte prefix, JSON header, binary payload).
-- **Browser:** `partcraft-engine.mjs` + `partcraft-engine.wasm`, loaded in a Web Worker, with the same messages.
+- **Browser:** `halfcube-engine.mjs` + `halfcube-engine.wasm`, loaded in a Web Worker, with the same messages.
 
 The messages are defined once in `protocol/engine-protocol.json`. `node protocol/generate.mjs` writes the C++ header
 (`engine/src/generated/protocol.hpp`), the TypeScript types (`app/src/engine/generated/protocol.ts`) and the JSON

@@ -170,7 +170,7 @@ export function App({ store, session, notices, rendererMode }: Props) {
   return (
     <div className="app">
       <header className="topbar">
-        <span className="title">Partcraft</span>
+        <span className="title">HalfCube</span>
         <span className="muted">Architektur-Spike</span>
         <span className="spacer" />
         <span className={`badge status-${snap.status}`} data-testid="engine-status">

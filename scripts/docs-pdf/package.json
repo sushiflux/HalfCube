@@ -1,8 +1,8 @@
 {
-  "name": "partcraft-docs-pdf",
+  "name": "halfcube-docs-pdf",
   "version": "1.0.0",
   "private": true,
-  "description": "Renders Markdown documents with front matter into designed A4 PDFs (Partcraft concept, manuals).",
+  "description": "Renders Markdown documents with front matter into designed A4 PDFs (HalfCube concept, manuals).",
   "license": "SEE LICENSE IN LICENSE",
   "type": "module",
   "engines": {

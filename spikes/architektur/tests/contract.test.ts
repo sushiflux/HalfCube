@@ -14,7 +14,7 @@ import {
 const p1a = loadRecipe("p1a");
 const spring = loadRecipe("spring");
 const spin: Recipe = {
-  format: "partcraft.recipe",
+  format: "halfcube.recipe",
   formatVersion: 0,
   parameters: { ms: 5000 },
   steps: [{ id: "spin", type: "debug.spin", ms: "ms" }],

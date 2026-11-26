@@ -126,7 +126,7 @@ export function protocolRefusal(hello: Pick<HelloResult, "protocol" | "protocolI
   const received = typeof hello.protocolId === "string" ? `"${hello.protocolId}"` : "nothing (no protocolId in the answer)";
   return (
     `This program speaks protocol "${PROTOCOL_ID}" (version ${PROTOCOL_VERSION}), the engine answered with protocol ${received} ` +
-    `(version ${String(hello.protocol)}). User interface and engine come from different builds; reinstall Partcraft.`
+    `(version ${String(hello.protocol)}). User interface and engine come from different builds; reinstall HalfCube.`
   );
 }
 
@@ -189,7 +189,7 @@ export class EngineClient {
     };
     try {
       await transport.start();
-      const handshake = this.request({ type: "hello", protocol: PROTOCOL_VERSION, protocolId: PROTOCOL_ID, client: this.opts.clientName ?? "partcraft" });
+      const handshake = this.request({ type: "hello", protocol: PROTOCOL_VERSION, protocolId: PROTOCOL_ID, client: this.opts.clientName ?? "halfcube" });
       const reply = await handshake.reply;
       if (this.transport !== transport) throw new EngineNotRunningError("The engine was stopped during the handshake.");
       // The engine checks our protocol id; this is the same check the other way round, so that neither side talks to

@@ -13,7 +13,7 @@ export interface ProblemContext {
   restarts: number;
   transport: "native" | "wasm" | null;
   engine: HelloResult | null;
-  /** Product version line for the report, e.g. "Partcraft v2026.11.5.13.12369 (</>)". */
+  /** Product version line for the report, e.g. "HalfCube v2026.11.5.13.12369 (</>)". */
   appVersion: string | undefined;
   at: Date;
 }
@@ -50,7 +50,7 @@ function assemble(
   extra: { exit?: ExitInfo; raw?: string; sections?: [string, string][] } = {},
 ): EngineProblem {
   const lines: string[] = [
-    "Partcraft engine problem",
+    "HalfCube engine problem",
     ctx.appVersion ? `Program: ${ctx.appVersion}` : "",
     `Time: ${ctx.at.toISOString()}`,
     `Code: ${code}`,

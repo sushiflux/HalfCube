@@ -2,7 +2,7 @@
 // English; a name shown once; and never an internal id (l4, k5, d12, p2, f1).
 import { describe, expect, it } from "vitest";
 import { createEmptyDocument } from "../../../app/src/document/index.ts";
-import type { PartcraftDocument, SketchData, SketchFeature } from "../../../app/src/document/types.ts";
+import type { HalfCubeDocument, SketchData, SketchFeature } from "../../../app/src/document/types.ts";
 import type { Problem } from "../../../app/src/engine/generated/protocol.ts";
 import { makeState } from "../../../app/src/i18n/core.ts";
 import { problemText } from "../../../app/src/model/index.ts";
@@ -136,7 +136,7 @@ describe("a stored sketch and the whole document", () => {
     steps: [{ id: "s1", kind: "rectangle", number: 2, members: ["p1", "p2", "p3", "l2", "l3"] }],
   };
   const feature: SketchFeature = { id: "f1", type: "sketch", name: "Skizze1", component: "root", visible: true, plane: { kind: "originPlane", plane: "xy" }, sketch: data };
-  const doc: PartcraftDocument = { ...createEmptyDocument({ rootName: "Teil" }), timeline: [feature] };
+  const doc: HalfCubeDocument = { ...createEmptyDocument({ rootName: "Teil" }), timeline: [feature] };
 
   it("reads the same names from a stored sketch", () => {
     const described = describeSketchData(data);

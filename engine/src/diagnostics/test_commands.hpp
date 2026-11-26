@@ -1,8 +1,8 @@
 // Test commands diagnostics.crash and diagnostics.hang. They exist only in engines built with the CMake option
-// PARTCRAFT_TEST_COMMANDS=ON and serve the tests of the desktop supervisor and the browser worker watchdog.
+// HALFCUBE_TEST_COMMANDS=ON and serve the tests of the desktop supervisor and the browser worker watchdog.
 #pragma once
 
-#if defined(PARTCRAFT_TEST_COMMANDS)
+#if defined(HALFCUBE_TEST_COMMANDS)
 
 #include "core/errors.hpp"
 #include "generated/protocol.hpp"
@@ -11,7 +11,7 @@
 #include <mutex>
 #include <string>
 
-namespace pc::testing {
+namespace hc::testing {
 
 // Ends the engine on purpose: "abort" (std::abort), "nullcall" (call through a null function pointer) or "intdiv"
 // (integer division by zero). Natively the process dies; in WebAssembly the module traps. Returns only by throwing
@@ -23,6 +23,6 @@ void crash(const std::string& mode, std::int64_t requestId);
 // native reader needs for ping, cancel and every new command) and never returns, so the engine answers nothing.
 protocol::HangResult hang(const protocol::DiagnosticsHangCommand& c, const CancelCheck& cancelled, std::mutex& engineLock);
 
-} // namespace pc::testing
+} // namespace hc::testing
 
 #endif

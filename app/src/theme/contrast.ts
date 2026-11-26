@@ -104,14 +104,14 @@ export const contrastPairs: readonly ContrastPair[] = [
   { id: "u10", label: "Value field, wrong value: error frame in the view and on the error tint", kind: "ui", fg: "error", bgs: [...view, "fieldTintError"] },
   {
     id: "m1",
-    label: 'Wordmark "Part" on title bar',
+    label: 'Wordmark "Half" on title bar',
     kind: "brand",
     fg: { fixed: { light: "#16476e", dark: "#ffffff" } },
     bgs: ["surface"],
   },
   {
     id: "m2",
-    label: 'Wordmark "craft" on title bar',
+    label: 'Wordmark "Cube" on title bar',
     kind: "brand",
     fg: { fixed: { light: "#1f75ae", dark: "#4cd1e0" } },
     bgs: ["surface"],

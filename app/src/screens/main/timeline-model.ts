@@ -2,7 +2,7 @@
 // what is inside it (lines, circles, dimensions, constraints) is listed as its inner steps, in the order they were
 // made. The document records them (sketch.steps), so a rectangle is one inner step, not four lines and four constraints.
 import { isDimension, type ShapeKind } from "../../document/index.ts";
-import type { Dimension, PartcraftDocument, SketchData, SketchFeature } from "../../document/types.ts";
+import type { Dimension, HalfCubeDocument, SketchData, SketchFeature } from "../../document/types.ts";
 import type { StepStatus } from "../../engine/generated/protocol.ts";
 import type { GlyphName } from "../../ui/glyph-data.ts";
 import type { StepState } from "./tree-model.ts";
@@ -131,7 +131,7 @@ export interface DraftStep {
   label: string;
 }
 
-export function buildTimeline(doc: PartcraftDocument, steps: readonly StepStatus[], text: TimelineText, draft?: DraftStep | null): TimelineStep[] {
+export function buildTimeline(doc: HalfCubeDocument, steps: readonly StepStatus[], text: TimelineText, draft?: DraftStep | null): TimelineStep[] {
   const stateOf = new Map(steps.map((s) => [s.featureId, s.state]));
   const built = doc.timeline.map((f): TimelineStep => {
     const state = stateOf.get(f.id) ?? "unknown";

@@ -14,7 +14,7 @@ emcmake cmake -S /work/src/engine -B /work/build -G "$GEN" -DCMAKE_BUILD_TYPE=Re
   -DOpenCASCADE_DIR="$CFG" -DCMAKE_FIND_ROOT_PATH_MODE_PACKAGE=BOTH
 cmake --build /work/build -j "$JOBS"
 t1=$(date +%s.%N)
-cp /work/build/partcraft-engine.mjs /work/build/partcraft-engine.wasm /work/out/
+cp /work/build/halfcube-engine.mjs /work/build/halfcube-engine.wasm /work/out/
 awk "BEGIN{printf \"engine_wasm_build_s=%.1f\n\", $t1-$t0}" | tee /work/out/engine-wasm-times.txt
 grep -c "warning:" /work/out/engine-wasm-build.log > /work/out/engine-wasm-warning-count.txt || true
 echo done

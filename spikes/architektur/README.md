@@ -43,8 +43,8 @@ triangle meshes with a face id per triangle.
 ## Build
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File engine\scripts\build-windows.ps1   # -> _build\engine-win\partcraft-engine.exe + OCCT DLLs
-powershell -ExecutionPolicy Bypass -File engine\scripts\build-wasm.ps1      # -> _build\engine-wasm\partcraft-engine.mjs + .wasm
+powershell -ExecutionPolicy Bypass -File engine\scripts\build-windows.ps1   # -> _build\engine-win\halfcube-engine.exe + OCCT DLLs
+powershell -ExecutionPolicy Bypass -File engine\scripts\build-wasm.ps1      # -> _build\engine-wasm\halfcube-engine.mjs + .wasm
 npm install
 ```
 
@@ -56,11 +56,11 @@ npm test                                  # contract and crash tests against bot
 node tests\bench.ts --out <results.json>  # transport measurements
 ```
 
-`PC_ENGINE_EXE` and `PC_ENGINE_WASM` point the tests at other builds. A suite whose engine is not built is skipped.
+`HC_ENGINE_EXE` and `HC_ENGINE_WASM` point the tests at other builds. A suite whose engine is not built is skipped.
 
 ## Running the engine
 
-**Native:** `partcraft-engine.exe [--debug-commands]`. It reads frames on stdin and writes frames on stdout;
+**Native:** `halfcube-engine.exe [--debug-commands]`. It reads frames on stdin and writes frames on stdout;
 diagnostics go to stderr (stdout is redirected to stderr at start, so stray library output cannot corrupt the
 frame stream). Frame: `u32 magic "PCE0"`, `u32 header bytes`, `u32 payload bytes`, `u32 0`, then the UTF-8 JSON
 header and the binary payload, all little-endian. It exits with 0 after `shutdown` or at the end of its input.
@@ -68,9 +68,9 @@ header and the binary payload, all little-endian. It exits with 0 after `shutdow
 main process).
 
 **WebAssembly:** `client/engine-worker.mjs` runs as a module worker (or Node worker thread), imports
-`partcraft-engine.mjs` from the URL given in its `init` message and passes messages in and out. Use
+`halfcube-engine.mjs` from the URL given in its `init` message and passes messages in and out. Use
 `WorkerTransport` with `browserWorkerPort(new URL("./engine-worker.mjs", import.meta.url))` and the absolute URL of
-`partcraft-engine.mjs`; the `.wasm` file must be served next to it.
+`halfcube-engine.mjs`; the `.wasm` file must be served next to it.
 
 Both transports deliver the same `(header text, payload ArrayBuffer)` pairs to `EngineClient`.
 
@@ -96,10 +96,10 @@ npm run build:ui        # -> _build\app-web (page, with the WebAssembly engine u
 The Electron runtime (45.x) is downloaded on the first `npm run start:desktop` (or with `npx install-electron`).
 
 **Desktop (Electron, native engine):** `npm run start:desktop`. The main process loads the page from the
-`app://partcraft` scheme (files of `_build/app-web` only), starts `_build/engine-win/partcraft-engine.exe`
-(override with `PC_ENGINE_EXE`) and hands the UI a MessagePort for it. `PC_SPIKE_QUERY=renderer=webgl` passes
+`app://halfcube` scheme (files of `_build/app-web` only), starts `_build/engine-win/halfcube-engine.exe`
+(override with `HC_ENGINE_EXE`) and hands the UI a MessagePort for it. `HC_SPIKE_QUERY=renderer=webgl` passes
 query parameters to the page. For UI work with hot reload: `npm run dev:web`, then set
-`PC_SPIKE_DEV_URL=http://127.0.0.1:5310/` and run `npm run start:desktop`.
+`HC_SPIKE_DEV_URL=http://127.0.0.1:5310/` and run `npm run start:desktop`.
 
 **Browser (WebAssembly engine in a Web Worker):** `npm run preview:web` and open `http://127.0.0.1:5311/` (built
 page), or `npm run dev:web` and open `http://127.0.0.1:5310/` (dev server). Both servers listen on 127.0.0.1 only
@@ -129,7 +129,7 @@ scheme.
 
 **Automated UI run:** `node tests\ui-drive.ts --target desktop|web [--renderer auto|webgl|nogpu] [--headed]
 [--out report.json] [--shot <folder>]`. It starts the Electron app, or `vite preview` plus a Chromium-based browser
-(path in `PC_BROWSER_EXE`, temporary profile), connects over the DevTools protocol on 127.0.0.1:5312, clicks a face
+(path in `HC_BROWSER_EXE`, temporary profile), connects over the DevTools protocol on 127.0.0.1:5312, clicks a face
 with real mouse events and runs `app/src/autotest.ts`: picking of every face, parameter rebuilds, undo, stale
 replies, a step error, three crash modes, the watchdog (desktop) and the spring mesh.
 
@@ -147,10 +147,10 @@ with the same buffers and a draw range over its contiguous triangles.
 and recovery (engine killed from outside, crash buttons, a frozen process, WebAssembly traps), the WebGL2 fallback,
 and that the window and the page carry the project logo as their icon.
 
-- The Electron window is shown without taking the focus (`PC_E2E_WINDOW=inactive`, the default). `hidden` never
+- The Electron window is shown without taking the focus (`HC_E2E_WINDOW=inactive`, the default). `hidden` never
   shows it, but Playwright screenshots of a hidden Electron window time out, so most tests need `inactive`.
-- `PC_BROWSER_EXE` selects the Chromium-based browser (default: first of Chrome, Edge, Brave found).
-- `PC_E2E_EVIDENCE` is the folder for screenshots and logs (default `_build/e2e-evidence`).
+- `HC_BROWSER_EXE` selects the Chromium-based browser (default: first of Chrome, Edge, Brave found).
+- `HC_E2E_EVIDENCE` is the folder for screenshots and logs (default `_build/e2e-evidence`).
 - The icons in `assets/` are resampled copies of the project logo (`node scripts/make-icons.mjs <logo.png> <browser>`).
 - The test for a hung WebAssembly worker is marked as a known gap (no watchdog on that path yet).
 

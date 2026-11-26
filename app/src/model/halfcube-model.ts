@@ -1,10 +1,10 @@
-// PartcraftModel: the one object the UI uses for modelling. It owns the document store, keeps the engine's model in
+// HalfCubeModel: the one object the UI uses for modelling. It owns the document store, keeps the engine's model in
 // step (ModelSync) and opens the sketch and extrude editors.
 import type { WatchdogClock } from "../engine/watchdog.ts";
 import { DocumentStore } from "../document/store.ts";
-import type { Body, ExtrudeFeature, OriginPlane, PartcraftDocument, Quantity, SketchFeature } from "../document/types.ts";
+import type { Body, ExtrudeFeature, OriginPlane, HalfCubeDocument, Quantity, SketchFeature } from "../document/types.ts";
 import { appendFeature, bodyOf, extrudeFeature, nextNumber, ROOT_COMPONENT, sketchFeature } from "./doc-edit.ts";
-import type { ExtrudeEditor, ExtrudeExtent, ModelView, PartcraftModel, SketchEditor, SketchProfiles } from "./editors.ts";
+import type { ExtrudeEditor, ExtrudeExtent, ModelView, HalfCubeModel, SketchEditor, SketchProfiles } from "./editors.ts";
 import type { EngineLink } from "./engine-link.ts";
 import { ExtrudeEditorImpl } from "./extrude-editor.ts";
 import { ModelSync } from "./model-sync.ts";
@@ -18,20 +18,20 @@ export interface FeatureNames {
   body(n: number): string;
 }
 
-export interface PartcraftModelOptions {
+export interface HalfCubeModelOptions {
   names: FeatureNames;
   clock?: WatchdogClock;
   /** Default 10 mm. */
   defaultDistance?: Quantity;
 }
 
-export class PartcraftModelImpl implements PartcraftModel {
+export class HalfCubeModelImpl implements HalfCubeModel {
   readonly document: DocumentStore;
   readonly sync: ModelSync;
   private readonly link: EngineLink;
-  private readonly opts: PartcraftModelOptions;
+  private readonly opts: HalfCubeModelOptions;
 
-  constructor(link: EngineLink, document: PartcraftDocument | DocumentStore, options: PartcraftModelOptions) {
+  constructor(link: EngineLink, document: HalfCubeDocument | DocumentStore, options: HalfCubeModelOptions) {
     this.link = link;
     this.opts = options;
     this.document = document instanceof DocumentStore ? document : new DocumentStore(document);
@@ -121,6 +121,6 @@ export class PartcraftModelImpl implements PartcraftModel {
   }
 }
 
-export function createPartcraftModel(link: EngineLink, document: PartcraftDocument | DocumentStore, options: PartcraftModelOptions): PartcraftModelImpl {
-  return new PartcraftModelImpl(link, document, options);
+export function createHalfCubeModel(link: EngineLink, document: HalfCubeDocument | DocumentStore, options: HalfCubeModelOptions): HalfCubeModelImpl {
+  return new HalfCubeModelImpl(link, document, options);
 }

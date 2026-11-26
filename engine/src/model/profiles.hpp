@@ -19,7 +19,7 @@
 #include <utility>
 #include <vector>
 
-namespace pc::model {
+namespace hc::model {
 
 // One curve of a loop in the order it is walked. Lines run from point group `from` to `to`; a circle is alone in
 // its loop and walked counter-clockwise (outer loop) or clockwise (hole).
@@ -60,4 +60,4 @@ ProfileResult findRegions(const sketch::Sketch& solved);
 // "l6" < "l10": letter prefix, then the number.
 bool naturalLess(const std::string& a, const std::string& b);
 
-} // namespace pc::model
+} // namespace hc::model

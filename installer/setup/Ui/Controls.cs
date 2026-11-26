@@ -1,15 +1,15 @@
 using System.Drawing.Drawing2D;
 
-namespace Partcraft.Setup.Ui;
+namespace HalfCube.Setup.Ui;
 
 /// <summary>
 /// Base of every owner-drawn control: double-buffered, knows the window's scale (design units are 96-dpi pixels) and paints with
 /// the window's current <see cref="Palette"/>. Controls never size themselves: the window places them in a fixed layout, so a
 /// message appearing or a language switch never moves anything (rigid layout rule).
 /// </summary>
-public abstract class PcControl : Control
+public abstract class HcControl : Control
 {
-    protected PcControl()
+    protected HcControl()
     {
         SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer | ControlStyles.ResizeRedraw |
                  ControlStyles.UserPaint | ControlStyles.SupportsTransparentBackColor, true);
@@ -54,7 +54,7 @@ public abstract class PcControl : Control
     }
 }
 
-public enum PcButtonKind
+public enum HcButtonKind
 {
     Primary,
     Secondary,
@@ -68,19 +68,19 @@ public enum PcButtonKind
 }
 
 /// <summary>Button in the app's look: tight radius, clear hover/pressed states, visible focus ring, readable disabled state.</summary>
-public sealed class PcButton : PcControl, IButtonControl
+public sealed class HcButton : HcControl, IButtonControl
 {
     private bool _hover;
     private bool _pressed;
 
-    public PcButton()
+    public HcButton()
     {
         SetStyle(ControlStyles.Selectable | ControlStyles.StandardClick, true);
         Cursor = Cursors.Hand;
         TabStop = true;
     }
 
-    public PcButtonKind Kind { get; set; } = PcButtonKind.Secondary;
+    public HcButtonKind Kind { get; set; } = HcButtonKind.Secondary;
 
     /// <summary>Optional glyph drawn left of the text (or alone when the text is empty).</summary>
     public Action<Graphics, RectangleF, Color>? Glyph { get; set; }
@@ -145,25 +145,25 @@ public sealed class PcButton : PcControl, IButtonControl
         Color back, fore, border;
         switch (Kind)
         {
-            case PcButtonKind.Primary:
+            case HcButtonKind.Primary:
                 back = !Enabled ? P.Elevated : _pressed || _hover ? P.AccentHover : P.Accent;
                 fore = Enabled ? P.OnAccent : P.Muted;
                 border = Enabled ? back : P.Border;
                 break;
-            case PcButtonKind.Danger:
+            case HcButtonKind.Danger:
                 back = !Enabled ? P.Elevated : _pressed || _hover ? P.DangerHover : P.Danger;
                 fore = Enabled ? (P.IsDark ? Palette.Hex("#2a0705") : Color.White) : P.Muted;
                 border = Enabled ? back : P.Border;
                 break;
-            case PcButtonKind.Ghost:
+            case HcButtonKind.Ghost:
                 back = _pressed ? P.Elevated : _hover ? Draw.Mix(Surface, P.Elevated, 0.8f) : Surface;
                 fore = Enabled ? P.TextSecondary : P.Muted;
                 border = back;
                 break;
-            case PcButtonKind.WindowButton:
-            case PcButtonKind.WindowClose:
+            case HcButtonKind.WindowButton:
+            case HcButtonKind.WindowClose:
                 var state = !Enabled ? CaptionState.Normal : _pressed ? CaptionState.Pressed : _hover ? CaptionState.Hover : CaptionState.Normal;
-                var close = Kind == PcButtonKind.WindowClose;
+                var close = Kind == HcButtonKind.WindowClose;
                 back = CaptionColors.ButtonBack(P, Surface, close, state);
                 fore = Enabled ? CaptionColors.Glyph(P, close, state, active: true) : P.Muted;
                 border = back;
@@ -176,11 +176,11 @@ public sealed class PcButton : PcControl, IButtonControl
         }
 
         Draw.FillRounded(g, r, radius, back);
-        if (Kind is not (PcButtonKind.Ghost or PcButtonKind.WindowButton or PcButtonKind.WindowClose)) Draw.StrokeRounded(g, r, radius, border, Math.Max(1f, U(1)));
+        if (Kind is not (HcButtonKind.Ghost or HcButtonKind.WindowButton or HcButtonKind.WindowClose)) Draw.StrokeRounded(g, r, radius, border, Math.Max(1f, U(1)));
         if (Focused && ShowFocusCues)
         {
             var ring = RectangleF.Inflate(r, -U(2.5f), -U(2.5f));
-            Draw.StrokeRounded(g, ring, U(3.5f), Kind is PcButtonKind.Primary or PcButtonKind.Danger ? fore : P.Focus, Math.Max(1.5f, U(1.75f)));
+            Draw.StrokeRounded(g, ring, U(3.5f), Kind is HcButtonKind.Primary or HcButtonKind.Danger ? fore : P.Focus, Math.Max(1.5f, U(1.75f)));
         }
 
         var font = Fonts.Get(10f, S, FontStyle.Bold);
@@ -202,9 +202,9 @@ public sealed class PcButton : PcControl, IButtonControl
 }
 
 /// <summary>Plain text that wraps inside its fixed bounds (no auto size). Role decides font and colour.</summary>
-public sealed class PcText : PcControl
+public sealed class HcText : HcControl
 {
-    public PcText()
+    public HcText()
     {
         SetStyle(ControlStyles.Selectable, false);
         TabStop = false;
@@ -280,12 +280,12 @@ public sealed class PcText : PcControl
 }
 
 /// <summary>On/off switch row: green = on, red = off (tokens --c-toggle-on/off), check/cross in the knob, the whole row is clickable.</summary>
-public sealed class PcToggle : PcControl
+public sealed class HcToggle : HcControl
 {
     private bool _checked;
     private bool _hover;
 
-    public PcToggle()
+    public HcToggle()
     {
         SetStyle(ControlStyles.Selectable | ControlStyles.StandardClick, true);
         TabStop = true;
@@ -375,12 +375,12 @@ public sealed class PcToggle : PcControl
 /// box is outlined in the muted text colour, which reaches 3:1 (WCAG 1.4.11) against the page in light and dark; the ticked box is the
 /// accent colour with the on-accent check (the layout check measures both).
 /// </summary>
-public sealed class PcCheck : PcControl
+public sealed class HcCheck : HcControl
 {
     private bool _checked;
     private bool _hover;
 
-    public PcCheck()
+    public HcCheck()
     {
         SetStyle(ControlStyles.Selectable | ControlStyles.StandardClick, true);
         TabStop = true;
@@ -428,7 +428,7 @@ public sealed class PcCheck : PcControl
     protected override AccessibleObject CreateAccessibilityInstance() => new CheckAccessibleObject(this);
 
     /// <summary>Tells screen readers that the row is a check box and whether it is ticked.</summary>
-    private sealed class CheckAccessibleObject(PcCheck owner) : ControlAccessibleObject(owner)
+    private sealed class CheckAccessibleObject(HcCheck owner) : ControlAccessibleObject(owner)
     {
         public override AccessibleStates State => base.State | (owner.Checked ? AccessibleStates.Checked : AccessibleStates.None);
 
@@ -457,12 +457,12 @@ public sealed class PcCheck : PcControl
 }
 
 /// <summary>A selectable card (radio semantics): badge, title and a line of description; the chosen one has an accent frame, a bar and a filled badge.</summary>
-public sealed class PcChoice : PcControl
+public sealed class HcChoice : HcControl
 {
     private bool _selected;
     private bool _hover;
 
-    public PcChoice()
+    public HcChoice()
     {
         SetStyle(ControlStyles.Selectable | ControlStyles.StandardClick, true);
         TabStop = true;
@@ -545,13 +545,13 @@ public sealed class PcChoice : PcControl
 }
 
 /// <summary>Progress bar: rounded track, accent fill with a gentle moving sheen while <see cref="Running"/>.</summary>
-public sealed class PcProgress : PcControl
+public sealed class HcProgress : HcControl
 {
     private float _value;
     private float _sheen;
     private readonly System.Windows.Forms.Timer _timer = new() { Interval = 33 };
 
-    public PcProgress()
+    public HcProgress()
     {
         TabStop = false;
         _timer.Tick += (_, _) =>

@@ -6,7 +6,7 @@
 
 #include <cstdint>
 
-namespace pc::protocol {
+namespace hc::protocol {
 
 // Compared in the hello handshake; any other value is refused with error "protocol_mismatch".
 inline constexpr int kVersion = 0;
@@ -43,4 +43,4 @@ inline constexpr const char* kDebugDisabled = "debug_disabled";
 inline constexpr const char* kInternal = "internal";
 } // namespace err
 
-} // namespace pc::protocol
+} // namespace hc::protocol

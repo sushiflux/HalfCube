@@ -1,12 +1,12 @@
 #include "core/engine.hpp"
-#include "partcraft/build_info.hpp"
+#include "halfcube/build_info.hpp"
 
 #include <doctest/doctest.h>
 
 #include <string>
 #include <vector>
 
-using namespace pc;
+using namespace hc;
 
 namespace {
 
@@ -40,7 +40,7 @@ TEST_CASE("hello answers with versions and build facts") {
     CHECK(r["replyTo"] == 1);
     CHECK(r["protocol"] == protocol::kVersion);
     CHECK(r["protocolId"] == std::string(protocol::kProtocolId));
-    CHECK(r["engine"]["name"] == "partcraft-engine");
+    CHECK(r["engine"]["name"] == "halfcube-engine");
     CHECK(r["engine"]["platform"] == "native");
     CHECK(r["components"]["occt"] == "8.0.2");
     CHECK(r["components"]["planegcs"]["source"] == "FreeCAD 1.1.4");

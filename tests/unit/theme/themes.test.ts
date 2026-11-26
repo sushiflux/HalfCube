@@ -51,7 +51,7 @@ describe("contrast maths", () => {
 
 /**
  * Accepted exceptions:
- * in High contrast light the wordmark's "craft" reaches only 4.98:1 instead of 7:1.
+ * in High contrast light the wordmark's "Cube" reaches only 4.98:1 instead of 7:1.
  * Function icon accent: in High contrast dark the accent #4d70ff reaches 3.07:1 on the selected
  * surface; the accent is chosen for 3:1, the stricter 4.5:1 of this theme is not met there.
  * The other two accepted points are not contrast numbers (Farbsicher toggles are blue/orange; the sharpened line colours
@@ -148,7 +148,7 @@ describe("generated stylesheet", () => {
     const start = css.indexOf(':root[data-theme="graphit"][data-mode="dark"] {');
     const body = css.slice(start, css.indexOf("\n}\n", start));
     expect(body).not.toContain("--wm-");
-    expect(css).toContain(':root[data-mode="dark"] {\n  --wm-part: #ffffff;\n  --wm-craft: #4cd1e0;');
+    expect(css).toContain(':root[data-mode="dark"] {\n  --wm-half: #ffffff;\n  --wm-cube: #4cd1e0;');
   });
 });
 

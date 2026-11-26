@@ -28,7 +28,7 @@ export default defineConfig<unknown, { target: Target }>({
     timeout: 240_000,
     stdout: "pipe",
     stderr: "pipe",
-    env: { PARTCRAFT_E2E_HOST: serverHost },
+    env: { HALFCUBE_E2E_HOST: serverHost },
   },
   projects: [
     { name: "browser", testIgnore: "**/*.electron.spec.ts", use: { target: "browser" } },

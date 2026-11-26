@@ -1,4 +1,4 @@
-// Choices the installer writes for the first start (%APPDATA%\Partcraft\setup-choices.json). The Electron main
+// Choices the installer writes for the first start (%APPDATA%\HalfCube\setup-choices.json). The Electron main
 // process reads and validates the file and hands the result to the page; a file that is not exactly in this shape
 // is ignored as a whole.
 

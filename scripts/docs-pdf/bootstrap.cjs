@@ -1,5 +1,5 @@
 // Entry point of every Electron job of this folder. The job script and the job file come from the environment
-// variables PARTCRAFT_JOB_SCRIPT and PARTCRAFT_JOB_FILE (set by run-electron.mjs).
+// variables HALFCUBE_JOB_SCRIPT and HALFCUBE_JOB_FILE (set by run-electron.mjs).
 // Electron shows an error dialog for an uncaught error in the main process. These jobs must never show a window,
 // so every error is written to the error output and ends the process with code 1 instead.
 "use strict";
@@ -16,7 +16,7 @@ process.on("uncaughtException", fail);
 process.on("unhandledRejection", fail);
 
 try {
-  require(process.env.PARTCRAFT_JOB_SCRIPT);
+  require(process.env.HALFCUBE_JOB_SCRIPT);
 } catch (error) {
   fail(error);
 }

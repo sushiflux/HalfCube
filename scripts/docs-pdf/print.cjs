@@ -2,13 +2,13 @@
 // nothing takes the focus). Steps: load the page (no network access at all), wait for fonts and draw the diagrams,
 // print once, read the page of every heading from the PDF, write those numbers into the table of contents, print
 // again (the layout does not change, the numbers have a fixed column).
-// Do not start it directly; use build.mjs. The job comes from the file named in PARTCRAFT_JOB_FILE.
+// Do not start it directly; use build.mjs. The job comes from the file named in HALFCUBE_JOB_FILE.
 "use strict";
 const { app, BrowserWindow, session } = require("electron");
 const fs = require("node:fs");
 const { createPdfHost } = require("./pdfjs-host.cjs");
 
-const job = JSON.parse(fs.readFileSync(process.env.PARTCRAFT_JOB_FILE, "utf8"));
+const job = JSON.parse(fs.readFileSync(process.env.HALFCUBE_JOB_FILE, "utf8"));
 app.disableHardwareAcceleration();
 app.setPath("userData", job.userData);
 

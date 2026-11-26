@@ -18,7 +18,7 @@
 #include <string>
 #include <vector>
 
-namespace pc::model {
+namespace hc::model {
 
 template <class Message>
 struct Answer {
@@ -58,4 +58,4 @@ private:
     std::map<std::string, ExtrudeStep> extrudes_;
 };
 
-} // namespace pc::model
+} // namespace hc::model

@@ -1,8 +1,8 @@
 using System.Text;
-using Partcraft.Setup.Localization;
-using Partcraft.Setup.Ui;
+using HalfCube.Setup.Localization;
+using HalfCube.Setup.Ui;
 
-namespace Partcraft.Setup;
+namespace HalfCube.Setup;
 
 /// <summary>
 /// <c>--test-layout &lt;folder&gt;</c>: renders every page of the setup - new installation and update - and of the uninstaller in German and
@@ -38,7 +38,7 @@ internal static class SetupLayoutCheck
                 InstalledVersion = update ? "2026.11.4" : null,
                 LicenceText = template.LicenceText,
                 NoticeText = template.NoticeText,
-                InstallDir = @"C:\Users\Name\AppData\Local\Partcraft",
+                InstallDir = @"C:\Users\Name\AppData\Local\HalfCube",
             };
             using (var window = new SetupWindow(state, (_, _) => Task.CompletedTask, scale))
             {
@@ -109,8 +109,8 @@ internal static class SetupLayoutCheck
         foreach (var palette in new[] { Palette.Light, Palette.Dark })
         {
             var mode = palette.IsDark ? "dark" : "light";
-            var box = Draw.Contrast(PcCheck.OutlineColor(palette), palette.Page);
-            var boxOnFill = Draw.Contrast(PcCheck.OutlineColor(palette), palette.Surface);
+            var box = Draw.Contrast(HcCheck.OutlineColor(palette), palette.Page);
+            var boxOnFill = Draw.Contrast(HcCheck.OutlineColor(palette), palette.Surface);
             var ticked = Draw.Contrast(palette.Accent, palette.Page);
             var mark = Draw.Contrast(palette.OnAccent, palette.Accent);
             var label = Draw.Contrast(palette.Text, palette.Page);
@@ -124,10 +124,10 @@ internal static class SetupLayoutCheck
 
         UiLang.Current = UiLang.English;
         ThemeMode.Set(false);
-        var state = new SetupState { Info = template.Info, LicenceText = template.LicenceText, NoticeText = template.NoticeText, InstallDir = @"C:\Users\Name\AppData\Local\Partcraft" };
+        var state = new SetupState { Info = template.Info, LicenceText = template.LicenceText, NoticeText = template.NoticeText, InstallDir = @"C:\Users\Name\AppData\Local\HalfCube" };
         using var window = new SetupWindow(state, (_, _) => Task.CompletedTask, 1f);
         window.GoTo(1);
-        var check = Descendants(window).OfType<PcCheck>().SingleOrDefault();
+        var check = Descendants(window).OfType<HcCheck>().SingleOrDefault();
         if (check is null)
         {
             Fail("the licence page has no agreement box");
@@ -136,7 +136,7 @@ internal static class SetupLayoutCheck
         if (!check.TabStop) Fail("the box is not in the tab order");
         if (check.AccessibleRole != AccessibleRole.CheckButton) Fail("the box is not a check box for screen readers");
         if (window.Next.Enabled) Fail("\"Next\" is enabled before the licence is agreed");
-        void Press(PcCheck target, Keys key) =>
+        void Press(HcCheck target, Keys key) =>
             typeof(Control).GetMethod("OnKeyDown", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!.Invoke(target, [new KeyEventArgs(key)]);
         Press(check, Keys.Space);
         if (!check.Checked || !state.LicenceAgreed || !window.Next.Enabled) Fail("Space did not tick the box and enable \"Next\"");
@@ -147,7 +147,7 @@ internal static class SetupLayoutCheck
         // A rebuild of the page (language or theme switch) keeps the choice
         Press(check, Keys.Space);
         UiLang.Current = UiLang.German;
-        var rebuilt = Descendants(window).OfType<PcCheck>().Single();
+        var rebuilt = Descendants(window).OfType<HcCheck>().Single();
         if (!rebuilt.Checked || !window.Next.Enabled) Fail("a language switch lost the agreement");
         UiLang.Current = UiLang.English;
         return failures;
@@ -221,17 +221,17 @@ internal static class SetupLayoutCheck
         {
             if (control.Parent is { } parent && parent is not Form && !parent.ClientRectangle.Contains(control.Bounds))
                 yield return $"{control.Name} sticks out of {parent.Name}";
-            if (control is PcButton button && button.NeededWidth > button.Width)
+            if (control is HcButton button && button.NeededWidth > button.Width)
                 yield return $"{button.Name} \"{Shorten(button.Text)}\" needs {button.NeededWidth}px, has {button.Width}px";
-            if (control is PcText text && text.Text.Length > 0 && text.NeededHeight > text.Height)
+            if (control is HcText text && text.Text.Length > 0 && text.NeededHeight > text.Height)
                 yield return $"{text.Name} \"{Shorten(text.Text)}\" needs {text.NeededHeight}px, has {text.Height}px";
-            if (control is PcFeature feature && feature.NeededHeight > feature.Height)
+            if (control is HcFeature feature && feature.NeededHeight > feature.Height)
                 yield return $"{feature.Name} \"{Shorten(feature.Text)}\" needs {feature.NeededHeight}px, has {feature.Height}px";
-            if (control is PcScrollText scroll && scroll.Name is "txtFolderProblem" && scroll.Overflows && !stateName.Contains("unsafe", StringComparison.Ordinal))
+            if (control is HcScrollText scroll && scroll.Name is "txtFolderProblem" && scroll.Overflows && !stateName.Contains("unsafe", StringComparison.Ordinal))
                 yield return $"{scroll.Name} scrolls in a normal state";
             // Cards with their own NeededHeight (the uninstall cards and the note row)
             if (control.GetType().GetProperty("NeededHeight") is { PropertyType: var t } property && t == typeof(int)
-                && control is not PcText and not PcFeature && (int)property.GetValue(control)! > control.Height)
+                && control is not HcText and not HcFeature && (int)property.GetValue(control)! > control.Height)
                 yield return $"{control.Name} \"{Shorten(control.Text)}\" needs {(int)property.GetValue(control)!}px, has {control.Height}px";
         }
     }

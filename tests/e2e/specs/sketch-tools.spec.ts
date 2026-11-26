@@ -2,7 +2,7 @@
 // highlighted, the dialog for a contradicting dimension, dragging, undo and redo inside the sketch, the timeline's inner steps
 // and the layout in German and English at the narrowest width. Runs in the browser (WebAssembly engine) and in the Electron
 // program (native engine). The mouse works on real pixels; where a test needs a position it asks the sketch layer (the dev
-// channel exposes it as window.__partcraft.layer) where a sketch point is on the screen.
+// channel exposes it as window.__halfcube.layer) where a sketch point is on the screen.
 import type { Locator, Page } from "@playwright/test";
 import { expect, test, type AppUnderTest } from "../support/fixtures.ts";
 import { expectNoHorizontalOverflow, expectNothingMoved, expectNotTruncated, snapshot, type Targets } from "../support/layout.ts";
@@ -22,7 +22,7 @@ interface PlainView {
 }
 
 interface Hooks {
-  __partcraft?: {
+  __halfcube?: {
     editor: { getView(): PlainView } | null;
     layer: { toScreen(u: number, v: number): { x: number; y: number }; pxPerMm(): number } | null;
   };
@@ -76,7 +76,7 @@ async function settled(page: Page): Promise<void> {
     .poll(
       async () => {
         const now = await page.evaluate(() => {
-          const layer = (window as unknown as Hooks).__partcraft?.layer;
+          const layer = (window as unknown as Hooks).__halfcube?.layer;
           const a = layer?.toScreen(0, 0);
           const b = layer?.toScreen(10, 10);
           return a && b ? `${a.x.toFixed(2)},${a.y.toFixed(2)},${b.x.toFixed(2)},${b.y.toFixed(2)}` : "";
@@ -92,7 +92,7 @@ async function settled(page: Page): Promise<void> {
 
 const readView = (page: Page): Promise<PlainView> =>
   page.evaluate(() => {
-    const v = (window as unknown as Hooks).__partcraft?.editor?.getView();
+    const v = (window as unknown as Hooks).__halfcube?.editor?.getView();
     if (!v) throw new Error("no open sketch");
     return {
       points: v.points.map((p) => ({ id: p.id, x: p.x, y: p.y })),
@@ -114,7 +114,7 @@ async function liveValue(field: Locator): Promise<number> {
 async function at(page: Page, u: number, v: number, dx = 0, dy = 0): Promise<{ x: number; y: number }> {
   const p = await page.evaluate(
     ([a, b]) => {
-      const layer = (window as unknown as Hooks).__partcraft?.layer;
+      const layer = (window as unknown as Hooks).__halfcube?.layer;
       const host = document.querySelector("[data-testid='viewport']");
       if (!layer || !host) throw new Error("no sketch layer");
       const s = layer.toScreen(a, b);
@@ -258,7 +258,7 @@ test("a typed value that contradicts the sketch is not applied: the dialog says 
   const dialog = page.getByTestId("sketch-reject-dialog");
   await expect(dialog).toBeVisible();
   await expect(dialog).toContainText("Dimension contradicts the sketch");
-  await expect(dialog).toContainText("PC-SKETCH-");
+  await expect(dialog).toContainText("HC-SKETCH-");
   await expect(dialog).toContainText("was not applied, the sketch stays unchanged");
   await expect(dialog).toContainText("The sketch cannot be solved with these dimensions and constraints.");
   await expect(dialog.getByRole("button", { name: "Copy" })).toBeVisible();
@@ -673,7 +673,7 @@ test("what is still missing: the chip shows a warning triangle for a conflict in
   feature.sketch.constraints.push({ id: "d9", kind: "distance", refs: ["l1"], value: { value: 70, unit: "mm" }, driving: true, label: { x: 0, y: 0 } });
   const { page } = app;
   await app.open("?screen=main&lang=en");
-  await page.evaluate(([key, text]) => sessionStorage.setItem(key!, text!), ["partcraft.session.document.2", serializeDocument(conflicting as never)]);
+  await page.evaluate(([key, text]) => sessionStorage.setItem(key!, text!), ["halfcube.session.document.2", serializeDocument(conflicting as never)]);
   await page.goto(app.url("/index.html?screen=main&lang=en&sketch=f1"));
   await expect(page.getByTestId("sketch-palette")).toBeVisible({ timeout: 60_000 });
   await expect(statusOf(page)).toHaveAttribute("data-status", "over", { timeout: 30_000 });
@@ -735,8 +735,8 @@ test("what is still missing: shapes carry names - two rectangles and two circles
 });
 
 test("screenshots of the palette's chip and list, for the report", async ({ app }, testInfo) => {
-  test.skip(process.env.PARTCRAFT_PALETTE_SHOTS === undefined, "only when PARTCRAFT_PALETTE_SHOTS names a folder");
-  const dir = process.env.PARTCRAFT_PALETTE_SHOTS!;
+  test.skip(process.env.HALFCUBE_PALETTE_SHOTS === undefined, "only when HALFCUBE_PALETTE_SHOTS names a folder");
+  const dir = process.env.HALFCUBE_PALETTE_SHOTS!;
   for (const mode of ["light", "dark"] as const) {
     const page = await openSketch(app, `lang=de&theme=praezision&mode=${mode}`);
     if (app.target === "browser") await page.setViewportSize({ width: 1440, height: 860 });
@@ -769,7 +769,7 @@ test("screenshots of the palette's chip and list, for the report", async ({ app 
     // Problem: a stored document with a conflict.
     const conflicting = sampleDocument(rectangle(3));
     (conflicting.timeline[0] as { sketch: { constraints: unknown[] } }).sketch.constraints.push({ id: "d9", kind: "distance", refs: ["l1"], value: { value: 70, unit: "mm" }, driving: true, label: { x: 0, y: 0 } });
-    await page.evaluate(([key, text]) => sessionStorage.setItem(key!, text!), ["partcraft.session.document.2", serializeDocument(conflicting as never)]);
+    await page.evaluate(([key, text]) => sessionStorage.setItem(key!, text!), ["halfcube.session.document.2", serializeDocument(conflicting as never)]);
     await page.goto(app.url(`/index.html?screen=main&lang=de&theme=praezision&mode=${mode}&sketch=f1`));
     await expect(statusOf(page)).toHaveAttribute("data-status", "over", { timeout: 30_000 });
     await settled(page);
@@ -881,7 +881,7 @@ test("value fields are there from the first click on and follow the pointer: cir
     expect(b.x + b.width, `${id} inside the view (right)`).toBeLessThanOrEqual(host.x + host.width);
     expect(b.y + b.height, `${id} inside the view (bottom)`).toBeLessThanOrEqual(host.y + host.height);
   };
-  const ppm = await page.evaluate(() => (window as unknown as Hooks).__partcraft!.layer!.pxPerMm());
+  const ppm = await page.evaluate(() => (window as unknown as Hooks).__halfcube!.layer!.pxPerMm());
 
   // Circle: no field before the centre, the diameter right after it.
   await page.getByTestId("tool-circle").click();
@@ -964,7 +964,7 @@ test("value fields show the decimal comma in German and two decimals at most", a
 
 test("typing locks one value, the other keeps following the pointer; Tab selects the next field; Enter commits one undo step", async ({ app }) => {
   const page = await openSketch(app);
-  const ppm = await page.evaluate(() => (window as unknown as Hooks).__partcraft!.layer!.pxPerMm());
+  const ppm = await page.evaluate(() => (window as unknown as Hooks).__halfcube!.layer!.pxPerMm());
   await page.getByTestId("tool-rectangle").click();
   const o = await at(page, 0, 0);
   await click(page, o);
@@ -1398,7 +1398,7 @@ test("a dimension value: typing follows the sketch, Esc brings the old value bac
 test("undo and redo inside the sketch reach back only to its own start; Ctrl+Z, Ctrl+Y and the buttons do the same", async ({ app }) => {
   const page = await openSketch(app, "lang=de");
   await expect(page.getByTestId("undo")).toBeDisabled();
-  await expect(page.locator(".pc-tip", { has: page.getByTestId("undo") })).toHaveAttribute("data-tip", words.de.undoLimit);
+  await expect(page.locator(".hc-tip", { has: page.getByTestId("undo") })).toHaveAttribute("data-tip", words.de.undoLimit);
   await drawRectangle(page);
   await expect(page.getByTestId("undo")).toBeEnabled();
   await expect(page.getByTestId("redo")).toBeDisabled();
@@ -1634,8 +1634,8 @@ async function setMode(page: Page, mode: "light" | "dark"): Promise<void> {
 }
 
 test("screenshots of the real app for the report", async ({ app }, testInfo) => {
-  test.skip(process.env.PARTCRAFT_U2_SHOTS === undefined || app.target !== "browser", "only when PARTCRAFT_U2_SHOTS names a folder, in the browser project");
-  const dir = process.env.PARTCRAFT_U2_SHOTS!;
+  test.skip(process.env.HALFCUBE_U2_SHOTS === undefined || app.target !== "browser", "only when HALFCUBE_U2_SHOTS names a folder, in the browser project");
+  const dir = process.env.HALFCUBE_U2_SHOTS!;
   const page = await openSketch(app, "lang=de&theme=praezision&mode=light");
   await page.setViewportSize({ width: 1440, height: 860 });
   await settled(page);
@@ -1877,7 +1877,7 @@ test("drawing a rectangle: the values are calm text on live dimension lines, the
 
 test("a circle: the diameter sits beyond the rim on its dimension line, with the Ø sign; a line: the length beside it and the angle beyond its arc, Tab changes the active one", async ({ app }) => {
   const page = await openSketch(app);
-  const ppm = await page.evaluate(() => (window as unknown as Hooks).__partcraft!.layer!.pxPerMm());
+  const ppm = await page.evaluate(() => (window as unknown as Hooks).__halfcube!.layer!.pxPerMm());
   await page.getByTestId("tool-circle").click();
   const o = await at(page, 0, 0, -60, 60);
   await click(page, o);
@@ -1988,7 +1988,7 @@ test("the look Etikett is a choice in the settings dialog: filled labels with a 
   await expect(page.getByTestId("field-look-dimension")).toHaveAttribute("aria-checked", "true");
   await page.getByTestId("field-look-tag").click();
   await expect(page.getByTestId("field-look-tag")).toHaveAttribute("aria-checked", "true");
-  expect(await page.evaluate(() => localStorage.getItem("partcraft.settings.fieldLook"))).toBe("tag");
+  expect(await page.evaluate(() => localStorage.getItem("halfcube.settings.fieldLook"))).toBe("tag");
   await page.keyboard.press("Escape");
   await expect(page.getByTestId("settings-dialog")).toHaveCount(0);
 
@@ -2063,8 +2063,8 @@ test("the look Etikett is a choice in the settings dialog: filled labels with a 
 });
 
 test("screenshots of the value fields while drawing and editing, for the report", async ({ app }, testInfo) => {
-  test.skip(process.env.PARTCRAFT_U2_SHOTS === undefined || app.target !== "browser", "only when PARTCRAFT_U2_SHOTS names a folder, in the browser project");
-  const dir = process.env.PARTCRAFT_U2_SHOTS!;
+  test.skip(process.env.HALFCUBE_U2_SHOTS === undefined || app.target !== "browser", "only when HALFCUBE_U2_SHOTS names a folder, in the browser project");
+  const dir = process.env.HALFCUBE_U2_SHOTS!;
   const page = await openSketch(app, "lang=de&theme=praezision&mode=light");
   await page.setViewportSize({ width: 1440, height: 860 });
   await settled(page);
@@ -2159,8 +2159,8 @@ test("screenshots of the value fields while drawing and editing, for the report"
 });
 
 test("screenshots of the value field frames: active, editable, invalid, dimension edit, for the report", async ({ app }) => {
-  test.skip(process.env.PARTCRAFT_RAHMEN_SHOTS === undefined || app.target !== "browser", "only when PARTCRAFT_RAHMEN_SHOTS names a folder, in the browser project");
-  const dir = process.env.PARTCRAFT_RAHMEN_SHOTS!;
+  test.skip(process.env.HALFCUBE_RAHMEN_SHOTS === undefined || app.target !== "browser", "only when HALFCUBE_RAHMEN_SHOTS names a folder, in the browser project");
+  const dir = process.env.HALFCUBE_RAHMEN_SHOTS!;
   for (const [theme, mode] of [["praezision", "light"], ["praezision", "dark"], ["graphit", "dark"]] as const) {
     const name = `${theme}-${mode === "light" ? "hell" : "dunkel"}`;
     const page = await openSketch(app, `lang=de&theme=${theme}&mode=${mode}`);

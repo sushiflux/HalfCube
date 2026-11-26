@@ -1,4 +1,4 @@
-// The "Lizenzen" tab of "About Partcraft": a searchable list of the project's own texts and every bundled component, grouped,
+// The "Lizenzen" tab of "About HalfCube": a searchable list of the project's own texts and every bundled component, grouped,
 // and a detail page per component with licence, copyright notice, source and the full licence text. The tab has the height
 // the Info tab gives it; the list and the detail scroll inside it with the overlay scrollbar, so nothing else ever moves.
 import { useRef, useState, type ReactNode } from "react";

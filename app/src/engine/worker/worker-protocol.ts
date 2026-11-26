@@ -2,7 +2,7 @@
 
 /** Page -> worker. */
 export type ToWorker =
-  /** Load the WebAssembly engine from moduleUrl (an absolute URL of partcraft-engine.mjs) and create the engine. */
+  /** Load the WebAssembly engine from moduleUrl (an absolute URL of halfcube-engine.mjs) and create the engine. */
   | { kind: "init"; moduleUrl: string; cancelFlags: Int32Array | null }
   /** One engine command; the payload (if any) is transferred. */
   | { kind: "msg"; header: string; payload: ArrayBuffer | null };

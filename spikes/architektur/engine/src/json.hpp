@@ -10,7 +10,7 @@
 #include <utility>
 #include <vector>
 
-namespace pc {
+namespace hc {
 
 class JsonError : public std::runtime_error {
 public:
@@ -79,4 +79,4 @@ private:
     std::vector<std::pair<std::string, Json>> obj_;
 };
 
-} // namespace pc
+} // namespace hc

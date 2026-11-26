@@ -17,17 +17,17 @@ export const serverPort = readDevPorts(repoRoot)["e2e-cdp"];
 
 /**
  * Where the web server listens. 127.0.0.1 by default; Docker Desktop on Windows reaches it through host.docker.internal.
- * PARTCRAFT_E2E_HOST overrides it only for hosts where that does not work (another address can trigger a firewall prompt).
+ * HALFCUBE_E2E_HOST overrides it only for hosts where that does not work (another address can trigger a firewall prompt).
  */
-export const serverHost = process.env.PARTCRAFT_E2E_HOST ?? "127.0.0.1";
+export const serverHost = process.env.HALFCUBE_E2E_HOST ?? "127.0.0.1";
 
 /** docker: the browser runs in the official Playwright image (default). local: an installed Chromium browser (fallback). */
 export type BrowserMode = "docker" | "local";
 
 export function browserMode(env: NodeJS.ProcessEnv = process.env): BrowserMode {
-  const raw = env.PARTCRAFT_E2E_BROWSER ?? "docker";
+  const raw = env.HALFCUBE_E2E_BROWSER ?? "docker";
   if (raw !== "docker" && raw !== "local") {
-    throw new Error(`PARTCRAFT_E2E_BROWSER must be "docker" or "local", got "${raw}".`);
+    throw new Error(`HALFCUBE_E2E_BROWSER must be "docker" or "local", got "${raw}".`);
   }
   return raw;
 }

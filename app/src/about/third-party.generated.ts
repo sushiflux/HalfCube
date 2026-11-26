@@ -17,7 +17,7 @@ export interface ThirdPartyEntry {
   copyright: string[];
   /** URL of the source code. */
   source: string;
-  /** One short line: what Partcraft uses it for. */
+  /** One short line: what HalfCube uses it for. */
   purpose: { de: string; en: string };
   platforms: ("desktop" | "browser")[];
   /** Path relative to the app's public root, e.g. "licenses/occt.txt"; null when the component ships no text of its own. */
@@ -57,8 +57,8 @@ export const THIRD_PARTY: readonly ThirdPartyEntry[] = [
     ],
     "textFile": "licenses/occt.txt",
     "note": {
-      "de": "Partcraft nutzt Open CASCADE Technology (OCCT) für die Geometrie. Der Lizenztext besteht aus der GNU LGPL 2.1 und der „Open CASCADE exception 1.0“. Einige Quelldateien von OCCT enthalten kleine Teile anderer Urheber; deren Hinweise stehen am Ende des Lizenztextes.",
-      "en": "Partcraft uses Open CASCADE Technology (OCCT) for its geometry. The licence text consists of the GNU LGPL 2.1 and the “Open CASCADE exception 1.0”. A few OCCT source files contain small parts by other authors; their notices are at the end of the licence text."
+      "de": "HalfCube nutzt Open CASCADE Technology (OCCT) für die Geometrie. Der Lizenztext besteht aus der GNU LGPL 2.1 und der „Open CASCADE exception 1.0“. Einige Quelldateien von OCCT enthalten kleine Teile anderer Urheber; deren Hinweise stehen am Ende des Lizenztextes.",
+      "en": "HalfCube uses Open CASCADE Technology (OCCT) for its geometry. The licence text consists of the GNU LGPL 2.1 and the “Open CASCADE exception 1.0”. A few OCCT source files contain small parts by other authors; their notices are at the end of the licence text."
     }
   },
   {
@@ -215,8 +215,8 @@ export const THIRD_PARTY: readonly ThirdPartyEntry[] = [
     ],
     "textFile": "licenses/nlohmann-json.txt",
     "note": {
-      "de": "Die Kopfdatei enthält außerdem Hedley-Makros von Evan Nemerson (MIT laut SPDX-Kopf) und, nur für Compiler vor C++14, eine Hilfsvorlage nach Google Abseil (Apache-2.0); Partcraft baut mit C++20 und übersetzt diesen Teil nicht.",
-      "en": "The header also contains Hedley macros by Evan Nemerson (MIT per its SPDX header) and, for compilers before C++14 only, a helper template derived from Google Abseil (Apache-2.0); Partcraft builds with C++20 and does not compile that part."
+      "de": "Die Kopfdatei enthält außerdem Hedley-Makros von Evan Nemerson (MIT laut SPDX-Kopf) und, nur für Compiler vor C++14, eine Hilfsvorlage nach Google Abseil (Apache-2.0); HalfCube baut mit C++20 und übersetzt diesen Teil nicht.",
+      "en": "The header also contains Hedley macros by Evan Nemerson (MIT per its SPDX header) and, for compilers before C++14 only, a helper template derived from Google Abseil (Apache-2.0); HalfCube builds with C++20 and does not compile that part."
     }
   },
   {
@@ -581,8 +581,8 @@ export const THIRD_PARTY: readonly ThirdPartyEntry[] = [
     ],
     "textFile": "licenses/vcrt.txt",
     "note": {
-      "de": "Microsoft-Dateien, unverändert neben der Engine ausgeliefert; sie stehen unter den Bedingungen von Microsoft, nicht unter Partcrafts Lizenz.",
-      "en": "Microsoft files, shipped unmodified next to the engine; they stay under Microsoft's terms, not under Partcraft's licence."
+      "de": "Microsoft-Dateien, unverändert neben der Engine ausgeliefert; sie stehen unter den Bedingungen von Microsoft, nicht unter HalfCubes Lizenz.",
+      "en": "Microsoft files, shipped unmodified next to the engine; they stay under Microsoft's terms, not under HalfCube's licence."
     }
   }
 ];

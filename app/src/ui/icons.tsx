@@ -180,3 +180,66 @@ export const IconSearch = outline(
   </>,
   2,
 );
+
+// Tabler Icons (MIT), 24 px grid, used by the update views and the category badges of "Was ist neu".
+export const IconDownload = outline(
+  <>
+    <path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" />
+    <path d="M7 11l5 5l5-5" />
+    <path d="M12 4v12" />
+  </>,
+  2,
+);
+export const IconRefresh = outline(
+  <>
+    <path d="M20 11a8.1 8.1 0 0 0-15.5-2m-.5-4v4h4" />
+    <path d="M4 13a8.1 8.1 0 0 0 15.5 2m.5 4v-4h-4" />
+  </>,
+  2,
+);
+export const IconCircleCheck = outline(
+  <>
+    <path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0-18 0" />
+    <path d="M9 12l2 2l4-4" />
+  </>,
+  2,
+);
+export const IconSparkles = outline(
+  <path d="M16 18a2 2 0 0 1 2 2a2 2 0 0 1 2-2a2 2 0 0 1-2-2a2 2 0 0 1-2 2m0-12a2 2 0 0 1 2 2a2 2 0 0 1 2-2a2 2 0 0 1-2-2a2 2 0 0 1-2 2m-7 12a6 6 0 0 1 6-6a6 6 0 0 1-6-6a6 6 0 0 1-6 6a6 6 0 0 1 6 6" />,
+  2,
+);
+export const IconTool = outline(<path d="M7 10h3v-3l-3.5-3.5a6 6 0 0 1 8 8l6 6a2 2 0 0 1-3 3l-6-6a6 6 0 0 1-8-8l3.5 3.5" />, 2);
+export const IconLock = outline(
+  <>
+    <path d="M5 13a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2h-10a2 2 0 0 1-2-2v-6" />
+    <path d="M11 16a1 1 0 1 0 2 0a1 1 0 0 0-2 0" />
+    <path d="M8 11v-4a4 4 0 1 1 8 0v4" />
+  </>,
+  2,
+);
+export const IconTrash = outline(
+  <>
+    <path d="M4 7h16" />
+    <path d="M10 11v6M14 11v6" />
+    <path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2l1-12" />
+    <path d="M9 7v-3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3" />
+  </>,
+  2,
+);
+export const IconAlertTriangle = outline(
+  <>
+    <path d="M12 9v4" />
+    <path d="M10.363 3.591l-8.106 13.534a1.914 1.914 0 0 0 1.636 2.871h16.214a1.914 1.914 0 0 0 1.636-2.87l-8.106-13.536a1.914 1.914 0 0 0-3.274 0" />
+    <path d="M12 16h.01" />
+  </>,
+  2,
+);
+export const IconArrowRight = outline(<path d="M5 12h14m-6 6l6-6m-6-6l6 6" />, 2);
+export const IconArrowDown = outline(<path d="M12 5v14m6-6l-6 6m-6-6l6 6" />, 2);
+export const IconSettings = outline(
+  <>
+    <path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 0 0-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 0 0-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 0 0-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 0 0-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 0 0 1.066-2.573c-.94-1.543.826-3.31 2.37-2.37c1 .608 2.296.07 2.572-1.065" />
+    <path d="M9 12a3 3 0 1 0 6 0a3 3 0 0 0-6 0" />
+  </>,
+  2,
+);

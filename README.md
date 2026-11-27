@@ -8,7 +8,7 @@ HalfCube will be a source-available, parametric 3D CAD program. You sketch in 2D
 
 - Every step is recorded in a timeline. You can go back and change any step later.
 - Parts can be turned into components and joined into assemblies.
-- Exchange with other programs works through common formats such as STEP, STL and 3MF.
+- Exchange with other programs works through common formats such as 3MF, STL and STEP.
 
 ### Platforms
 
@@ -46,7 +46,7 @@ HalfCube wird ein quelloffenes, parametrisches 3D-CAD-Programm. Man skizziert zu
 
 - Alle Schritte stehen in einer Zeitleiste. Man kann sie später jederzeit ändern.
 - Bauteile lassen sich als Komponenten zu Baugruppen verbinden.
-- Der Austausch mit anderen Programmen läuft über gängige Formate wie STEP, STL und 3MF.
+- Der Austausch mit anderen Programmen läuft über gängige Formate wie 3MF, STL und STEP.
 
 ### Plattformen
 

@@ -10,6 +10,7 @@ import { getMainModel, startNewDocument } from "./screens/main/main-model.ts";
 import { patchUrl, readUrlState } from "./screens/main/url-state.ts";
 import { isWelcomeHidden, setWelcomeHidden } from "./screens/welcome/preference.ts";
 import { Welcome } from "./screens/welcome/Welcome.tsx";
+import { UpdatesHost } from "./updates/UpdatesHost.tsx";
 import { ConfirmProvider, useConfirm } from "./ui/Confirm.tsx";
 import { engineStatusToProgress, selectEngineView } from "./ui/loading/engine.ts";
 import { LoadingPanel } from "./ui/loading/LoadingPanel.tsx";
@@ -113,6 +114,9 @@ function Shell() {
 
       {/* One view for the whole window, over the main window and over the welcome screen; its state is in the address. */}
       <AboutDialog ready={startupDone} />
+
+      {/* The update function: automatic checks, the update windows, "What's new" after an update. Desktop program only (the browser has no updater). */}
+      <UpdatesHost ready={startupDone} welcomeOpen={welcomeOpen} />
     </div>
   );
 }

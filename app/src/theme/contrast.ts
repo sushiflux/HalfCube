@@ -29,6 +29,9 @@ export const FIELD_TINT_SHARE = 0.18;
 /** The share of the error colour in the tint behind a wrong value field (index.css: --c-field-tint-error). */
 export const FIELD_TINT_ERROR_SHARE = 0.12;
 
+/** The share of the muted colour in the track of progress bars and rings (index.css: --c-progress-track). */
+export const PROGRESS_TRACK_SHARE = 0.18;
+
 /** A colour mixed over the surface as index.css's color-mix does it (srgb, rounded per channel). */
 export function mixOverSurface(colour: string, surface: string, share: number): string {
   const [pr, pg, pb] = parseHex(colour);
@@ -40,7 +43,7 @@ export function mixOverSurface(colour: string, surface: string, share: number): 
 export type PairKind = "text" | "brand" | "ui" | "line";
 
 /** Colours that are mixed in the stylesheet, not stored in a theme: the tints behind the value field (index.css). */
-export type DerivedColourName = "fieldTint" | "fieldTintError";
+export type DerivedColourName = "fieldTint" | "fieldTintError" | "progressTrack";
 
 /** Foreground: a theme token, a derived tint, or a fixed brand colour per mode (the wordmark). */
 export type PairColour = ColourTokenName | DerivedColourName | { fixed: Record<Mode, string> };
@@ -57,6 +60,7 @@ export interface ContrastPair {
 function resolveColour(tokens: Theme["tokens"][Mode], name: ColourTokenName | DerivedColourName): string {
   if (name === "fieldTint") return mixOverSurface(tokens.primary, tokens.surface, FIELD_TINT_SHARE);
   if (name === "fieldTintError") return mixOverSurface(tokens.error, tokens.surface, FIELD_TINT_ERROR_SHARE);
+  if (name === "progressTrack") return mixOverSurface(tokens.muted, tokens.surface, PROGRESS_TRACK_SHARE);
   return tokens[name];
 }
 
@@ -80,6 +84,7 @@ export const contrastPairs: readonly ContrastPair[] = [
   { id: "t6", label: "Muted text on surface", kind: "text", fg: "muted", bgs: ["surface"] },
   { id: "t7", label: "Muted text on surface 2", kind: "text", fg: "muted", bgs: ["surface2"] },
   { id: "t8", label: "Primary colour as text on surface", kind: "text", fg: "primary", bgs: ["surface"] },
+  { id: "t9", label: "Muted text on selected surface (error code in the hint of the update slot)", kind: "text", fg: "muted", bgs: ["primarySoft"] },
   { id: "t10", label: "Text on primary button", kind: "text", fg: "onPrimary", bgs: ["primary"] },
   { id: "t11", label: "Text on create button", kind: "text", fg: "onCreate", bgs: ["create"] },
   { id: "t12", label: "Create colour as text on surface", kind: "text", fg: "create", bgs: ["surface"] },
@@ -128,6 +133,12 @@ export const contrastPairs: readonly ContrastPair[] = [
     bgs: ["surface", "bg"],
   },
   { id: "u6", label: "Function icon accent on toolbar, background and selected surface", kind: "ui", fg: "fn", bgs: ["surface", "bg", "primarySoft"] },
+  // The update views (title bar dot, update slot, update window): marks in the primary, destructive and toggle colours on the surfaces they sit on.
+  { id: "u12", label: "Update dot and ring (primary) on the title bar, its hover surface and the tinted update slot", kind: "ui", fg: "primary", bgs: ["surface", "surface2", "primarySoft"] },
+  { id: "u13", label: "Update warning triangle (destructive) on the title bar, its hover surface and the tinted update slot", kind: "ui", fg: "destructive", bgs: ["surface", "surface2", "primarySoft"] },
+  { id: "u14", label: "Progress arc and bar (primary) on their track (muted over the surface)", kind: "ui", fg: "primary", bgs: ["progressTrack"] },
+  { id: "u15", label: "Progress bar 'ready' (toggle on) on its track, the check 'up to date' on the slot card", kind: "ui", fg: "toggleOn", bgs: ["progressTrack", "surface2", "primarySoft"] },
+  { id: "u16", label: "Warning icon of the restart dialog (the amber of the hover highlight) on the surface", kind: "ui", fg: "hover", bgs: ["surface"] },
   { id: "u7", label: "Failed-step icon on the tree band and surface", kind: "ui", fg: "error", bgs: ["surface", "primarySoft", "surface2"] },
   { id: "l1", label: "Sketch line, under-constrained", kind: "line", fg: "sketchUnder", bgs: view },
   { id: "l2", label: "Sketch line, fully constrained", kind: "line", fg: "sketchFull", bgs: view },

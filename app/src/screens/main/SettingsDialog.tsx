@@ -1,8 +1,7 @@
-// The settings dialog skeleton (every setting lives here and nowhere in the work area). Two areas as a segmented tab
-// bar, the active one in the URL (`?settings=display|sketch`). A choice applies and is stored the moment it is made; there is
+// The settings dialog skeleton (every setting lives here and nowhere in the work area). Three areas as a segmented tab
+// bar (display, sketch, updates), the active one in the URL (`?settings=display|sketch|updates`). A choice applies and is stored the moment it is made; there is
 // no save button, and nothing in the window moves. Colour theme, light or dark and the language have their own stores; the
 // rest goes through the settings store, where the sketch settings wait for the sketch tools (step U2).
-import type { ReactNode } from "react";
 import { i18n, useI18n } from "../../i18n/runtime.ts";
 import type { Language } from "../../i18n/types.ts";
 import { settingsStore, useSettings } from "../../prefs/settings-runtime.ts";
@@ -10,16 +9,9 @@ import { themeStore, useTheme } from "../../theme/runtime.ts";
 import { getTheme, themeKeys, type Mode, type ThemeKey } from "../../theme/themes.ts";
 import { Dialog } from "../../ui/Dialog.tsx";
 import { Segmented } from "../../ui/Segmented.tsx";
+import { UpdatesSettings } from "../../updates/UpdatesSettings.tsx";
+import { Row } from "./SettingsRow.tsx";
 import type { SettingsTab } from "./url-state.ts";
-
-function Row({ label, children, testId }: { label: string; children: ReactNode; testId: string }) {
-  return (
-    <div className="grid grid-cols-[minmax(0,200px)_1fr] items-start gap-x-4 gap-y-1 border-b border-line py-3 last:border-b-0 max-[640px]:grid-cols-1" data-testid={testId}>
-      <div className="pt-2 text-[13.5px] font-medium">{label}</div>
-      <div className="min-w-0">{children}</div>
-    </div>
-  );
-}
 
 /** Three small chips with the theme's own colours, so the list shows what each theme looks like in the current mode. */
 function Swatch({ themeKey, mode }: { themeKey: ThemeKey; mode: Mode }) {
@@ -57,6 +49,7 @@ export function SettingsDialog({ tab, onTab, onClose }: SettingsDialogProps) {
           options={[
             { value: "display", label: t("main.settings.tabDisplay"), testId: "settings-tab-display" },
             { value: "sketch", label: t("main.settings.tabSketch"), testId: "settings-tab-sketch" },
+            { value: "updates", label: t("main.settings.tabUpdates"), testId: "settings-tab-updates" },
           ]}
           className="mb-1"
         />
@@ -139,6 +132,8 @@ export function SettingsDialog({ tab, onTab, onClose }: SettingsDialogProps) {
                 />
               </Row>
             </>
+          ) : shown === "updates" ? (
+            <UpdatesSettings />
           ) : (
             <>
               <Row label={t("main.settings.sketchFill")} testId="setting-sketch-fill">

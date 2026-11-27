@@ -51,7 +51,9 @@ if [ -f "intern/CHANGELOG.dev.md" ]; then
   " 2>/dev/null || true
 fi
 
-# Stamp the "## vNEXT" placeholders in staged customer changelogs
+# Stamp the "## vNEXT" placeholders in staged customer changelogs with the readable version and the day of the commit (ISO date,
+# local time, fetched once): "## vNEXT β · Unraid" becomes "## v2026.11.12.13.557 (β) · 2026-11-27 · Unraid"
+stamp_date=$(date '+%Y-%m-%d')
 for cf in CHANGELOG.md CHANGELOG.beta.md CHANGELOG.nightly.md; do
   if git diff --cached --name-only | grep -qx "$cf"; then
     node -e "
@@ -59,9 +61,9 @@ for cf in CHANGELOG.md CHANGELOG.beta.md CHANGELOG.nightly.md; do
       const p = '${cf}';
       let c = fs.readFileSync(p, 'utf8');
       let updated = c
-        .replace(/^## vNEXT α(.*)$/gm, '## ${full_ver} (α)\$1')
-        .replace(/^## vNEXT β(.*)$/gm, '## ${full_ver} (β)\$1')
-        .replace(/^## vNEXT(.*)$/gm, '## ${full_ver}\$1');
+        .replace(/^## vNEXT α(.*)$/gm, '## ${full_ver} (α) · ${stamp_date}\$1')
+        .replace(/^## vNEXT β(.*)$/gm, '## ${full_ver} (β) · ${stamp_date}\$1')
+        .replace(/^## vNEXT(.*)$/gm, '## ${full_ver} · ${stamp_date}\$1');
       if (updated !== c) fs.writeFileSync(p, updated, 'utf8');
     " 2>/dev/null || true
     git add "$cf"

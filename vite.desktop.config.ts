@@ -20,7 +20,9 @@ function windowIcon(): Plugin {
 }
 
 const buildInfo = readBuildInfo();
-const external = ["electron", /^node:/];
+// velopack is a native package: in the installed program it lives in the packaged app's node_modules and is required at
+// run time (desktop/src/updates/velopack-adapter.ts), never bundled.
+const external = ["electron", /^node:/, "velopack"];
 
 /**
  * Builds the preload script as a build of its own. A sandboxed preload can only require electron and a few built-in

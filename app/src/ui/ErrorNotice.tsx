@@ -1,6 +1,7 @@
 import { useCallback, useId, useMemo, useState, type ReactNode } from "react";
 import { formatTimestamp } from "../i18n/core.ts";
 import { useI18n } from "../i18n/runtime.ts";
+import { windowsLook } from "../dev/look.ts";
 import { detectPlatform, getDesktopBridge } from "../platform.ts";
 import { currentVersion } from "../version.ts";
 import { CopyButton } from "./CopyButton.tsx";
@@ -53,7 +54,9 @@ export function ErrorNotice({
     const environment =
       detectPlatform() === "desktop" && bridge
         ? t("error.environmentDesktop", { os: bridge.os })
-        : t("error.environmentBrowser");
+        : windowsLook()
+          ? t("error.environmentDesktop", { os: "win32" })
+          : t("error.environmentBrowser");
     return {
       headline,
       code,

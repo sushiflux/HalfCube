@@ -81,10 +81,10 @@ test.describe("welcome screen", () => {
     // Page 2: the focus moved to the first action.
     await expect(second.getByRole("button", { name: /New project/ })).toBeFocused();
 
-    await second.getByRole("button", { name: /Open a project or STEP file/ }).click();
+    await second.getByRole("button", { name: /Open or import/ }).click();
     const info = page.getByRole("dialog", { name: "Not available yet" });
     await expect(info).toBeVisible();
-    await expect(info).toContainText("Projects and STEP files cannot be opened in this version yet.");
+    await expect(info).toContainText("Opening projects and importing files is not possible in this version yet.");
     await expect(info.getByRole("button")).toHaveText(["OK"]);
 
     // Esc closes the info dialog only; the welcome screen stays.
@@ -123,9 +123,9 @@ test.describe("welcome screen", () => {
     await expect(welcome).toBeVisible();
     await expect(welcome.getByText("Frühphase.")).toBeVisible();
     await welcome.getByRole("button", { name: "Weiter" }).click();
-    await page.getByRole("dialog", { name: "Womit möchtest du anfangen?" }).getByRole("button", { name: /Projekt oder STEP-Datei öffnen/ }).click();
+    await page.getByRole("dialog", { name: "Womit möchtest du anfangen?" }).getByRole("button", { name: /Öffnen oder importieren/ }).click();
     const info = page.getByRole("dialog", { name: "Noch nicht verfügbar" });
-    await expect(info).toContainText("Projekte und STEP-Dateien lassen sich in dieser Version noch nicht öffnen");
+    await expect(info).toContainText("Projekte öffnen und Dateien importieren geht in dieser Version noch nicht");
     await info.getByRole("button", { name: "OK" }).click();
     await expect(info).toHaveCount(0);
   });

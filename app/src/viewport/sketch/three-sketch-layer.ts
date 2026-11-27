@@ -403,8 +403,7 @@ export class ThreeSketchLayer implements SketchLayer {
 
   // --- content that changes with the sketch ---------------------------------------------------------------------------------
 
-  private updateCurveLayers(frame: Frame3): void {
-    void frame;
+  private updateCurveLayers(_frame: Frame3): void {
     for (const [kind, layer] of this.curveLayers) {
       const found = this.curveSegs.find((c) => c.kind === kind);
       if (!found) layer.replaceGeometry({ positions: new Float32Array(0) });

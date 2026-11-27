@@ -1,15 +1,31 @@
 // Vite config of the shared UI (app/). The same build runs as the browser version and inside the Electron window.
 // Dev server and preview server bind 127.0.0.1 only and send the cross-origin isolation headers.
+import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import { defineConfig, type Plugin } from "vite";
 import { readBuildInfo, readDevPorts, repoRoot } from "./config/build-info.ts";
+import type { Channel } from "./app/src/version.ts";
 import { engineAssets } from "./config/engine-assets.ts";
 import { isolationHeaders, responseHeaders } from "./config/security.ts";
 import brandingFile from "./branding/branding.json" with { type: "json" };
 
 const ports = readDevPorts();
+const buildInfo = readBuildInfo();
+
+/**
+ * The customer changelog of the build's channel, shipped inside the bundle for "Was ist neu": CHANGELOG.nightly.md, CHANGELOG.beta.md
+ * or CHANGELOG.md. A dev build reads the nightly file. A file that does not exist (yet) gives an empty text, never a build error.
+ */
+function changelogFile(channel: Channel): string {
+  return channel === "release" ? "CHANGELOG.md" : channel === "beta" ? "CHANGELOG.beta.md" : "CHANGELOG.nightly.md";
+}
+
+function readChangelog(channel: Channel): string {
+  const file = resolve(repoRoot, changelogFile(channel));
+  return existsSync(file) ? readFileSync(file, "utf8") : "";
+}
 
 /** Replaces %PRODUCT_NAME% in index.html, so the product name stays in branding/branding.json only. */
 function brandingHtml(): Plugin {
@@ -28,7 +44,13 @@ export default defineConfig({
   plugins: [react(), tailwindcss(), brandingHtml(), engineAssets(repoRoot)],
   // The engine worker (app/src/engine/worker) is an ES module worker: it imports the engine module dynamically.
   worker: { format: "es" },
-  define: { __BUILD_INFO__: JSON.stringify(readBuildInfo()) },
+  define: {
+    __BUILD_INFO__: JSON.stringify(buildInfo),
+    // The update demo (?updates-demo=..., app/src/updates/demo-bridge.ts) exists in the dev channel only: in every other channel this
+    // constant is the literal false and the demo module is dropped from the bundle.
+    __HC_UPDATES_DEMO__: JSON.stringify(buildInfo.channel === "dev"),
+    __HC_CHANGELOG__: JSON.stringify(readChangelog(buildInfo.channel)),
+  },
   build: {
     outDir: resolve(repoRoot, "_build/web"),
     emptyOutDir: true,

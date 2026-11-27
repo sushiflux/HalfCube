@@ -20,7 +20,7 @@ export interface LoadingPanelProps {
 }
 
 /**
- * The same design as the loading screen, as a panel over the work area (open project, STEP import, engine restart).
+ * The same design as the loading screen, as a panel over the work area (open project, file import, engine restart).
  * Mount it inside a `relative` container: it covers that container with a veil and blocks the area behind it while
  * the operation runs. A failure replaces the step list in place, in full and copyable.
  */

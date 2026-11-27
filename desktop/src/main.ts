@@ -19,8 +19,11 @@
 //   HALFCUBE_USER_DATA  folder for the settings and caches of this run (default: Electron's per-user folder)
 //   HALFCUBE_ENGINE_EXE path of another engine program (unpackaged only; default: see engine-path.ts)
 //   HALFCUBE_SETUP_CHOICES_FILE  another first-start file than the one in the roaming HalfCube folder (unpackaged only)
+//   HALFCUBE_UPDATE_FEED  where the installed program looks for updates instead of the GitHub releases: an absolute path of
+//                        an existing local folder (Velopack release files) or http://127.0.0.1:<port>/; anything else is
+//                        logged and ignored. For local update tests across skipped versions.
 import { app, BrowserWindow, protocol, screen, session } from "electron";
-import { existsSync } from "node:fs";
+import { existsSync, statSync } from "node:fs";
 import { readFile, stat } from "node:fs/promises";
 import { dirname, extname, join, normalize, relative, resolve, sep } from "node:path";
 import { responseHeaders } from "../../config/security.ts";
@@ -32,6 +35,10 @@ import { installExternalIpc } from "./external-ipc.ts";
 import { resolveEngineExecutable, sessionDataDir, setupChoicesPath } from "./engine-path.ts";
 import { showMinimizedNoActivate } from "./native-window.ts";
 import { readSetupChoices } from "./setup-choices-file.ts";
+import { chooseFeed, describeFeed } from "./updates/feed.ts";
+import { UpdateService } from "./updates/service.ts";
+import { installUpdatesIpc } from "./updates/updates-ipc.ts";
+import { loadVelopackAdapter } from "./updates/velopack-adapter.ts";
 
 const log = (line: string) => process.stderr.write(`[main] ${line}\n`);
 
@@ -309,6 +316,26 @@ if (!app.requestSingleInstanceLock({ background: windowMode !== "normal" })) {
       chromiumLicencesFile: join(dirname(process.execPath), "LICENSES.chromium.html"),
       log,
     });
+
+    // Updates: Velopack in this process (installed builds only), driven by the page's requests. A dev build and a build
+    // that is not installed through the installer get a state that says so and never load Velopack.
+    const channel = currentVersion().channel;
+    const feedChoice = chooseFeed(process.env.HALFCUBE_UPDATE_FEED, channel, (path) => statSync(path, { throwIfNoEntry: false })?.isDirectory() === true);
+    if (feedChoice.ignored) log(`HALFCUBE_UPDATE_FEED ignoriert (${feedChoice.ignored}); es bleibt bei GitHub.`);
+    else if (feedChoice.source.kind !== "github") log(`HALFCUBE_UPDATE_FEED gilt: ${describeFeed(feedChoice.source)}`);
+    const updates = new UpdateService({
+      channel,
+      feed: feedChoice.source,
+      loadAdapter: () =>
+        app.isPackaged
+          ? loadVelopackAdapter({ feed: feedChoice.source })
+          : { ok: false, reason: "not-installed", detail: "The program runs from the build folder, not from the installer's package." },
+      quit: () => app.quit(),
+      log,
+    });
+    installUpdatesIpc({ service: updates, isTrustedFrame: (frame) => frame !== null && frame.parent === null && isOwnUrl(frame.url), log });
+    // A scheduled update is handed to the updater when the program ends (the engine is killed in the handler above).
+    app.on("before-quit", () => updates.onBeforeQuit());
 
     mainWindow = createWindow();
   });

@@ -15,8 +15,8 @@ function memoryPreferences(initial: Record<string, string> = {}) {
 }
 
 describe("settings store", () => {
-  it("starts with the decided defaults: inner band, green, symbols only, view initials, wheel down zooms out, dimension-line fields", () => {
-    expect(defaultSettings).toEqual({ timelineLabels: "icons", axisLabels: "views", wheelZoom: "down-out", sketchFill: "band", sketchColour: "green", fieldLook: "dimension" });
+  it("starts with the decided defaults: inner band, green, symbols only, view initials, wheel down zooms out, dimension-line fields, update check at every start", () => {
+    expect(defaultSettings).toEqual({ timelineLabels: "icons", axisLabels: "views", wheelZoom: "down-out", sketchFill: "band", sketchColour: "green", fieldLook: "dimension", updateCheck: "start" });
     expect(createSettingsStore(memoryPreferences().prefs).getState()).toEqual(defaultSettings);
   });
 
@@ -77,5 +77,23 @@ describe("settings store", () => {
     store.reset();
     expect(store.getState()).toEqual(defaultSettings);
     expect([...data.keys()].filter((k) => k.includes("settings."))).toEqual([]);
+  });
+});
+
+describe("update check setting", () => {
+  it("keeps a valid choice and falls back to the default for a value that no longer exists", () => {
+    const { prefs } = memoryPreferences({ "settings.updateCheck": "week" });
+    expect(createSettingsStore(prefs).getState().updateCheck).toBe("week");
+    const old = memoryPreferences({ "settings.updateCheck": "hourly" });
+    expect(createSettingsStore(old.prefs).getState().updateCheck).toBe("start");
+  });
+
+  it("stores a choice at once and refuses an unknown one", () => {
+    const { prefs, data } = memoryPreferences();
+    const store = createSettingsStore(prefs);
+    store.set("updateCheck", "manual");
+    expect(data.get("halfcube.settings.updateCheck")).toBe("manual");
+    store.set("updateCheck", "never" as never);
+    expect(store.getState().updateCheck).toBe("manual");
   });
 });

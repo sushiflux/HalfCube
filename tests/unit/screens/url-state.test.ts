@@ -35,3 +35,29 @@ describe("applyUrlPatch", () => {
     expect(parseUrlState(search)).toEqual({ screen: "main", sketch: "f7", settings: "sketch" });
   });
 });
+
+describe("update views in the address", () => {
+  it("reads the update view, the news window and the updates tab of the settings", () => {
+    expect(parseUrlState("?update=window")).toEqual({ update: "window" });
+    expect(parseUrlState("?update=restart&news=1&settings=updates")).toEqual({ update: "restart", news: "1", settings: "updates" });
+    expect(parseUrlState("?update=error")).toEqual({ update: "error" });
+  });
+
+  it("reads the source of the dialog Alle Änderungen", () => {
+    expect(parseUrlState("?changes=app")).toEqual({ changes: "app" });
+    expect(parseUrlState("?changes=update&update=window")).toEqual({ changes: "update", update: "window" });
+    expect(applyUrlPatch("?lang=de", { changes: "update" })).toBe("?lang=de&changes=update");
+    expect(applyUrlPatch("?changes=app", { changes: null })).toBe("");
+  });
+
+  it("ignores values that are not exactly known", () => {
+    expect(parseUrlState("?update=install&news=yes&settings=update&changes=all")).toEqual({});
+  });
+
+  it("writes and removes the keys and round-trips", () => {
+    const search = applyUrlPatch(applyUrlPatch("?lang=en&updates-demo=found", { update: "window" }), { news: "1" });
+    expect(search).toBe("?lang=en&updates-demo=found&update=window&news=1");
+    expect(parseUrlState(search)).toEqual({ update: "window", news: "1" });
+    expect(applyUrlPatch(search, { update: null, news: null })).toBe("?lang=en&updates-demo=found");
+  });
+});

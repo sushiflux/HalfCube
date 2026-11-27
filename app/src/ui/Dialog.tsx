@@ -16,14 +16,14 @@ export interface DialogProps {
   /** Shows a close button in the header. Dialogs that ask a question leave it out and use their buttons. */
   showClose?: boolean;
   role?: "dialog" | "alertdialog";
-  size?: "sm" | "md" | "lg";
+  size?: "sm" | "md" | "wide" | "lg";
   initialFocus?: RefObject<HTMLElement | null>;
   closeOnBackdrop?: boolean;
   /** Text the dialog is about, for screen readers (alertdialog). */
   describedById?: string;
 }
 
-const widths = { sm: "w-[420px]", md: "w-[520px]", lg: "w-[680px]" } as const;
+const widths = { sm: "w-[420px]", md: "w-[520px]", wide: "w-[600px]", lg: "w-[680px]" } as const;
 
 /** The one dialog of the app: own overlay, title, scrolling body, footer. Never window.confirm/alert/prompt. */
 export function Dialog({

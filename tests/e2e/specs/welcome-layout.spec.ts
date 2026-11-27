@@ -12,7 +12,7 @@ const words: Record<Lang, { title1: string; title2: string; next: string; back: 
     title2: "How do you want to start?",
     next: "Next",
     back: "Back",
-    open: /Open a project or STEP file/,
+    open: /Open or import/,
     checkbox: "Don’t show this at the next start",
     infoTitle: "Not available yet",
   },
@@ -21,7 +21,7 @@ const words: Record<Lang, { title1: string; title2: string; next: string; back: 
     title2: "Womit möchtest du anfangen?",
     next: "Weiter",
     back: "Zurück",
-    open: /Projekt oder STEP-Datei öffnen/,
+    open: /Öffnen oder importieren/,
     checkbox: "Beim nächsten Start nicht mehr anzeigen",
     infoTitle: "Noch nicht verfügbar",
   },
@@ -82,7 +82,7 @@ for (const lang of ["en", "de"] as const) {
       expect(infoBox.x).toBeGreaterThanOrEqual(0);
       expect(infoBox.x + infoBox.width).toBeLessThanOrEqual(innerWidth);
     }
-    await expect(info).toContainText(lang === "de" ? "Projekte und STEP-Dateien" : "Projects and STEP files");
+    await expect(info).toContainText(lang === "de" ? "Projekte öffnen und Dateien importieren" : "Opening projects and importing files");
     await expectNotCut(info);
     await page.keyboard.press("Escape");
     await expect(info).toHaveCount(0);

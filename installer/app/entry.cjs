@@ -7,6 +7,9 @@
 // and ends the process; for a normal start it returns and the program loads.
 const { VelopackApp } = require("velopack");
 
-VelopackApp.build().run();
+// A downloaded update must stay "ready" until the user restarts through the update window or schedules it for exit, and the
+// schedule must be cancellable. Velopack's default would apply a downloaded package at the next start by itself
+// (setAutoApplyOnStartup is ON by default; app.rs applies the newest local package when the program was not just restarted by it).
+VelopackApp.build().setAutoApplyOnStartup(false).run();
 
 require("./_build/desktop/main.cjs");

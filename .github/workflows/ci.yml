@@ -1,5 +1,6 @@
 # Continuous integration: checks, engine builds and the browser build on every push to main, every pull request and
-# every v* tag. Nothing is published from here yet.
+# every v* tag. A v* tag also builds the Windows package and publishes the GitHub release (jobs "release-build" and
+# "release-publish").
 #
 # Jobs
 #   windows      typecheck, lint, unit tests, protocol check, native engine (MSVC), C++ unit tests, engine drive test
@@ -7,14 +8,24 @@
 #   engine-wasm  WebAssembly engine in the pinned emscripten/emsdk container, driven through its message interface,
 #                third-party notices up to date (npm run check:notices; needs the engine licence files and the WebAssembly build)
 #   linux        compile check of the native engine, no tests, no package (Linux comes later)
-#   ci-ok        single result of all jobs above (what a later release job and branch protection depend on)
+#   ci-ok        single result of all jobs above (what branch protection depends on)
+#   release-build    only for a v* tag, after every job above succeeded: Windows package (Velopack, our own setup), contents: read
+#   release-publish  the GitHub release from the artifacts of release-build, contents: write, runs no code of this repository
+#
+# Release jobs, in short. The tag decides the channel: v<id>-nightly, v<id>-beta, v<year>.<month>.<commit> (release). The annotated
+# tag's line "platform: ..." decides the targets; only windows-desktop (and all) is built so far. scripts/ci/release.ts checks the tag
+# against version.txt, writes the release text (only this version's changelog entry) and Velopack's release notes (the channel file's
+# frame with the newest entries); scripts/build-installer.ps1 -Ci builds the package, fetches the previous package of the channel
+# first (so vpk writes a delta) and stages exactly what is published: our setup (the download), the packages and releases.<channel>.json
+# (what the updater reads). release-build uploads them as artifacts. release-publish checks them (file set, names, sizes and hashes
+# against the feed, versions against the tag) and only then creates the release as a draft, fills it and publishes it; a tag build
+# never publishes before all jobs succeeded.
 #
 # OCCT is the expensive part. Each engine job caches its prebuilt OCCT; the key is the pinned OCCT commit, a hash of the
 # OCCT configure options read from the build scripts (scripts/ci/occt-key.mjs) and the compiler version.
 #
-# PHASE 4 PLACEHOLDER (releases, installers, Store packages): there is deliberately no release job yet. Later it will
-# be a job with `needs: ci-ok`, `if: startsWith(github.ref, 'refs/tags/v')` and its own narrow `permissions`
-# (contents: write), reading the channel from the tag. Keep the top-level permissions at contents: read.
+# Keep the top-level permissions at contents: read; only the release-publish job gets contents: write. That job has no checkout and
+# runs no npm and no project script: whatever runs third-party code (npm ci, the build scripts) has no write token.
 name: CI
 
 on:
@@ -46,6 +57,8 @@ env:
 #   actions/setup-node      949feb2413d6458794dcd2491c4babbbce0c15c1  v7.1.0
 #   actions/cache           55cc8345863c7cc4c66a329aec7e433d2d1c52a9  v6.1.0 (also cache/restore and cache/save)
 #   actions/upload-artifact cf430e030ddbb5b0abf93d22962f4752f3646cd9  v7.0.2
+#   actions/download-artifact 9000827ccba6bdab643e8b6fd33ac0654aef8333  v8.0.2
+#   actions/setup-dotnet    0f4a354dd5547a28c70b7853dbd95d5b67886e73  v6.1.0
 
 jobs:
   windows:
@@ -142,6 +155,23 @@ jobs:
       - name: Drive the engine through its message interface
         shell: bash
         run: node engine/tests/drive-engine.mjs --native engine/_build/windows-release/bin/halfcube-engine.exe --out engine/_build/results/native.json
+
+      # The release job packs the engine that was just built and tested instead of building OCCT and the engine a second time.
+      # The globs are what scripts/build-installer.ps1 takes (programs, libraries, notices) minus the unit-test program.
+      - name: Keep the engine for the release job
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: engine-windows
+          path: |
+            engine/_build/windows-release/bin/**/*.exe
+            engine/_build/windows-release/bin/**/*.dll
+            engine/_build/windows-release/bin/**/*.txt
+            engine/_build/windows-release/bin/**/*.md
+            engine/_build/windows-release/bin/**/*.html
+            !engine/_build/windows-release/bin/**/*-tests*
+          retention-days: 1
+          if-no-files-found: error
 
   web:
     name: Browser UI build
@@ -299,3 +329,293 @@ jobs:
           for r in $RESULTS; do
             [ "$r" = success ] || { echo "at least one job did not succeed" >&2; exit 1; }
           done
+
+  # The release is split in two jobs so that nothing that runs third-party code ever holds the write token:
+  #   release-build    contents: read. npm ci, the project scripts, the Windows package. Uploads the files as artifacts.
+  #   release-publish  contents: write. Downloads the artifacts, checks them and calls gh. No checkout, no npm, no project script.
+  # Only for a v* tag and only when every job above succeeded (ci-ok fails otherwise, a needed job that failed or was skipped blocks
+  # these).
+  release-build:
+    name: Release build (Windows package)
+    needs: [windows, web, engine-wasm, linux, ci-ok]
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: windows-2025
+    timeout-minutes: 60
+    permissions:
+      contents: read
+    outputs:
+      channel: ${{ steps.info.outputs.channel }}
+      title: ${{ steps.info.outputs.title }}
+      prerelease: ${{ steps.info.outputs.prerelease }}
+      windows: ${{ steps.info.outputs.windows }}
+    env:
+      # The tag as pushed. Always read from the environment inside scripts, never pasted into script text.
+      TAG: ${{ github.ref_name }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # checkout can leave an annotated tag as a plain reference to its commit; the platform line lives in the tag object.
+      # The tag is fetched again explicitly, with the (read-only) token for this one command only (no credentials stay in the clone).
+      - name: Fetch the annotated tag
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          auth="$(printf 'x-access-token:%s' "$GITHUB_TOKEN" | base64 -w0)"
+          git -c "http.https://github.com/.extraheader=AUTHORIZATION: basic $auth" fetch --no-tags --force origin "+refs/tags/${TAG}:refs/tags/${TAG}"
+          git cat-file -t "refs/tags/${TAG}"
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Install npm packages
+        shell: bash
+        run: npm ci
+
+      # Fails when the tag is not a release tag, disagrees with version.txt of its commit or has an unknown platform id.
+      # Outputs: channel, id, title (the readable version), prerelease, changelog, platforms, windows.
+      - name: Read the tag
+        id: info
+        shell: bash
+        run: node scripts/ci/release.ts info --tag "$TAG"
+
+      - name: No Windows desktop target in this tag
+        if: steps.info.outputs.windows != 'true'
+        shell: bash
+        env:
+          PLATFORMS: ${{ steps.info.outputs.platforms }}
+        run: echo "The tag asks for platform(s) $PLATFORMS; this job builds only windows-desktop, nothing is published from here."
+
+      # A version without a customer entry (no heading, or no channel file yet) gets the neutral release text and a notice line; an entry
+      # in only one language fails the job.
+      - name: Release text and release notes from the channel changelog
+        if: steps.info.outputs.windows == 'true'
+        shell: bash
+        run: |
+          node scripts/ci/release.ts body --tag "$TAG" --out _build/release-text/body.md
+          node scripts/ci/release.ts excerpt --tag "$TAG" --out _build/release-text/notes.md
+
+      - name: Engine from the Windows job
+        if: steps.info.outputs.windows == 'true'
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: engine-windows
+          path: engine/_build/windows-release/bin
+
+      # The .NET SDK of the setup and of vpk (the tool manifest of this repository pins vpk).
+      - name: .NET SDK
+        if: steps.info.outputs.windows == 'true'
+        uses: actions/setup-dotnet@0f4a354dd5547a28c70b7853dbd95d5b67886e73 # v6.1.0
+        with:
+          dotnet-version: 11.0.x
+
+      # vpk download first fetches the newest package of this channel from the GitHub releases (none yet: no delta), then vpk pack
+      # writes the full package and the delta to it. Result: _build/installer-ci/release (the files of the GitHub release).
+      # The token of this job is read-only (contents: read); vpk download is the only program that gets it.
+      - name: Build the Windows package
+        if: steps.info.outputs.windows == 'true'
+        shell: pwsh
+        env:
+          CHANNEL: ${{ steps.info.outputs.channel }}
+          # Read by vpk download (previous package of the channel) in scripts/build-installer.ps1, which removes it from the environment
+          # of every other program it starts
+          GITHUB_TOKEN: ${{ github.token }}
+          # The packager fetches the Electron runtime it packs; the global setting only saved the download during npm ci
+          ELECTRON_SKIP_BINARY_DOWNLOAD: ""
+        run: |
+          powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-installer.ps1 -Ci -Channel $env:CHANNEL `
+            -ReleaseNotes _build/release-text/notes.md -PreviousFrom "https://github.com/$env:GITHUB_REPOSITORY" -OutDir _build/installer-ci
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      # The publish job takes exactly these two artifacts and nothing else from this job.
+      - name: Keep the release files for the publish job
+        if: steps.info.outputs.windows == 'true'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: release-files
+          path: _build/installer-ci/release
+          retention-days: 3
+          compression-level: 0
+          if-no-files-found: error
+
+      - name: Keep the release text for the publish job
+        if: steps.info.outputs.windows == 'true'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: release-text
+          path: _build/release-text/body.md
+          retention-days: 3
+          if-no-files-found: error
+
+  # The only job with write access. It runs no code of this repository: no checkout, no npm, no project script. What it gets from the
+  # build job is data (the artifacts); the channel and the Velopack version are derived from the tag again here, and the files are
+  # checked against them before the release is created. One publish per channel at a time: a second tag of the same channel waits for
+  # the first one (the running publish is never cancelled; GitHub keeps only one waiting run per group, so of three tags of one channel
+  # pushed within the publish time the middle one is dropped, push its tag again).
+  release-publish:
+    name: Release (publish to GitHub)
+    needs: [release-build]
+    if: startsWith(github.ref, 'refs/tags/v') && needs.release-build.outputs.windows == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    concurrency:
+      group: release-publish-${{ endsWith(github.ref_name, '-nightly') && 'nightly' || endsWith(github.ref_name, '-beta') && 'beta' || 'release' }}
+      cancel-in-progress: false
+    env:
+      TAG: ${{ github.ref_name }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - name: Release files from the build job
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: release-files
+          path: publish/files
+
+      - name: Release text from the build job
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: release-text
+          path: publish/text
+
+      # No token in this step. Everything the updater will read is checked before the release exists: the file set, the file names, the
+      # sizes and hashes the feed states, and the version of the build against the one the tag means. The mapping tag to channel and
+      # Velopack version is the one of Get-PackVersion in scripts/build-installer.ps1 (tests/unit/ci/release-workflow.test.ts runs this
+      # script against sample files).
+      - name: Check the release files before anything is published
+        shell: bash
+        env:
+          CLAIMED_CHANNEL: ${{ needs.release-build.outputs.channel }}
+          FILES_DIR: publish/files
+        run: |
+          node - <<'JS'
+          const fs = require("node:fs");
+          const path = require("node:path");
+          const crypto = require("node:crypto");
+          const { TAG, FILES_DIR, CLAIMED_CHANNEL } = process.env;
+          const problems = [];
+          const bad = (text) => problems.push(text);
+
+          let channel;
+          let pack;
+          let m = /^v(\d+)\.(\d+)\.(\d+)\.(\d+)\.(\d+)-(nightly|beta)$/.exec(TAG);
+          if (m) {
+            channel = m[6];
+            pack = `${m[1]}.${m[2]}.${m[3]}-${channel === "nightly" ? "alpha" : "beta"}.${m[4]}.${m[5]}`;
+          } else if ((m = /^v(\d+)\.(\d+)\.(\d+)$/.exec(TAG))) {
+            channel = "release";
+            pack = `${m[1]}.${m[2]}.${m[3]}`;
+          } else {
+            console.error(`::error::The tag ${TAG} is not a release tag.`);
+            process.exit(1);
+          }
+          if (CLAIMED_CHANNEL !== channel) bad(`The build job reports the channel "${CLAIMED_CHANNEL}", the tag ${TAG} means "${channel}".`);
+
+          const entries = fs.readdirSync(FILES_DIR, { withFileTypes: true });
+          const names = entries.filter((e) => e.isFile()).map((e) => e.name);
+          for (const e of entries) if (!e.isFile()) bad(`${e.name} in the release files is not a plain file.`);
+          const readJson = (name) => {
+            try {
+              return JSON.parse(fs.readFileSync(path.join(FILES_DIR, name), "utf8").replace(/^﻿/, ""));
+            } catch (error) {
+              bad(`${name} is missing or not valid JSON: ${error.message}`);
+              return null;
+            }
+          };
+
+          const setupName = `HalfCube-Setup-${TAG}.exe`;
+          const feedName = `releases.${channel}.json`;
+          const expected = new Set(["build-result.json", setupName, feedName]);
+
+          const result = readJson("build-result.json");
+          if (result) {
+            if (result.channel !== channel) bad(`build-result.json: channel "${result.channel}", the tag means "${channel}".`);
+            if (result.packVersion !== pack) bad(`build-result.json: Velopack version "${result.packVersion}", the tag ${TAG} means "${pack}".`);
+            if (result.setup !== setupName) bad(`build-result.json: setup "${result.setup}", expected "${setupName}".`);
+          }
+
+          const feed = readJson(feedName);
+          if (feed) {
+            const assets = Array.isArray(feed.Assets) ? feed.Assets : [];
+            const fulls = assets.filter((a) => a.Type === "Full");
+            if (fulls.length !== 1) bad(`${feedName} must list exactly one full package, it lists ${fulls.length}.`);
+            if (assets.some((a) => a.Type !== "Full" && a.Type !== "Delta")) bad(`${feedName} lists an asset that is neither Full nor Delta.`);
+            for (const a of assets) {
+              const label = `${feedName}, ${a.FileName}`;
+              const want = `HalfCube-${pack}-${channel}-${String(a.Type).toLowerCase()}.nupkg`;
+              if (a.PackageId !== "HalfCube") bad(`${label}: package id "${a.PackageId}".`);
+              if (a.Version !== pack) bad(`${label}: version "${a.Version}", the tag means "${pack}".`);
+              if (a.FileName !== want) bad(`${label}: file name does not match, expected "${want}".`);
+              expected.add(a.FileName);
+              if (!names.includes(a.FileName)) {
+                bad(`${label}: the file is not among the uploaded assets.`);
+                continue;
+              }
+              const bytes = fs.readFileSync(path.join(FILES_DIR, a.FileName));
+              if (bytes.length !== a.Size) bad(`${label}: size ${bytes.length}, the feed says ${a.Size}.`);
+              const sha256 = crypto.createHash("sha256").update(bytes).digest("hex");
+              if (sha256 !== String(a.SHA256).toLowerCase()) bad(`${label}: SHA256 ${sha256}, the feed says ${a.SHA256}.`);
+            }
+          }
+
+          for (const n of expected) if (!names.includes(n)) bad(`${n} is missing from the release files.`);
+          for (const n of names) if (!expected.has(n)) bad(`${n} is not expected in the release files.`);
+
+          if (problems.length > 0) {
+            for (const p of problems) console.error(`::error::${p}`);
+            console.error("::error::Nothing was published.");
+            process.exit(1);
+          }
+          console.log(`Checked ${names.length} files for ${TAG} (${channel}, Velopack ${pack}): file set, names, sizes and hashes match the feed.`);
+          JS
+
+      # Draft first, assets uploaded, published last: the updater never sees a half-filled release. A published release of the
+      # same tag stops the job (delete the release by hand when a tag is rebuilt); a draft left by a failed run is replaced.
+      - name: Publish the GitHub release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TITLE: ${{ needs.release-build.outputs.title }}
+          PRERELEASE: ${{ needs.release-build.outputs.prerelease }}
+        run: |
+          set -euo pipefail
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            if [ "$(gh release view "$TAG" --json isDraft --jq .isDraft)" = "true" ]; then
+              gh release delete "$TAG" --yes
+            else
+              echo "::error::A published release for $TAG exists already. Delete the release (not the tag) and run the tag build again."
+              exit 1
+            fi
+          fi
+          files=()
+          while IFS= read -r f; do files+=("$f"); done < <(find publish/files -maxdepth 1 -type f ! -name build-result.json | sort)
+          printf 'Uploading %s\n' "${files[@]}"
+          flags=(--verify-tag)
+          if [ "$PRERELEASE" = "true" ]; then flags+=(--prerelease); else flags+=(--latest); fi
+          gh release create "$TAG" --draft --title "$TITLE" --notes-file publish/text/body.md "${flags[@]}" "${files[@]}"
+          gh release edit "$TAG" --draft=false
+          echo "Published $TAG: $TITLE"
+
+      # After publishing only reachability is checked, the way the updater reaches the feed (public URL, no token); the content was checked
+      # before. The files can take a moment to appear on the download host.
+      - name: The feed of the channel is reachable
+        shell: bash
+        env:
+          CHANNEL: ${{ needs.release-build.outputs.channel }}
+        run: |
+          url="https://github.com/$GH_REPO/releases/download/$TAG/releases.$CHANNEL.json"
+          for attempt in 1 2 3 4 5 6; do
+            if curl -fsSL -o /dev/null "$url"; then
+              echo "Reachable: $url"
+              exit 0
+            fi
+            echo "Attempt $attempt: $url not reachable yet"
+            sleep 10
+          done
+          echo "::error::$TAG is published, but $url cannot be fetched. Check the release in the browser; to build the tag again delete the release (not the tag) first."
+          exit 1

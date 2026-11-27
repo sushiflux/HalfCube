@@ -27,11 +27,13 @@
   white-space: nowrap;
   color: #ffffff;
 }
+/* The two quiet chips have an opaque fill (their former translucent tint, worked out over the strip base), so their text contrast
+   never depends on where the glow of the strip sits behind them: 10:1 and better in every dialog height. */
 .hc-about-chip[data-kind="early"] {
-  background: rgb(76 209 224 / 0.16);
+  background: #194555;
 }
 .hc-about-chip[data-kind="dev"] {
-  background: rgb(255 255 255 / 0.1);
+  background: #273f4e;
   font-family: var(--font-mono);
   font-weight: 500;
 }

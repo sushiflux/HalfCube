@@ -41,7 +41,9 @@ import { buildTimeline, problemSteps, type TimelineText } from "./timeline-model
 import { TitleBar } from "./TitleBar.tsx";
 import { Toolbar } from "./Toolbar.tsx";
 import { buildTree, initiallyExpanded, type TreeRow, type TreeText } from "./tree-model.ts";
-import { patchUrl, readUrlState, type SettingsTab } from "./url-state.ts";
+import { patchUrl, readUrlState, isSettingsTab, type SettingsTab } from "./url-state.ts";
+import { OPEN_SETTINGS_EVENT } from "../../updates/actions.ts";
+import { workStore } from "../../updates/work.ts";
 import { bodyData, committedBodies, featureSketchData } from "./view-bridge.ts";
 
 export interface MainWindowProps {
@@ -336,6 +338,24 @@ export function MainWindow({ session, engineReady, arrived, overlay }: MainWindo
   useEffect(() => {
     patchUrl({ settings: settingsTab });
   }, [settingsTab]);
+
+  // What a restart for an update would lose: HalfCube cannot save yet, so every step of the timeline counts (updates/work.ts).
+  const untitled = t("main.title.untitled");
+  const stepCount = doc.timeline.length;
+  useEffect(() => {
+    workStore.set({ name: untitled, steps: stepCount });
+  }, [untitled, stepCount]);
+  useEffect(() => () => workStore.set(null), []);
+
+  // The update views ask for a settings tab ("Einstellungen für Updates"); the dialog's state lives here.
+  useEffect(() => {
+    const onOpenSettings = (event: Event) => {
+      const tab = (event as CustomEvent<unknown>).detail;
+      setSettingsTab(isSettingsTab(tab) ? tab : null);
+    };
+    window.addEventListener(OPEN_SETTINGS_EVENT, onOpenSettings);
+    return () => window.removeEventListener(OPEN_SETTINGS_EVENT, onOpenSettings);
+  }, []);
 
   // ---- choosing the plane of a new sketch ------------------------------------------------------------------------------
 

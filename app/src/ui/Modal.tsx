@@ -1,11 +1,29 @@
 import { AnimatePresence, motion } from "motion/react";
-import { useEffect, useRef, type ReactNode, type RefObject } from "react";
+import { useEffect, useRef, useSyncExternalStore, type ReactNode, type RefObject } from "react";
 import { createPortal } from "react-dom";
 import { cx } from "./cx.ts";
 import { useFocusTrap } from "./useFocusTrap.ts";
 
 /** Open modals, topmost last: only the topmost one reacts to Esc and keeps the focus. */
 const stack: symbol[] = [];
+const stackListeners = new Set<() => void>();
+const notifyStack = () => {
+  for (const listener of [...stackListeners]) listener();
+};
+
+/** True while any modal is open: what must not open by itself (the "What's new" window) waits for this to be false. */
+export function useAnyModalOpen(): boolean {
+  return useSyncExternalStore(
+    (listener) => {
+      stackListeners.add(listener);
+      return () => {
+        stackListeners.delete(listener);
+      };
+    },
+    () => stack.length > 0,
+    () => false,
+  );
+}
 
 export interface ModalProps {
   open: boolean;
@@ -50,6 +68,7 @@ export function Modal({
     if (!open) return;
     const me = id.current;
     stack.push(me);
+    notifyStack();
     const root = document.getElementById("root");
     root?.setAttribute("inert", "");
     const onKeyDown = (event: KeyboardEvent) => {
@@ -63,6 +82,7 @@ export function Modal({
     return () => {
       document.removeEventListener("keydown", onKeyDown);
       stack.splice(stack.indexOf(me), 1);
+      notifyStack();
       if (stack.length === 0) root?.removeAttribute("inert");
     };
   }, [open]);

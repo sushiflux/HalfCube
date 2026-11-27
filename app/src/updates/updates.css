@@ -1,0 +1,89 @@
+/*
+ * Colours of the channel badges and the category badges of the update views. They are fixed per mode and independent of the colour
+ * theme (like the wordmark), chosen so the word on its badge reaches 7:1, which also satisfies the High contrast theme
+ * (tests/unit/updates/badge-contrast.test.ts reads this file and checks every pair).
+ */
+:root {
+  --ch-nightly-bg: #ece4fb;
+  --ch-nightly-fg: #4a2a9a;
+  --ch-beta-bg: #dcebf8;
+  --ch-beta-fg: #0d4f80;
+  --cb-new-bg: #dff2e7;
+  --cb-new-fg: #0d5a38;
+  --cb-change-bg: #dcebf8;
+  --cb-change-fg: #0d4f80;
+  --cb-fix-bg: #fbecd4;
+  --cb-fix-fg: #6b3a00;
+  --cb-security-bg: #fbe4e4;
+  --cb-security-fg: #8f1d1d;
+  --cb-removed-bg: #ececef;
+  --cb-removed-fg: #3d3d46;
+  --cb-deprecated-bg: #f1e4f5;
+  --cb-deprecated-fg: #5b2a73;
+}
+:root[data-mode="dark"] {
+  --ch-nightly-bg: #2b2150;
+  --ch-nightly-fg: #d3c2ff;
+  --ch-beta-bg: #10304a;
+  --ch-beta-fg: #9fd4ff;
+  --cb-new-bg: #12372a;
+  --cb-new-fg: #8de8ba;
+  --cb-change-bg: #14303f;
+  --cb-change-fg: #9fd4ff;
+  --cb-fix-bg: #3b2a0e;
+  --cb-fix-fg: #ffd08a;
+  --cb-security-bg: #3e1b1b;
+  --cb-security-fg: #ffb4ad;
+  --cb-removed-bg: #2a2a30;
+  --cb-removed-fg: #d6d6dc;
+  --cb-deprecated-bg: #35243f;
+  --cb-deprecated-fg: #e6c8f5;
+}
+
+.hc-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 20px;
+  padding: 0 7px;
+  border-radius: 4px;
+  font-size: 11.5px;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+}
+.hc-badge[data-cat] {
+  padding-left: 5px;
+}
+.hc-badge[data-channel="nightly"] {
+  background: var(--ch-nightly-bg);
+  color: var(--ch-nightly-fg);
+}
+.hc-badge[data-channel="beta"] {
+  background: var(--ch-beta-bg);
+  color: var(--ch-beta-fg);
+}
+.hc-badge[data-cat="new"] {
+  background: var(--cb-new-bg);
+  color: var(--cb-new-fg);
+}
+.hc-badge[data-cat="change"] {
+  background: var(--cb-change-bg);
+  color: var(--cb-change-fg);
+}
+.hc-badge[data-cat="fix"] {
+  background: var(--cb-fix-bg);
+  color: var(--cb-fix-fg);
+}
+.hc-badge[data-cat="security"] {
+  background: var(--cb-security-bg);
+  color: var(--cb-security-fg);
+}
+.hc-badge[data-cat="removed"] {
+  background: var(--cb-removed-bg);
+  color: var(--cb-removed-fg);
+}
+.hc-badge[data-cat="deprecated"] {
+  background: var(--cb-deprecated-bg);
+  color: var(--cb-deprecated-fg);
+}

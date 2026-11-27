@@ -10,6 +10,7 @@ import { cx } from "../ui/cx.ts";
 import { Glyph } from "../ui/Glyph.tsx";
 import { Modal } from "../ui/Modal.tsx";
 import { NotchFrame, NOTCH_BUTTON } from "../ui/NotchFrame.tsx";
+import { ScrollArea } from "../ui/ScrollArea.tsx";
 import { Segmented } from "../ui/Segmented.tsx";
 import { currentVersion, type Channel } from "../version.ts";
 import { AboutInfo } from "./AboutInfo.tsx";
@@ -127,7 +128,10 @@ export function AboutDialog({ ready }: { ready: boolean }) {
             </div>
             <div className="relative" data-testid="about-panes">
               <div role="tabpanel" aria-label={t("about.tabInfo")} inert={!info} className={cx(!info && "invisible")}>
-                <AboutInfo items={items} />
+                {/* The Info tab sets the height of the dialog; in a window too low for it, it scrolls inside (the update slot made it taller). */}
+                <ScrollArea viewportClassName="max-h-[calc(100vh-142px)]" data-testid="about-info-scroll">
+                  <AboutInfo items={items} />
+                </ScrollArea>
               </div>
               <div
                 role="tabpanel"

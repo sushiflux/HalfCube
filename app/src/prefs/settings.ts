@@ -1,6 +1,7 @@
 // User settings that only the settings dialog changes (no setting control lives in the work area). Colour theme,
 // light or dark and the language have their own stores (theme/, i18n/); this is the rest. Values are validated when read,
 // so a stored value that no longer exists falls back to the default instead of breaking the window.
+import { updateCheckModes, type UpdateCheckMode } from "../updates/schedule.ts";
 import type { Preferences } from "./preferences.ts";
 
 export const timelineLabelModes = ["icons", "names"] as const;
@@ -30,6 +31,9 @@ export const wheelZoomModes = ["down-out", "down-in"] as const;
 /** Which way the mouse wheel zooms: "down-out" = wheel down zooms out (default), "down-in" = wheel down zooms in. */
 export type WheelZoomSetting = (typeof wheelZoomModes)[number];
 
+/** How often HalfCube looks for updates by itself (desktop program only; Einstellungen › Updates). */
+export type UpdateCheckSetting = UpdateCheckMode;
+
 export interface UiSettings {
   timelineLabels: TimelineLabelMode;
   axisLabels: AxisLabelSetting;
@@ -37,6 +41,7 @@ export interface UiSettings {
   sketchFill: SketchFillMode;
   sketchColour: SketchColourMode;
   fieldLook: FieldLook;
+  updateCheck: UpdateCheckSetting;
 }
 
 export const defaultSettings: UiSettings = {
@@ -46,6 +51,7 @@ export const defaultSettings: UiSettings = {
   sketchFill: "band",
   sketchColour: "green",
   fieldLook: "dimension",
+  updateCheck: "start",
 };
 
 const allowed: { [K in keyof UiSettings]: readonly UiSettings[K][] } = {
@@ -55,6 +61,7 @@ const allowed: { [K in keyof UiSettings]: readonly UiSettings[K][] } = {
   sketchFill: sketchFillModes,
   sketchColour: sketchColourModes,
   fieldLook: fieldLooks,
+  updateCheck: updateCheckModes,
 };
 
 export const settingKeys = Object.keys(defaultSettings) as (keyof UiSettings)[];

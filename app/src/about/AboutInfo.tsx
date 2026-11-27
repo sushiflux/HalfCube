@@ -7,7 +7,11 @@ import { getDesktopBridge } from "../platform.ts";
 import { Button } from "../ui/Button.tsx";
 import { CopyButton } from "../ui/CopyButton.tsx";
 import { ExternalLink } from "../ui/ExternalLink.tsx";
-import { IconFileText, IconGithub, IconExternal } from "../ui/icons.tsx";
+import { IconFileText, IconGithub, IconExternal, IconSparkles } from "../ui/icons.tsx";
+import { openNews } from "../updates/actions.ts";
+import { useUpdates } from "../updates/controller.ts";
+import { LinkButton, UpdateSlot } from "../updates/UpdateSlot.tsx";
+import { isSupported } from "../updates/view-model.ts";
 import { currentVersion } from "../version.ts";
 import { kernelVersion, lgplItems, lgplLibraries, LICENCE_ITEM, NOTICE_ITEM, REPOSITORY_URL } from "./catalogue.ts";
 import { aboutStore } from "./state.ts";
@@ -21,10 +25,19 @@ export function AboutInfo({ items }: { items: readonly LicenceItem[] }) {
   const kernel = kernelVersion(items);
   const getText = useCallback(() => versionReport(display, electron, kernel), [display, electron, kernel]);
   const lgpl = lgplItems(items).length > 0 ? lgplLibraries(items, t("about.lgplAnd")) : "";
+  const hasSlot = isSupported(useUpdates().state);
 
   return (
     <div className="px-6 pt-4 pb-[22px]" data-testid="about-info">
-      <div className="relative overflow-hidden rounded-card border border-line bg-surface-2 py-3 pr-3.5 pl-4 text-[13px]">
+      {hasSlot ? (
+        <section aria-labelledby="about-updates-title">
+          <h3 id="about-updates-title" className="text-[13px] font-semibold">
+            {t("updates.heading")}
+          </h3>
+          <UpdateSlot />
+        </section>
+      ) : null}
+      <div className={`relative overflow-hidden rounded-card border border-line bg-surface-2 py-3 pr-3.5 pl-4 text-[13px]${hasSlot ? " mt-4" : ""}`}>
         <span className="absolute top-0 bottom-0 left-0 w-[3px] bg-primary" aria-hidden="true" />
         {t("about.earlyText")}
       </div>
@@ -101,8 +114,15 @@ export function AboutInfo({ items }: { items: readonly LicenceItem[] }) {
             </>
           ) : null}
         </dl>
-        <div className="mt-1.5 -ml-2" data-testid="about-copy-version">
-          <CopyButton getText={getText} variant="quiet" size="sm" label={t("about.copyVersion")} className="px-2" />
+        <div className="mt-1.5 -ml-2 flex flex-wrap items-center gap-x-3">
+          <span data-testid="about-copy-version">
+            <CopyButton getText={getText} variant="quiet" size="sm" label={t("about.copyVersion")} className="px-2" />
+          </span>
+          {hasSlot ? null : (
+            <LinkButton onClick={openNews} icon={<IconSparkles />} testId="update-news-link">
+              {t("updates.showNews")}
+            </LinkButton>
+          )}
         </div>
       </section>
     </div>

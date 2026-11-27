@@ -6,7 +6,7 @@
 // `app` is the page under test plus the few things that differ between the targets.
 import { existsSync, mkdirSync, rmSync } from "node:fs";
 import { join } from "node:path";
-import { chromium, expect, test as base, type Browser, type ElectronApplication, type Page } from "@playwright/test";
+import { chromium, expect, test as base, type Browser, type CDPSession, type ElectronApplication, type Page } from "@playwright/test";
 import { engineChildren, launchElectron, type LaunchedElectron } from "./electron-app.ts";
 import { browserMode, e2eBuild, serverPort, type BrowserMode, type Target } from "./paths.ts";
 
@@ -183,6 +183,15 @@ export const test = base.extend<{ app: AppUnderTest }, { target: Target; browser
     const description = await electron.evaluate(() => `electron ${process.versions.electron} (chrome ${process.versions.chrome})`);
     testInfo.annotations.push({ type: "target", description });
     watch(page);
+    // The page and its window are shared by all tests of a worker. Playwright's own page.setViewportSize would leave a viewport
+    // override behind (its size and device scale 1 instead of the window's real scale, 1.5 here), which makes the layout of every
+    // later test fractional in a different way. So on this target the call becomes an override held by a session of this test only;
+    // detaching that session at the end of the test removes it, and the page keeps the window's real size and scale for the next one.
+    let emulation: CDPSession | undefined;
+    page.setViewportSize = async ({ width, height }) => {
+      emulation ??= await page.context().newCDPSession(page);
+      await emulation.send("Emulation.setDeviceMetricsOverride", { width, height, deviceScaleFactor: 0, mobile: false });
+    };
     const origin = "app://halfcube";
     const resize = (width: number, height: number) =>
       electron.evaluate(
@@ -227,8 +236,12 @@ export const test = base.extend<{ app: AppUnderTest }, { target: Target; browser
       },
     };
     await withClipboardLock(testInfo, target, async () => {
-      await provide(handle);
-      await attachScreenshot(page);
+      try {
+        await provide(handle);
+        await attachScreenshot(page);
+      } finally {
+        await emulation?.detach().catch(() => undefined);
+      }
     });
   },
 });

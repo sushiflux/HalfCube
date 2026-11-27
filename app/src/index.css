@@ -92,6 +92,7 @@
   /* The background of the value field that has the keyboard (primary) and of a wrong value (error); mixed in the base layer below. */
   --color-field-tint: var(--c-field-tint);
   --color-field-tint-error: var(--c-field-tint-error);
+  --color-progress-track: var(--c-progress-track);
   /* The amber of the hover highlight doubles as the warning colour (no extra token needed). */
   --color-warning: var(--c-hover);
   --color-veil: var(--veil);
@@ -126,6 +127,8 @@
     /* The tint behind the active (primary) and the wrong (error) value field; the shares are FIELD_TINT_SHARE and FIELD_TINT_ERROR_SHARE in theme/contrast.ts (text and frame checked there in every theme). */
     --c-field-tint: color-mix(in srgb, var(--c-primary) 18%, var(--c-surface));
     --c-field-tint-error: color-mix(in srgb, var(--c-error) 12%, var(--c-surface));
+    /* The track of progress bars and rings (update views); the share is PROGRESS_TRACK_SHARE in theme/contrast.ts. */
+    --c-progress-track: color-mix(in srgb, var(--c-muted) 18%, var(--c-surface));
   }
 
   html,

@@ -328,7 +328,7 @@ test.describe("About HalfCube: contents", () => {
   });
 
   for (const lang of ["de", "en"] as const) {
-    test(`the Info tab: early-access note, the exact licence text, the links, the LGPL line, no "What's new" (${lang})`, async ({ app }) => {
+    test(`the Info tab: early-access note, the exact licence text, the links, the LGPL line, the "What's new" link (${lang})`, async ({ app }) => {
       const { page } = app;
       await openAbout(app, lang);
       const dialog = dialogOf(page, lang);
@@ -337,7 +337,10 @@ test.describe("About HalfCube: contents", () => {
           ? "HalfCube wird unter der PolyForm Shield License 1.0.0 bereitgestellt. Sie erlaubt die kostenlose Nutzung, privat und geschäftlich, sowie Änderungen für den eigenen Gebrauch. Ausgenommen ist das Anbieten von Produkten, die mit HalfCube im Wettbewerb stehen. Ohne Gewährleistung."
           : "HalfCube is provided under the PolyForm Shield License 1.0.0. It permits free use, private and commercial, and changes for your own use. Offering products that compete with HalfCube is excluded. No warranty.";
       await expect(page.getByTestId("about-licence-summary")).toHaveText(summary);
-      await expect(dialog.getByText(words[lang].news)).toHaveCount(0);
+      // Without an updater (the browser, a dev build) the only update entry is the link to "What's new" next to "Copy version"; the update slot is not there.
+      await expect(dialog.getByText(words[lang].news)).toHaveCount(1);
+      await expect(page.getByTestId("update-news-link")).toBeVisible();
+      await expect(page.getByTestId("update-slot")).toHaveCount(0);
 
       // LGPL-2.1 section 6: one calm line names the LGPL components with their copyright and points to the licences.
       const lgpl = page.getByTestId("about-lgpl");
@@ -689,12 +692,19 @@ for (const theme of THEMES) {
   for (const mode of MODES) {
     test(`About HalfCube contrast: ${theme} ${mode}`, async ({ app }) => {
       const { page } = app;
-      await app.open(`?screen=main&lang=en&theme=${theme}&mode=${mode}&about=info`);
+      await app.open(`?screen=main&lang=en&theme=${theme}&mode=${mode}&about=info&updates-demo=found`);
       await expect(page.getByRole("dialog", { name: "About HalfCube" })).toBeVisible({ timeout: 60_000 });
       await page.evaluate(async () => document.fonts.ready);
 
       const pairs: Pair[] = [];
       pairs.push(...(await collectPairs(page, "info")));
+      // The update slot in its other looks: downloading (disabled check button), ready, scheduled for exit (underlined link), error.
+      for (const scenario of ["dl", "ready", "exit", "failed", "newerfail"]) {
+        await app.open(`?screen=main&lang=en&theme=${theme}&mode=${mode}&about=info&updates-demo=${scenario}`);
+        await expect(page.getByTestId("update-slot")).toBeVisible({ timeout: 60_000 });
+        await page.evaluate(async () => document.fonts.ready);
+        pairs.push(...(await collectPairs(page, `info-${scenario}`)));
+      }
       await page.getByTestId("about-tab-licenses").click();
       await expect(page.getByTestId("about-licences-list")).toBeVisible();
       pairs.push(...(await collectPairs(page, "list")));

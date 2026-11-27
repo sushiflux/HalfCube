@@ -19,6 +19,14 @@ describe("readBuildInfo", () => {
     expect(readBuildInfo(dir, { HALFCUBE_CHANNEL: "nightly" })).toEqual({ id: "v2026.11.4.58.26093", channel: "nightly" });
   });
 
+  it("lets HALFCUBE_VERSION_ID replace the id of version.txt (local update tests) and validates it", () => {
+    writeFileSync(join(dir, "version.txt"), "v2026.11.4\nv2026.11.4.58.26093\n");
+    expect(readBuildInfo(dir, { HALFCUBE_VERSION_ID: "v2026.11.20.1.2", HALFCUBE_CHANNEL: "nightly" })).toEqual({ id: "v2026.11.20.1.2", channel: "nightly" });
+    expect(() => readBuildInfo(dir, { HALFCUBE_VERSION_ID: "v2026.11.20" })).toThrow(/Invalid version id/);
+    // An empty value is no override
+    expect(readBuildInfo(dir, { HALFCUBE_VERSION_ID: "  " }).id).toBe("v2026.11.4.58.26093");
+  });
+
   it("fails on an invalid channel", () => {
     writeFileSync(join(dir, "version.txt"), "v2026.11.4\nv2026.11.4.58.26093\n");
     expect(() => readBuildInfo(dir, { HALFCUBE_CHANNEL: "foo" })).toThrow(/Invalid channel/);

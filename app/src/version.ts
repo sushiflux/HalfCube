@@ -2,6 +2,8 @@
 // The version id comes from line 2 of version.txt (five segments), the channel from the environment at build time.
 // This is the only place that turns them into the readable form shown to people.
 
+import { windowsLook } from "./dev/look.ts";
+
 export type Channel = "dev" | "nightly" | "beta" | "release";
 
 export const channels: readonly Channel[] = ["dev", "nightly", "beta", "release"];
@@ -71,5 +73,7 @@ export function describeVersion(info: BuildInfo): VersionInfo {
 
 /** The version of the running build. */
 export function currentVersion(): VersionInfo {
-  return describeVersion(__BUILD_INFO__);
+  const info = describeVersion(__BUILD_INFO__);
+  // Dev demo only (dev/look.ts): the display reads as on the Nightly channel; the channel itself stays dev.
+  return windowsLook() ? { ...info, display: formatVersion(info.id, "nightly") } : info;
 }

@@ -1,6 +1,7 @@
 // Where the UI runs: inside the Electron window (the preload script exposes the bridge) or as a page in a browser.
 import type { EngineBridge } from "./engine/bridge.ts";
 import type { SetupChoices } from "./setup-choices.ts";
+import type { UpdatesBridge } from "./updates/types.ts";
 
 /** Result of asking the main process to open something outside the window; `message` is the complete cause. */
 export type OpenResult = { ok: true } | { ok: false; message: string };
@@ -20,6 +21,8 @@ export interface DesktopBridge extends EngineBridge {
   openExternal(url: string): Promise<OpenResult>;
   /** Opens LICENSES.chromium.html, the licence file that ships with Electron, in the program set up for HTML files. */
   openChromiumLicences(): Promise<OpenResult>;
+  /** The updater (Velopack in the main process); see app/src/updates/types.ts. */
+  updates: UpdatesBridge;
 }
 
 declare global {

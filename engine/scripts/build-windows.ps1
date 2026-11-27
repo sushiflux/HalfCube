@@ -26,6 +26,29 @@ function Find-OcctConfig([string]$Dir) {
     return $cfg.DirectoryName
 }
 
+# CMake build folders and the OCCT install config store absolute paths. When the project folder has been moved or renamed
+# they point to a folder that no longer exists, so they are detected here and recreated instead of failing the build.
+# Normalised form of a path for comparisons: forward slashes, no trailing slash, lower case (Windows paths are case-insensitive).
+function Normalize-Path([string]$P) { return $P.Replace('\', '/').TrimEnd('/').ToLowerInvariant() }
+# True when the CMake cache in $Dir was created for another source folder than $ExpectedHome.
+function Test-CacheMoved([string]$Dir, [string]$ExpectedHome) {
+    $cache = Join-Path $Dir 'CMakeCache.txt'
+    if (-not (Test-Path $cache)) { return $false }
+    $m = Select-String -Path $cache -Pattern '^CMAKE_HOME_DIRECTORY:[A-Z]+=(.*)$' | Select-Object -First 1
+    if (-not $m) { return $false }
+    return (Normalize-Path $m.Matches[0].Groups[1].Value.Trim()) -ne (Normalize-Path $ExpectedHome)
+}
+# True when the installed OpenCASCADEConfig.cmake names an absolute path outside the engine folder.
+function Test-OcctInstallMoved([string]$Install, [string]$EngineDir) {
+    $cfg = Get-ChildItem -Path $Install -Recurse -Filter 'OpenCASCADEConfig.cmake' -ErrorAction SilentlyContinue | Select-Object -First 1
+    if (-not $cfg) { return $false }
+    $prefix = (Normalize-Path $EngineDir) + '/'
+    foreach ($m in [regex]::Matches((Get-Content -Raw $cfg.FullName), '"([A-Za-z]:[/\\][^"]*)"')) {
+        if (-not ((Normalize-Path $m.Groups[1].Value) + '/').StartsWith($prefix)) { return $true }
+    }
+    return $false
+}
+
 # OCCT configure options. Same modules and switches as the WebAssembly and Linux builds; DataExchange is kept for
 # the STEP, IGES and STL work of later phases.
 $occtOptions = @(
@@ -50,11 +73,18 @@ if ($OcctDir) {
     $srcPin = Join-Path $src '.halfcube-pin'
     if (-not (Test-Path $srcPin)) { throw "OCCT sources missing in $src. Run engine/scripts/fetch-deps.ps1 first (or pass -OcctDir)." }
     $stamp = ((Get-Content -Raw $srcPin).Trim()) + ' | msvc | ' + ($occtOptions -join ' ')
-    if ((Test-Path $stampFile) -and ((Get-Content -Raw $stampFile).Trim() -eq $stamp)) {
+    $stampOk = (Test-Path $stampFile) -and ((Get-Content -Raw $stampFile).Trim() -eq $stamp)
+    $occtMoved = $stampOk -and (Test-OcctInstallMoved $occtInstall $engine)
+    if ($occtMoved) { Write-Host "the OCCT installation $occtInstall refers to a folder outside $engine (project folder moved or renamed); rebuilding it" }
+    if ($stampOk -and -not $occtMoved) {
         Write-Host "reusing $occtInstall (same OCCT sources and options)"
     } else {
         Write-Host "building OCCT from $src (about 10 minutes) ..."
         if (Test-Path $occtInstall) { Remove-Item -Recurse -Force $occtInstall }
+        if ((Test-Path $occtBuild) -and ($occtMoved -or (Test-CacheMoved $occtBuild $src))) {
+            Write-Host "removing the OCCT build folder $occtBuild (it holds paths of the old project folder)"
+            Remove-Item -Recurse -Force $occtBuild
+        }
         cmake -S $src -B $occtBuild -G Ninja "-DINSTALL_DIR=$occtInstall" @occtOptions
         if ($LASTEXITCODE -ne 0) { throw "OCCT configure failed ($LASTEXITCODE)." }
         cmake --build $occtBuild --parallel $Jobs
@@ -70,6 +100,10 @@ if ($OcctDir) {
 $name = if ($TestCommands) { 'windows-release-testing' } else { 'windows-release' }
 $build = Join-Path $buildRoot $name
 if ($Clean -and (Test-Path $build)) { Remove-Item -Recurse -Force $build }
+if ((Test-Path $build) -and (Test-CacheMoved $build $engine)) {
+    Write-Host "removing the engine build folder $build (its CMake cache was created in another project folder)"
+    Remove-Item -Recurse -Force $build
+}
 $t0 = $sw.Elapsed.TotalSeconds
 cmake -S $engine -B $build -G Ninja -DCMAKE_BUILD_TYPE=Release "-DOpenCASCADE_DIR=$occtConfig" `
     "-DHALFCUBE_TEST_COMMANDS=$(if ($TestCommands) { 'ON' } else { 'OFF' })"

@@ -3,18 +3,36 @@
 #
 # Usage: powershell -ExecutionPolicy Bypass -File scripts\build-installer.ps1 [-Channel dev] [-Neubau] [-OhneEngine]
 #          [-AlleSprachen] [-LayoutPruefung] [-PackId HalfCube] [-Title HalfCube] [-OutDir <folder>]
+#          [-VersionId v2026.11.20.1.1] [-FeedDir <folder>]
+#          CI (release job of .github/workflows/ci.yml): -Ci -Channel nightly -ReleaseNotes <file> [-PreviousFrom https://github.com/<owner>/<repo>]
 #   -Neubau         rebuild every step even if its inputs did not change
 #   -OhneEngine     build without the engine (only for tests of the installer itself; the program then has no geometry)
 #   -AlleSprachen   keep all Chromium locale files (by default only en-US and de stay: the program speaks German and English)
 #   -LayoutPruefung renders every page of the setup (light/dark, DE/EN, 100/150/200 %) offscreen into <OutDir>/layout-check and fails on a layout problem
 #   -PackId/-Title  Velopack app id and display name (default HalfCube); tests use another id so a real installation is never touched
 #   -OutDir         where the result goes (default _build\installer)
+#   -VersionId      TEST ONLY: bakes this five-part id into the bundles, the package and the setup instead of version.txt line 2 (through
+#                   HALFCUBE_VERSION_ID, read by config/build-info.ts). Rejected together with -Ci and in a CI tag build. A build with it
+#                   overwrites the bundles in _build that the local dev environment uses (run scripts\dev.ps1 -Neubau afterwards).
+#   -FeedDir        TEST ONLY: one local folder that collects the successive packages of one channel (not wiped between builds), so vpk
+#                   writes deltas between them and the folder works as a local update feed (releases.<channel>.json). Older setups in
+#                   -OutDir are kept. Test across skipped versions: build with -FeedDir and three different -VersionId values in a row,
+#                   install the first setup, point the program's update source to the folder.
+#   -Ci             release job: non-interactive, no layout check, no local-only steps; needs -ReleaseNotes; builds nightly, beta or
+#                   release only; writes the files for the GitHub release (setup, packages, releases.<channel>.json) to <OutDir>\release
+#                   and build-result.json next to them
+#   -ReleaseNotes   markdown file for vpk pack --releaseNotes (the channel changelog excerpt, scripts/ci/release.ts excerpt)
+#   -PreviousFrom   repository URL (https://github.com/<owner>/<repo>): fetches the newest full package of the channel from its GitHub
+#                   releases first (vpk download github, token from GITHUB_TOKEN if set), so vpk pack writes a delta to it
 #
 # What it does, in this order (each step is skipped when nothing it depends on changed):
-#   1. bundles      npm run build:web and build:desktop (HALFCUBE_CHANNEL is baked into both)
-#   2. engine       halfcube-engine.exe and its DLLs from engine\_build\windows-release\bin plus the app-local VC++ runtime
+#   1. bundles      npm run build:web and build:desktop (HALFCUBE_CHANNEL is baked into both). _build\web and _build\desktop are shared with
+#                   scripts\dev.ps1, so the build id and channel baked into the bundles are read back before and after the build: a foreign
+#                   bundle is rebuilt, a wrong one after the build stops the script. -Ci always rebuilds.
+#   2. engine      halfcube-engine.exe and its DLLs from engine\_build\windows-release\bin plus the app-local VC++ runtime
 #   3. app folder   installer\app\entry.cjs (Velopack hooks first, then the built main process) + velopack from npm, packaged with
-#                   @electron/packager into an Electron application folder with the engine in resources\engine
+#                   @electron/packager (pinned devDependency, run from node_modules) into an Electron application folder with the engine in
+#                   resources\engine
 #   4. vpk pack     Velopack 1.2.161 from the local tool manifest (.config\dotnet-tools.json, never a global install) creates the
 #                   Velopack Setup.exe and the package
 #   5. setup        installer\setup (.NET 11 WinForms, the designed window) is published as one self-contained exe
@@ -35,9 +53,38 @@ param(
     [string]$PackId = 'HalfCube',
     [string]$Title = 'HalfCube',
     [string]$OutDir,
+    [string]$VersionId,
+    [string]$FeedDir,
+    [string]$ReleaseNotes,
+    [string]$PreviousFrom,
+    [switch]$Ci,
     [switch]$Neubau, [switch]$OhneEngine, [switch]$AlleSprachen, [switch]$LayoutPruefung
 )
 $ErrorActionPreference = 'Stop'
+
+# ---------------------------------------------------------------- parameter checks (before anything is created or built)
+if ($Ci) {
+    if ($Channel -eq 'dev') { throw '-Ci baut nur die Kanaele nightly, beta und release.' }
+    if (-not $ReleaseNotes) { throw '-Ci braucht -ReleaseNotes (die Release-Notes-Datei fuer vpk pack).' }
+    foreach ($bad in @('OhneEngine', 'LayoutPruefung', 'FeedDir')) {
+        if ($PSBoundParameters.ContainsKey($bad)) { throw "-$bad ist nur fuer lokale Tests und mit -Ci nicht erlaubt." }
+    }
+}
+if ($VersionId) {
+    if ($Ci -or "$env:GITHUB_REF" -like 'refs/tags/*') {
+        throw '-VersionId ist nur fuer lokale Tests (Update ueber uebersprungene Versionen) und wird bei einem CI-Tag-Bau abgelehnt: ein Tag traegt immer die Version seines Commits.'
+    }
+    if ($VersionId -notmatch '^v(0|[1-9]\d*)(\.(0|[1-9]\d*)){4}$') { throw "-VersionId '$VersionId' ist keine fuenfteilige Kennung wie v2026.11.4.58.26093." }
+}
+if ($FeedDir -and $PreviousFrom) { throw '-FeedDir und -PreviousFrom schliessen sich aus: der Feed-Ordner ist selbst die Vorgaengerquelle.' }
+if ($PreviousFrom -and $PreviousFrom -notmatch '^https://[^/]+/[^/]+/[^/]+$') { throw "-PreviousFrom '$PreviousFrom' muss die Form https://github.com/<owner>/<repo> haben." }
+if ($ReleaseNotes -and -not (Test-Path -LiteralPath $ReleaseNotes -PathType Leaf)) { throw "-ReleaseNotes: Datei nicht gefunden: $ReleaseNotes" }
+if ($ReleaseNotes) { $ReleaseNotes = (Resolve-Path -LiteralPath $ReleaseNotes).Path }
+
+# The GitHub token of the release-build job (contents: read) is needed by "vpk download" only. It leaves the environment here, before
+# any program starts, so the npm builds, npx and the packager (and whatever their dependencies run) never see it.
+$githubToken = $env:GITHUB_TOKEN
+Remove-Item Env:\GITHUB_TOKEN -ErrorAction SilentlyContinue
 
 $root = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 $out = if ($OutDir) { $OutDir } else { Join-Path $root '_build\installer' }
@@ -47,7 +94,12 @@ $work = Join-Path $out 'work'
 $stageApp = Join-Path $work 'stage-app'
 $extra = Join-Path $work 'extra'
 $pkgOut = Join-Path $work 'pkg'
-$feed = Join-Path $work 'velopack'
+# vpk's output folder. With -FeedDir it is the caller's folder that keeps the packages of earlier builds; otherwise it is recreated.
+$keepFeed = [bool]$FeedDir
+if ($FeedDir) {
+    New-Item -ItemType Directory -Force -Path $FeedDir | Out-Null
+    $feed = (Resolve-Path $FeedDir).Path
+} else { $feed = Join-Path $work 'velopack' }
 $setupOut = Join-Path $work 'setup-publish'
 $stampFile = Join-Path $work 'pack.stamp'
 New-Item -ItemType Directory -Force -Path $work | Out-Null
@@ -63,7 +115,11 @@ function Run {
     # Runs a program and fails on a non-zero exit code. Output goes to the console.
     param([string]$Exe, [Parameter(ValueFromRemainingArguments)]$Arguments)
     & $Exe @Arguments
-    if ($LASTEXITCODE -ne 0) { throw "$Exe $($Arguments -join ' ') fehlgeschlagen (Code $LASTEXITCODE)" }
+    if ($LASTEXITCODE -ne 0) {
+        $shown = "$Exe $($Arguments -join ' ')"
+        if ($githubToken) { $shown = $shown.Replace($githubToken, '***') }
+        throw "$shown fehlgeschlagen (Code $LASTEXITCODE)"
+    }
 }
 function Npm { param([Parameter(ValueFromRemainingArguments)]$a) Run 'npm.cmd' @a }
 # Newest write time below a path (a file or a folder); $null when nothing is there.
@@ -84,9 +140,11 @@ function Test-Stale($output, [string[]]$inputs) {
 }
 
 # ---------------------------------------------------------------- version
-$versionLines = Get-Content (Join-Path $root 'version.txt')
-if ($versionLines.Count -lt 2) { throw 'version.txt hat keine zweite Zeile mit der fuenfteiligen Kennung.' }
-$id = $versionLines[1].Trim()
+if ($VersionId) { $id = $VersionId } else {
+    $versionLines = Get-Content (Join-Path $root 'version.txt')
+    if ($versionLines.Count -lt 2) { throw 'version.txt hat keine zweite Zeile mit der fuenfteiligen Kennung.' }
+    $id = $versionLines[1].Trim()
+}
 if ($id -notmatch '^v(\d+)\.(\d+)\.(\d+)\.(\d+)\.(\d+)$') { throw "Ungueltige Versionskennung in version.txt: '$id'" }
 $vYear = $Matches[1]; $vMonth = $Matches[2]; $vCommit = $Matches[3]; $vPrompts = $Matches[4]; $vLines = $Matches[5]
 function Get-PackVersion([string]$channel) {
@@ -104,8 +162,14 @@ $packVersion = Get-PackVersion $Channel
 $fileSuffix = if ($Channel -eq 'release') { '' } else { "-$Channel" }
 $fileId = if ($Channel -eq 'release') { "v$vYear.$vMonth.$vCommit" } else { $id }
 $finalName = "HalfCube-Setup-$fileId$fileSuffix.exe"
+# The names vpk gives its files: <packId>-<channel>-Setup.exe and <packId>-<packVersion>-<channel>-full.nupkg
+$vpkSetupName = "$PackId-$Channel-Setup.exe"
+$vpkFullName = "$PackId-$packVersion-$Channel-full.nupkg"
 Say "Version $display, Velopack-Version $packVersion, Kanal $Channel"
-if ($Channel -ne 'dev') { Say 'Hinweis: ein lokaler Bau eines anderen Kanals ueberschreibt die Bundles in _build, die die lokale Dev-Umgebung nutzt (danach dev.ps1 -Neubau).' }
+if (-not $Ci) {
+    if ($Channel -ne 'dev') { Say 'Hinweis: ein lokaler Bau eines anderen Kanals ueberschreibt die Bundles in _build, die die lokale Dev-Umgebung nutzt (danach dev.ps1 -Neubau).' }
+    if ($VersionId) { Say "Hinweis: -VersionId $VersionId ist nur ein Test; die Bundles in _build tragen diese Kennung, bis scripts\dev.ps1 -Neubau sie ersetzt." }
+}
 
 # ---------------------------------------------------------------- tools
 Push-Location $root
@@ -119,22 +183,43 @@ try {
     Run 'dotnet' 'tool' 'restore' '--verbosity' 'quiet'
     $electronVersion = (& node -p "require('./node_modules/electron/package.json').version").Trim()
     if (-not $electronVersion) { throw 'Electron ist nicht installiert (npm install).' }
+    # The packager is a pinned devDependency (package.json, package-lock.json) and runs from node_modules: no npx, nothing is resolved
+    # or downloaded at build time.
+    $packagerBin = Join-Path $root 'node_modules\@electron\packager\bin\electron-packager.mjs'
+    if (-not (Test-Path -LiteralPath $packagerBin)) { throw '@electron/packager ist nicht installiert (npm ci).' }
+    $packagerVersion = (& node -p "require('./node_modules/@electron/packager/package.json').version").Trim()
 
     # ---------------------------------------------------------------- 1. bundles
     $env:HALFCUBE_CHANNEL = $Channel
-    $channelFile = Join-Path $work 'bundle-channel.txt'
-    $channelChanged = (-not (Test-Path $channelFile)) -or ((Get-Content $channelFile -Raw).Trim() -ne $Channel)
+    # The id reaches the bundles through config/build-info.ts; without -VersionId a stray variable must not change the build
+    if ($VersionId) { $env:HALFCUBE_VERSION_ID = $VersionId } else { Remove-Item Env:\HALFCUBE_VERSION_ID -ErrorAction SilentlyContinue }
     $webBundle = Join-Path $root '_build\web\index.html'
     $mainBundle = Join-Path $root '_build\desktop\main.cjs'
+    $releaseCli = Join-Path $root 'scripts\ci\release.ts'
     $appInputs = @('app', 'branding\branding.json', 'branding\icons', 'config', 'protocol', 'version.txt', 'vite.config.ts', 'package.json')
     $desktopInputs = @('desktop\src', 'app\src\version.ts', 'app\src\branding.ts', 'app\src\platform.ts', 'branding\branding.json',
         'branding\icons\icon-512.png', 'config', 'version.txt', 'vite.desktop.config.ts', 'package.json')
-    if ($Neubau -or $channelChanged -or (Test-Stale $webBundle $appInputs)) { Step 'Browser-Version bauen' { Npm 'run' 'build:web' } }
-    if ($Neubau -or $channelChanged -or (Test-Stale $mainBundle $desktopInputs)) { Step 'Desktop-Programm bauen' { Npm 'run' 'build:desktop' } }
-    Set-Content -Path $channelFile -Value $Channel -Encoding ascii
+    # _build\web and _build\desktop are shared with scripts\dev.ps1 (dev channel, the id of version.txt). What matters is what the bundles
+    # themselves carry, not what an earlier run of this script wrote down: the build id and channel baked into them (config/build-info.ts)
+    # are read back every time. A bundle from another channel or id is rebuilt; if it is still wrong after the build, the script stops.
+    function Get-BundleState([string]$webDir, [string]$mainFile) {
+        $answer = & node $releaseCli 'verify-bundles' '--web' $webDir '--main' $mainFile '--id' $id '--channel' $Channel '--on-mismatch' 'report'
+        if ($LASTEXITCODE -ne 0) { throw 'scripts\ci\release.ts verify-bundles ist fehlgeschlagen.' }
+        ($answer -join ' ').Trim()
+    }
+    function Assert-BundleInfo([string]$webDir, [string]$mainFile) {
+        Run 'node' $releaseCli 'verify-bundles' '--web' $webDir '--main' $mainFile '--id' $id '--channel' $Channel
+    }
+    $bundleState = if ($Neubau -or $Ci) { 'match' } else { Get-BundleState (Join-Path $root '_build\web') $mainBundle }
+    $bundleForeign = $bundleState -ne 'match'
+    if ($bundleForeign) { Say "Die Bundles in _build passen nicht zu diesem Bau, sie werden neu gebaut. $bundleState" }
+    # A CI build starts from a clean checkout; it rebuilds anyway so no leftover can reach a package
+    if ($Neubau -or $Ci -or $bundleForeign -or (Test-Stale $webBundle $appInputs)) { Step 'Browser-Version bauen' { Npm 'run' 'build:web' } }
+    if ($Neubau -or $Ci -or $bundleForeign -or (Test-Stale $mainBundle $desktopInputs)) { Step 'Desktop-Programm bauen' { Npm 'run' 'build:desktop' } }
     foreach ($f in @($webBundle, $mainBundle, (Join-Path $root '_build\desktop\preload.cjs'))) {
         if (-not (Test-Path $f)) { throw "Bundle fehlt nach dem Bau: $f" }
     }
+    Assert-BundleInfo (Join-Path $root '_build\web') $mainBundle
 
     # ---------------------------------------------------------------- 2. engine
     $engineBin = Join-Path $root 'engine\_build\windows-release\bin'
@@ -170,16 +255,16 @@ try {
     }
 
     # ---------------------------------------------------------------- 3. app folder + 4. vpk pack (one stamp for both)
-    $stampParts = @($id, $Channel, $packVersion, $PackId, $Title, "electron=$electronVersion", "all-locales=$($AlleSprachen.IsPresent)",
+    $stampParts = @($id, $Channel, $packVersion, $PackId, $Title, "electron=$electronVersion", "packager=$packagerVersion", "all-locales=$($AlleSprachen.IsPresent)",
         (Get-Newest (Join-Path $root '_build\desktop')), (Get-Newest (Join-Path $root '_build\web')),
         (Get-Newest (Join-Path $root 'installer\app')), (Get-Newest (Join-Path $root 'branding\icons')),
         (Get-FileHash $PSCommandPath -Algorithm SHA256).Hash)
+    if ($ReleaseNotes) { $stampParts += (Get-FileHash -LiteralPath $ReleaseNotes -Algorithm SHA256).Hash }
     foreach ($f in ($engineFiles + $crtFiles)) { $stampParts += "$($f.Name)|$($f.Length)|$($f.LastWriteTimeUtc.Ticks)" }
     $stamp = ($stampParts | ForEach-Object { "$_" }) -join "`n"
-    $packCurrent = (-not $Neubau) -and (Test-Path $stampFile) -and ((Get-Content $stampFile -Raw) -eq $stamp) -and (Test-Path $feed)
+    $packCurrent = (-not $Neubau) -and (-not $Ci) -and (Test-Path $stampFile) -and ((Get-Content $stampFile -Raw) -eq $stamp) -and (Test-Path $feed)
     if ($packCurrent) {
-        $found = @(Get-ChildItem $feed -Filter '*-Setup.exe' -File -ErrorAction SilentlyContinue)
-        if ($found.Count -ne 1) { $packCurrent = $false } else { Say 'Programmordner und Velopack-Paket sind aktuell, uebersprungen.' }
+        if (-not ((Test-Path (Join-Path $feed $vpkSetupName)) -and (Test-Path (Join-Path $feed $vpkFullName)))) { $packCurrent = $false } else { Say 'Programmordner und Velopack-Paket sind aktuell, uebersprungen.' }
     }
     if (-not $packCurrent) {
         Remove-Item $stampFile -ErrorAction SilentlyContinue
@@ -194,6 +279,8 @@ try {
             [IO.File]::WriteAllText((Join-Path $stageApp 'package.json'), ($pkgJson | ConvertTo-Json -Depth 5), (New-Object Text.UTF8Encoding $false))
             Copy-Item (Join-Path $root '_build\desktop') (Join-Path $stageApp '_build\desktop') -Recurse
             Copy-Item (Join-Path $root '_build\web') (Join-Path $stageApp '_build\web') -Recurse
+            # What goes into the package is checked again at the place it is copied to (the bundles could change while the script runs)
+            Assert-BundleInfo (Join-Path $stageApp '_build\web') (Join-Path $stageApp '_build\desktop\main.cjs')
             foreach ($f in $engineFiles) {
                 $rel = $f.FullName.Substring($engineRoot.Length).TrimStart('\')
                 $dest = Join-Path (Join-Path $extra 'engine') $rel
@@ -208,7 +295,7 @@ try {
         }
         Step 'Electron verpacken' {
             Remove-Item $pkgOut -Recurse -Force -ErrorAction SilentlyContinue
-            $packagerArgs = @('--yes', '@electron/packager@20.3.0', $stageApp, 'HalfCube',
+            $packagerArgs = @($packagerBin, $stageApp, 'HalfCube',
                 '--platform=win32', '--arch=x64', "--out=$pkgOut", '--overwrite', "--electron-version=$electronVersion",
                 "--icon=$(Join-Path $root 'branding\icons\icon.ico')",
                 # The Windows file version has four numeric parts (year, month, commit of the year, prompts)
@@ -217,7 +304,7 @@ try {
                 '--win32metadata.CompanyName=SushiFlux', '--win32metadata.ProductName=HalfCube',
                 '--win32metadata.FileDescription=HalfCube', '--win32metadata.OriginalFilename=HalfCube.exe')
             if ($engineFiles.Count -gt 0) { $packagerArgs += "--extra-resource=$(Join-Path $extra 'engine')" }
-            Run 'npx.cmd' @packagerArgs
+            Run 'node' @packagerArgs
         }
         $pkgDir = (Get-ChildItem $pkgOut -Directory | Select-Object -First 1).FullName
         if (-not (Test-Path (Join-Path $pkgDir 'HalfCube.exe'))) { throw "HalfCube.exe fehlt im verpackten Ordner $pkgDir" }
@@ -227,22 +314,35 @@ try {
             Get-ChildItem (Join-Path $pkgDir 'locales') -Filter '*.pak' | Where-Object { $_.Name -notin @('en-US.pak', 'de.pak') } | Remove-Item -Force
         }
         Step 'Velopack-Paket erzeugen (vpk pack)' {
-            Remove-Item $feed -Recurse -Force -ErrorAction SilentlyContinue
+            if (-not $keepFeed) { Remove-Item $feed -Recurse -Force -ErrorAction SilentlyContinue }
             New-Item -ItemType Directory -Force -Path $feed | Out-Null
-            # Dev builds need no delta packages and no portable zip. The Velopack installer (Setup.exe) is carried inside our own
-            # setup, which runs it silently. Shortcuts (desktop and start menu) are fixed in the package; the setup removes the ones
-            # the user switches off.
-            Run 'dotnet' 'tool' 'run' 'vpk' '--' 'pack' '--packId' $PackId '--packVersion' $packVersion '--packDir' $pkgDir `
-                '--mainExe' 'HalfCube.exe' '--packTitle' $Title '--packAuthors' 'SushiFlux' `
-                '--icon' (Join-Path $root 'branding\icons\icon.ico') '--channel' $Channel '--runtime' 'win-x64' `
-                '--outputDir' $feed '--delta' 'None' '--noPortable' '--shortcuts' 'Desktop,StartMenuRoot'
+            if ($FeedDir -and (Test-Path (Join-Path $feed $vpkFullName))) {
+                throw "Im Feed-Ordner liegt schon ein Paket dieser Version ($vpkFullName). Eine neue, hoehere -VersionId waehlen oder das Paket loeschen."
+            }
+            if ($PreviousFrom) {
+                # The newest full package of this channel from the GitHub releases (only the 10 newest releases are looked at, see
+                # sources/github.rs of Velopack); vpk pack finds it in the output folder and writes the delta. No release yet = nothing to fetch.
+                $download = @('download', 'github', '--repoUrl', $PreviousFrom, '--channel', $Channel, '--pre', '--outputDir', $feed)
+                if ($githubToken) { $download += @('--token', $githubToken) }
+                Run 'dotnet' 'tool' 'run' 'vpk' '--' @download
+            }
+            # Without a feed (local dev build) no delta packages are made. The portable zip is never made. The Velopack installer
+            # (Setup.exe) is carried inside our own setup, which runs it silently. Shortcuts (desktop and start menu) are fixed in the
+            # package; the setup removes the ones the user switches off.
+            $delta = if ($FeedDir -or $PreviousFrom) { 'BestSpeed' } else { 'None' }
+            $packArgs = @('pack', '--packId', $PackId, '--packVersion', $packVersion, '--packDir', $pkgDir,
+                '--mainExe', 'HalfCube.exe', '--packTitle', $Title, '--packAuthors', 'SushiFlux',
+                '--icon', (Join-Path $root 'branding\icons\icon.ico'), '--channel', $Channel, '--runtime', 'win-x64',
+                '--outputDir', $feed, '--delta', $delta, '--noPortable', '--shortcuts', 'Desktop,StartMenuRoot')
+            if ($ReleaseNotes) { $packArgs += @('--releaseNotes', (Resolve-Path -LiteralPath $ReleaseNotes).Path) }
+            Run 'dotnet' 'tool' 'run' 'vpk' '--' @packArgs
         }
         Set-Content -Path $stampFile -Value $stamp -Encoding utf8 -NoNewline
     }
 
-    $vpkSetup = @(Get-ChildItem $feed -Filter '*-Setup.exe' -File)
-    $nupkg = @(Get-ChildItem $feed -Filter '*-full.nupkg' -File)
-    if ($vpkSetup.Count -ne 1 -or $nupkg.Count -ne 1) { throw "vpk hat nicht genau eine Setup.exe und ein volles Paket erzeugt (in $feed)." }
+    $vpkSetup = @(Get-Item (Join-Path $feed $vpkSetupName) -ErrorAction SilentlyContinue)
+    $nupkg = @(Get-Item (Join-Path $feed $vpkFullName) -ErrorAction SilentlyContinue)
+    if ($vpkSetup.Count -ne 1 -or $nupkg.Count -ne 1) { throw "vpk hat $vpkSetupName und $vpkFullName nicht erzeugt (in $feed)." }
 
     # ---------------------------------------------------------------- installed size (for the setup's progress bar)
     # The setup measures the fill level of the target folder against this number: the files of the app (uncompressed) plus the copy of the
@@ -256,6 +356,13 @@ try {
     $setupSources = @('installer\setup', 'installer\Directory.Build.props', 'branding\icons\icon-512.png', 'branding\icons\icon.ico')
     $setupPublished = Join-Path $setupOut 'HalfCube-Setup.exe'
     $setupStale = $Neubau -or (Test-Stale $setupPublished $setupSources)
+    # NuGet's restore files hold absolute paths; after a move or rename of the project folder they are recreated from scratch.
+    $setupObj = Join-Path $out 'obj\HalfCube.Setup'
+    $setupAssets = Join-Path $setupObj 'project.assets.json'
+    if ((Test-Path $setupAssets) -and -not ((Get-Content -Raw $setupAssets).Replace('\\', '/').ToLowerInvariant().Contains($root.Replace('\', '/').ToLowerInvariant()))) {
+        Say 'Die .NET-Wiederherstellungsdateien stammen aus einem anderen Projektordner, obj wird neu angelegt.'
+        Remove-Item $setupObj -Recurse -Force
+    }
     if ($setupStale) {
         Step 'Setup-Programm bauen (.NET)' {
             Remove-Item $setupOut -Recurse -Force -ErrorAction SilentlyContinue
@@ -291,7 +398,10 @@ try {
             try { $writer.Write(($info | ConvertTo-Json)) } finally { $writer.Dispose() }
         } finally { $zip.Dispose() }
         $final = Join-Path $out $finalName
-        Get-ChildItem $out -Filter 'HalfCube-Setup-*.exe' -File | Where-Object { $_.Name -ne $finalName } | Remove-Item -Force -ErrorAction SilentlyContinue
+        # Test builds with -FeedDir or -VersionId keep the older setups (the first one is installed, the later ones are updates)
+        if (-not $FeedDir -and -not $VersionId) {
+            Get-ChildItem $out -Filter 'HalfCube-Setup-*.exe' -File | Where-Object { $_.Name -ne $finalName } | Remove-Item -Force -ErrorAction SilentlyContinue
+        }
         Copy-Item $setupPublished $final -Force
         # The published exe appends the payload to the copy (a running exe cannot be written, and it is a window program: wait for it)
         $append = Start-Process -FilePath $setupPublished -ArgumentList @('--append-payload', "`"$final`"", "`"$payloadZip`"") -Wait -PassThru -WindowStyle Hidden
@@ -303,6 +413,18 @@ $result = Join-Path $out $finalName
 $size = (Get-Item $result).Length
 Say ('Fertig: {0} ({1:N0} MB)' -f $result, ($size / 1MB))
 Say "Version $display (Velopack $packVersion), Kanal $Channel"
+if ($Ci) {
+    # What the GitHub release carries: our setup (the download), the packages of this build and the slim feed the updater reads.
+    # Velopack's own Setup.exe stays inside our setup and is not published separately.
+    $rel = Join-Path $out 'release'
+    Remove-Item $rel -Recurse -Force -ErrorAction SilentlyContinue
+    Push-Location $root
+    try { Run 'node' (Join-Path $root 'scripts\ci\release.ts') 'stage' '--dir' $feed '--channel' $Channel '--out' $rel } finally { Pop-Location }
+    Copy-Item $result $rel
+    $buildResult = [ordered]@{ id = $id; channel = $Channel; displayVersion = $display; packVersion = $packVersion; setup = $finalName; files = @(Get-ChildItem $rel -File | ForEach-Object { $_.Name }) }
+    [IO.File]::WriteAllText((Join-Path $rel 'build-result.json'), ($buildResult | ConvertTo-Json), (New-Object Text.UTF8Encoding $false))
+    Say "Dateien fuer das GitHub-Release: $rel ($($buildResult.files -join ', '))"
+}
 if ($LayoutPruefung) {
     # The headless layout check of the setup: nothing is shown, nothing is installed
     $shots = Join-Path $out 'layout-check'

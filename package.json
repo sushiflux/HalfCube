@@ -34,22 +34,24 @@
     "three": "0.187.0"
   },
   "devDependencies": {
+    "@electron/packager": "20.3.0",
     "@playwright/test": "1.65.1",
     "@tailwindcss/vite": "^4.3.5",
-    "@types/node": "^26.6.10",
-    "@types/react": "^19.3.2",
+    "@types/node": "^26.6.11",
+    "@types/react": "^19.3.3",
     "@types/react-dom": "^19.3.0",
     "@types/three": "0.187.0",
     "@vitejs/plugin-react": "^6.3.0",
     "electron": "^45.5.0",
     "oxlint": "^1.95.0",
-    "oxlint-tsgolint": "^7.0.2008",
+    "oxlint-tsgolint": "^7.0.2009",
     "playwright-core": "1.65.1",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
     "tailwindcss": "^4.3.5",
     "typescript": "^7.0.2",
-    "vite": "^8.3.8",
-    "vitest": "^5.1.1"
+    "velopack": "1.2.161",
+    "vite": "^8.4.0",
+    "vitest": "^5.1.2"
   }
 }

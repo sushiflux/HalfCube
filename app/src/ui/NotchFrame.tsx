@@ -4,6 +4,7 @@
 // sits on top of it. The button comes in as `action` and keeps its own 30 px size, focus ring and aria-label.
 import { useLayoutEffect, useRef, useState, type HTMLAttributes, type ReactNode } from "react";
 import { cx } from "./cx.ts";
+import { IconClose } from "./icons.tsx";
 
 /** Side of the square the notch cuts out of the corner, in CSS px; the button is 30 px and sits in the notch's corner. */
 export const NOTCH_SIZE = 36;
@@ -37,9 +38,11 @@ export interface NotchFrameProps extends Omit<HTMLAttributes<HTMLDivElement>, "c
   /** The corner button (a close X); placed in the notch. */
   action: ReactNode;
   children: ReactNode;
+  /** Class names of the wrapper around the content (a window of fixed height gives it `h-full`). */
+  contentClassName?: string;
 }
 
-export function NotchFrame({ action, children, className, ...rest }: NotchFrameProps) {
+export function NotchFrame({ action, children, className, contentClassName, ...rest }: NotchFrameProps) {
   const box = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState<{ w: number; h: number } | null>(null);
   useLayoutEffect(() => {
@@ -59,7 +62,23 @@ export function NotchFrame({ action, children, className, ...rest }: NotchFrameP
         </svg>
       ) : null}
       <div className="absolute top-0 right-0 z-[2]">{action}</div>
-      <div className="relative">{children}</div>
+      <div className={cx("relative", contentClassName)}>{children}</div>
     </div>
+  );
+}
+
+/** The close button for the notch: filled in the destructive colour with a light X; the drawn button is 30 px, its hit area 48 px. */
+export function NotchCloseButton({ label, onClick, "data-testid": testId }: { label: string; onClick: () => void; "data-testid"?: string }) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      onClick={onClick}
+      data-testid={testId}
+      style={{ width: NOTCH_BUTTON, height: NOTCH_BUTTON }}
+      className="relative inline-grid cursor-pointer place-items-center rounded-ctl bg-destructive text-[16px] text-on-destructive after:absolute after:-inset-[9px] after:content-[''] hover:brightness-95 dark:hover:brightness-110"
+    >
+      <IconClose />
+    </button>
   );
 }

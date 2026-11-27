@@ -67,6 +67,14 @@ describe("catalogue parity (the type system already rejects a missing key; this 
       "about.channelBeta",
       "about.copyright",
       "about.techElectron",
+      // The update views: tab and section name, the link "Details", the date line of a check, the channel names and the label "Download" read the same in both.
+      "main.settings.tabUpdates",
+      "updates.heading",
+      "updates.showDetails",
+      "updates.whenDate",
+      "updates.channelNightly",
+      "updates.channelBeta",
+      "updates.window.download",
       // Sketch tools and texts that read the same in German and English.
       "sketch.tools.horizontal",
       "sketch.tools.parallel",

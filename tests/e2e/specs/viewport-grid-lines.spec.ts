@@ -2,7 +2,7 @@
 // the device pixel ratios of real monitors (1, 1.75 = a 175 % display, 2). The bug this guards against: the grid's alpha blend
 // also wrote the canvas alpha, so under every line pixel the canvas became translucent and the page behind it showed through. The
 // soft edge of a thin line then all but vanished and the line broke into dots and dashes, strongest at shallow angles. Runs in the
-// browser and in the Electron program, on the default backend (WebGPU where there is one) and on the WebGL2 fallback.
+// Electron program, on the default backend (WebGPU where there is one) and on the WebGL2 fallback.
 import { DEFAULT_FOV_Y, pixelsPerWorld } from "../../../app/src/viewport/camera.ts";
 import { gridLevels } from "../../../app/src/viewport/grid-math.ts";
 import { getTheme } from "../../../app/src/theme/themes.ts";
@@ -88,7 +88,7 @@ for (const renderer of ["auto", "webgl2"] as const) {
 
 /**
  * The 3D view as the page shows it, in device pixels of the emulated ratio. Playwright's own screenshot would scale the picture
- * to the ratio it knows (1 in the browser, the real display's in Electron), which resamples the lines and hides what is measured.
+ * to the ratio it knows (the real display's), which resamples the lines and hides what is measured.
  */
 async function shootHostInDevicePixels(page: Page, cdp: CDPSession): Promise<Pick<HostShot, "image" | "scale" | "box">> {
   const box = await page.getByTestId("viewport-host").boundingBox();

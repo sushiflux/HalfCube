@@ -15,6 +15,7 @@ import { themeStore, useTheme } from "../theme/runtime.ts";
 import { themeKeys } from "../theme/themes.ts";
 import { buildScenario } from "./scenarios.ts";
 import { useScenario } from "./useScenario.ts";
+import { branding } from "../branding.ts";
 
 export function DemoStartup({ name, onDone }: { name: string; onDone: () => void }) {
   const { language } = useI18n();
@@ -136,11 +137,11 @@ export function DemoGallery() {
         </Section>
         <Section title="Error notice">
           <ErrorNotice
-            headline="Gehäuse.hcube konnte nicht geöffnet werden: keine HalfCube-Datei, weil in der Datei die Datei manifest.json fehlt und der Inhalt sich nicht lesen lässt"
+            headline={`Gehäuse.hcube konnte nicht geöffnet werden: keine ${branding.name}-Datei, weil in der Datei die Datei manifest.json fehlt und der Inhalt sich nicht lesen lässt`}
             code="HC-FILE-003"
             details={[
-              { kind: "text", text: "In der Datei fehlt manifest.json. HalfCube erkennt Projekte an ihrem Inhalt, nicht an der Endung; diese Datei ist beschädigt oder ein anderes ZIP-Archiv mit der Endung .hcube." },
-              { kind: "code", text: "C:\\Users\\Name\\Documents\\HalfCube\\Gehäuse.hcube" },
+              { kind: "text", text: `In der Datei fehlt manifest.json. ${branding.name} erkennt Projekte an ihrem Inhalt, nicht an der Endung; diese Datei ist beschädigt oder ein anderes ZIP-Archiv mit der Endung .hcube.` },
+              { kind: "code", text: `C:\\Users\\Name\\Documents\\${branding.name}\\Gehäuse.hcube` },
               { kind: "text", text: "Es wurde nichts verändert; geöffnete Projekte bleiben, wie sie waren." },
             ]}
             actions={<Button variant="primary">Open another file …</Button>}

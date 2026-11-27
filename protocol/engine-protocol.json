@@ -3,7 +3,7 @@
   "protocol": {
     "name": "halfcube-engine",
     "version": 3,
-    "doc": "A message is a UTF-8 JSON header plus an optional binary payload. Commands go from the client to the engine and carry a client-chosen request id; every engine message that answers a command carries that id as replyTo. Desktop: the engine is a child process, both directions use length-prefixed frames on stdin/stdout. Browser: the engine is a WebAssembly module in a Web Worker; header and payload are passed as (string, ArrayBuffer | null)."
+    "doc": "A message is a UTF-8 JSON header plus an optional binary payload. Commands go from the client to the engine and carry a client-chosen request id; every engine message that answers a command carries that id as replyTo. Desktop: the engine is a child process, both directions use length-prefixed frames on stdin/stdout."
   },
   "$commentDocument": "documentTypes describe the stored HalfCube document (history.json in a .hcube file, and the document of model.sync); generate.mjs also writes protocol/document.schema.json from them. Lengths are stored in mm and angles in degrees, as the user means them. Ids are a kind letter plus a number from the document counter nextId (p point, l line, c circle, k constraint, d dimension, f timeline step, b body, s sketch step), unique in the whole document and never reused. Ids starting with @ are fixed references of every sketch: @origin (the origin point), @axisU and @axisV (the sketch axes as fixed lines); they are not stored. Lists are only appended to or shortened, never reordered: the solver creates its parameters in list order.",
   "constants": [
@@ -14,16 +14,11 @@
     { "name": "payloadAlignment", "type": "u32", "value": 16, "doc": "Every buffer inside a payload starts at a multiple of this many bytes from the payload start." },
     { "name": "documentFormat", "type": "u32", "value": 1, "doc": "Format version of the HalfCube document (history.json, the document of model.sync) this engine reads. It changes only when the stored format changes incompatibly; the protocol version changes with every change of the messages." },
     { "name": "maxRevision", "type": "i64", "value": 9007199254740991, "doc": "Largest model.sync revision (2^53 - 1, exact in JavaScript numbers)." },
-    { "name": "maxRequestId", "type": "i64", "value": 2147483647, "doc": "Request ids are integers from 1 to this value (they must fit an Int32Array slot, used by the WebAssembly cancel flag)." },
+    { "name": "maxRequestId", "type": "i64", "value": 2147483647, "doc": "Request ids are integers from 1 to this value (they fit a signed 32-bit integer)." },
     { "name": "pingIntervalMs", "type": "u32", "value": 1000, "doc": "Desktop supervisor: interval between pings to the native engine." },
     { "name": "pingTimeoutMs", "type": "u32", "value": 5000, "doc": "Desktop supervisor: the native engine is stopped when a ping stays unanswered this long. The native engine answers pings while it computes." },
     { "name": "protocolId", "type": "string", "value": "d60beafbc03237e2", "doc": "Identifies this message protocol. hello carries it in both directions and each side refuses a peer that names a different one: the version number alone is the same in unrelated builds, and a program must never talk to an engine whose messages mean something else. It stays the same for the whole protocol line; a breaking change raises the protocol version." },
-    { "name": "nativeExecutable", "type": "string", "value": "halfcube-engine", "doc": "File name of the native engine without extension (.exe on Windows)." },
-    { "name": "wasmModuleFile", "type": "string", "value": "halfcube-engine.mjs", "doc": "ES module that loads the WebAssembly engine; halfcube-engine.wasm must be served next to it." },
-    { "name": "wasmBinaryFile", "type": "string", "value": "halfcube-engine.wasm", "doc": "WebAssembly binary of the engine." },
-    { "name": "wasmModuleFactory", "type": "string", "value": "createEngineModule", "doc": "Default export of the ES module: async factory (moduleOverrides) -> module. Overrides used: onEngineMessage(header: string, payload: ArrayBuffer | null), optional cancelFlags (Int32Array, slot 0 = id of the command to cancel), print, printErr." },
-    { "name": "wasmInitExport", "type": "string", "value": "_hc_init", "doc": "Module function _hc_init(hasCancelFlags: 0 | 1): number. Creates the engine once and returns the protocol version." },
-    { "name": "wasmHandleExport", "type": "string", "value": "_hc_handle", "doc": "Module function _hc_handle(headerPtr, headerBytes, payloadPtr, payloadBytes): void. Handles one message and runs everything it queued before returning; replies arrive synchronously through onEngineMessage. The caller allocates both buffers with _malloc and frees them with _free afterwards." }
+    { "name": "nativeExecutable", "type": "string", "value": "halfcube-engine", "doc": "File name of the native engine without extension (.exe on Windows)." }
   ],
   "errors": [
     { "code": "protocol_mismatch", "doc": "hello asked for a protocol version the engine does not speak; user interface and engine come from different builds." },
@@ -246,8 +241,8 @@
         "version": { "type": "string", "doc": "Short product version of the build (first line of version.txt), e.g. v2026.11.4." },
         "versionFull": { "type": "string", "doc": "Full build version (second line of version.txt)." },
         "buildType": { "type": "string", "doc": "CMake build type, e.g. Release." },
-        "platform": { "type": "string", "enum": ["native", "wasm"], "doc": "native = separate desktop process, wasm = WebAssembly module in a worker." },
-        "os": { "type": "string", "doc": "Target, e.g. windows-x64, linux-x64, wasm32." },
+        "platform": { "type": "string", "enum": ["native"], "doc": "native = separate engine process started by the desktop program." },
+        "os": { "type": "string", "doc": "Target, e.g. windows-x64, linux-x64." },
         "compiler": { "type": "string", "doc": "Compiler and version." },
         "testCommands": { "type": "boolean", "doc": "true when the engine was built with test commands (diagnostics.crash, diagnostics.hang)." }
       }
@@ -272,8 +267,8 @@
     "Capabilities": {
       "doc": "What the transport of this engine can do.",
       "fields": {
-        "pingWhileBusy": { "type": "boolean", "doc": "ping and cancel are answered while a command runs (native: reader thread). The WebAssembly engine answers only between commands." },
-        "cancelWhileBusy": { "type": "boolean", "doc": "cancel reaches a running command (native always; WebAssembly only with a shared cancel flag)." }
+        "pingWhileBusy": { "type": "boolean", "doc": "ping and cancel are answered while a command runs (the reader thread of the native engine)." },
+        "cancelWhileBusy": { "type": "boolean", "doc": "cancel reaches a running command." }
       }
     },
     "Limits": {
@@ -502,7 +497,7 @@
       "reply": "helloResult"
     },
     "ping": {
-      "doc": "Liveness check. The native engine answers while it computes; the WebAssembly engine only between commands.",
+      "doc": "Liveness check. The engine answers while it computes.",
       "immediate": true,
       "fields": {},
       "reply": "pong"
@@ -552,7 +547,7 @@
       "reply": "modelResult"
     },
     "diagnostics.crash": {
-      "doc": "Test only: ends the engine on purpose (native: the process dies; WebAssembly: a trap). Used to test the desktop supervisor and the worker restart.",
+      "doc": "Test only: ends the engine on purpose (the process dies). Used to test the desktop supervisor and its restart of the engine.",
       "testOnly": true,
       "fields": {
         "mode": { "type": "string", "enum": ["abort", "nullcall", "intdiv"], "doc": "abort = std::abort, nullcall = call through a null function pointer, intdiv = integer division by zero." }
@@ -560,7 +555,7 @@
       "reply": null
     },
     "diagnostics.hang": {
-      "doc": "Test only. busy: the command computes for ms milliseconds (or until cancelled when ms is missing) and answers hangResult; ping is still answered natively. frozen: the engine stops answering anything, including ping, until it is killed (desktop supervisor and browser watchdog tests).",
+      "doc": "Test only. busy: the command computes for ms milliseconds (or until cancelled when ms is missing) and answers hangResult; ping is still answered. frozen: the engine stops answering anything, including ping, until it is killed (desktop supervisor tests).",
       "testOnly": true,
       "fields": {
         "mode": { "type": "string", "enum": ["busy", "frozen"] },

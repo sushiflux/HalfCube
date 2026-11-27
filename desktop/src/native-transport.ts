@@ -125,8 +125,4 @@ export class NativeTransport implements EngineTransport {
     this.killed = true;
     this.child?.kill();
   }
-
-  cancelRunning(): boolean {
-    return false; // the native engine reads cancel messages while it computes
-  }
 }

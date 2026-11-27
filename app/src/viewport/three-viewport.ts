@@ -1,4 +1,4 @@
-// The Viewport on three.js's WebGPURenderer: WebGPU when the browser offers it, otherwise its WebGL2 backend, MSAA 4x.
+// The Viewport on three.js's WebGPURenderer: WebGPU when the renderer offers it, otherwise its WebGL2 backend, MSAA 4x.
 // Renders on demand: a frame is drawn only when something changed or moves, never in
 // an idle loop. All colours, weights and dashes come from the ViewportStyle.
 import * as THREE from "three/webgpu";

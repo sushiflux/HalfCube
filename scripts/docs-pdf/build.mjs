@@ -78,11 +78,12 @@ export async function buildPdf({ input, output, versionFile, channel, htmlOut })
     theme,
     themeDir: here,
     brandName: branding.name,
+    brandSlug: branding.slug,
     logoFile,
     mermaidScript: needsMermaid ? mermaidScript : null,
   });
 
-  const work = mkdtempSync(join(tmpdir(), "halfcube-docs-html-"));
+  const work = mkdtempSync(join(tmpdir(), `${branding.slug}-docs-html-`));
   try {
     const htmlFile = join(work, "document.html");
     writeFileSync(htmlFile, html);

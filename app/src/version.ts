@@ -1,4 +1,4 @@
-// Version handling shared by the UI (browser and Electron renderer), the Electron main process and the build.
+// Version handling shared by the UI (the Electron renderer), the Electron main process and the build.
 // The version id comes from line 2 of version.txt (five segments), the channel from the environment at build time.
 // This is the only place that turns them into the readable form shown to people.
 

@@ -1,42 +1,37 @@
-// Creates the engine session for the place the UI runs in: inside the Electron window the native engine behind the
-// preload bridge, in a browser the WebAssembly engine in a Web Worker.
+// Creates the engine session of the program: the native engine process behind the preload bridge of the Electron window.
 import { branding } from "../branding.ts";
 import { getDesktopBridge } from "../platform.ts";
 import { currentVersion } from "../version.ts";
-import { WASM_MODULE_FILE } from "./generated/protocol.ts";
 import { EngineSession, type EngineSessionOptions } from "./session.ts";
+import type { EngineTransport, ExitInfo } from "./transport.ts";
 import { DesktopTransport } from "./transports/desktop-transport.ts";
-import { browserWorkerPort, WorkerTransport } from "./transports/worker-transport.ts";
+
+export type CreateEngineSessionOptions = Partial<Omit<EngineSessionOptions, "createTransport">>;
 
 /**
- * Folder of the WebAssembly engine inside the web build, relative to the page: halfcube-engine.mjs and .wasm
- * (see config/engine-assets.ts, which puts them there). The testing variant with crash and hang commands is served
- * from "engine-testing/" in builds made with HALFCUBE_WASM_TESTING=1 and in the dev server.
+ * Stand-in transport for a page that runs without the Electron preload bridge (a plain browser tab, a broken preload
+ * script). There is no other engine to fall back to; starting it fails with the complete cause, so the normal start-up
+ * problem screen explains it instead of a blank window.
  */
-export const WASM_ENGINE_FOLDER = "engine";
-export const WASM_TESTING_FOLDER = "engine-testing";
+class MissingBridgeTransport implements EngineTransport {
+  readonly kind = "native" as const;
+  onMessage: ((header: string, payload: ArrayBuffer | null) => void) | null = null;
+  onExit: ((info: ExitInfo) => void) | null = null;
 
-export interface CreateEngineSessionOptions extends Partial<Omit<EngineSessionOptions, "createTransport">> {
-  /** Absolute URL of halfcube-engine.mjs; default: the engine folder next to the page. */
-  wasmModuleUrl?: string;
-}
+  start(): Promise<void> {
+    return Promise.reject(new Error(`The desktop bridge of the Electron window is missing; ${branding.name} runs only as the desktop program.`));
+  }
 
-export function defaultWasmModuleUrl(folder: string = WASM_ENGINE_FOLDER): string {
-  return new URL(`${folder}/${WASM_MODULE_FILE}`, document.baseURI).href;
+  send(): void {
+    throw new Error("The engine connection is closed.");
+  }
+
+  kill(): void {}
 }
 
 export function createEngineSession(options: CreateEngineSessionOptions = {}): EngineSession {
-  const { wasmModuleUrl, ...sessionOptions } = options;
   const version = `${branding.name} ${currentVersion().display}`;
   const bridge = getDesktopBridge();
-  const createTransport = bridge
-    ? () => new DesktopTransport(bridge)
-    : () =>
-        new WorkerTransport({
-          createPort: () =>
-            // The URL must stay a literal inside this call: the bundler finds and bundles the worker through it.
-            browserWorkerPort(new Worker(new URL("./worker/engine-worker.ts", import.meta.url), { type: "module", name: "halfcube-engine" })),
-          moduleUrl: wasmModuleUrl ?? defaultWasmModuleUrl(),
-        });
-  return new EngineSession({ createTransport, clientName: version, appVersion: version, ...sessionOptions });
+  const createTransport = bridge ? () => new DesktopTransport(bridge) : () => new MissingBridgeTransport();
+  return new EngineSession({ createTransport, clientName: version, appVersion: version, ...options });
 }

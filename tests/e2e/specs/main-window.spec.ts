@@ -1,7 +1,7 @@
 // The main window (step U1): it renders in German and English at the narrowest width without anything moving, the browser tree
 // and the timeline show a sketch right after "Skizze erstellen", the quick options of the navigation bar work, the settings
 // dialog opens, stores its choices and survives a reload, and a reload brings the user back to the same place. Runs in the
-// browser (WebAssembly engine) and in the Electron program (native engine).
+// Electron program (native engine).
 import type { Page } from "@playwright/test";
 import { expect, test, type AppUnderTest } from "../support/fixtures.ts";
 import { expectNoHorizontalOverflow, expectNothingMoved, expectNotTruncated, snapshot, type Targets } from "../support/layout.ts";
@@ -391,7 +391,7 @@ for (const lang of ["en", "de"] as const) {
 test("the welcome screen's new project opens the main window with an empty document, and a reload stays there", async ({ app }) => {
   const { page } = app;
   await app.open("?lang=en");
-  const welcome = page.getByRole("dialog", { name: "Sketch first, then build" });
+  const welcome = page.getByRole("dialog", { name: "Sketch first, then build." });
   await expect(welcome).toBeVisible({ timeout: 60_000 });
   await welcome.getByRole("button", { name: "Next" }).click();
   await page.getByRole("dialog", { name: "How do you want to start?" }).getByRole("button", { name: /New project/ }).click();
@@ -454,7 +454,7 @@ test("an address that names a sketch the document does not have says so in our o
   expect(app.errors).toEqual([]);
 });
 
-test("no dialog of the browser or the system is used: the main window never calls alert, confirm or prompt", async ({ app }) => {
+test("no native dialog is used: the main window never calls alert, confirm or prompt", async ({ app }) => {
   const { page } = app;
   const dialogs: string[] = [];
   page.on("dialog", (d) => {

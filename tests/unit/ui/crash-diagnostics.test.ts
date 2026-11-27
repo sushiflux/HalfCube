@@ -14,9 +14,6 @@ const chromium = `Error: boom
     at http://127.0.0.1:5313/src/anon.ts:1:1
     at <anonymous>`;
 
-const firefox = `Broken@http://localhost:5313/src/App.tsx:12:9
-@http://localhost:5313/src/main.tsx:4:1`;
-
 describe("stack parser", () => {
   it("parses the Chromium format including async and anonymous frames", () => {
     const frames = parseStack(chromium);
@@ -27,13 +24,6 @@ describe("stack parser", () => {
     expect(frames[2]).toMatchObject({ functionName: "load", isAsync: true, line: 3 });
     expect(frames[3]).toMatchObject({ functionName: undefined, line: 1, column: 1 });
     expect(frames[4]).toMatchObject({ functionName: "<anonymous>", line: undefined });
-  });
-
-  it("parses the Firefox and Safari format", () => {
-    const frames = parseStack(firefox);
-    expect(frames).toHaveLength(2);
-    expect(frames[0]).toMatchObject({ functionName: "Broken", line: 12, column: 9 });
-    expect(frames[1]).toMatchObject({ functionName: undefined, line: 4 });
   });
 
   it("skips the message line and survives empty input", () => {

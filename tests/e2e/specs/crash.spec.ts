@@ -27,7 +27,7 @@ for (const lang of ["en", "de"] as const) {
     await expect(tabs.nth(1)).toHaveAccessibleName(/^Component stack \(\d+\)$/);
     await tabs.nth(2).click();
     await expect(tabs.nth(2)).toHaveAttribute("aria-selected", "true");
-    await expect(consoleView.getByRole("tabpanel")).toContainText(app.target === "electron" ? "Electron" : "Mozilla");
+    await expect(consoleView.getByRole("tabpanel")).toContainText("Electron");
     await tabs.nth(3).click();
     await expect(consoleView.getByRole("tabpanel")).toContainText(MESSAGE);
 

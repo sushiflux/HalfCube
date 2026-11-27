@@ -6,7 +6,7 @@
  */
 .hc-stage {
   --u: min(max(0.6px, 0.1111vh), 1.25px);
-  --hc-details-max: clamp(80px, calc(100vh - 586 * var(--u) - 200px), 240px);
+  --hc-details-max: clamp(80px, calc(100vh - 612 * var(--u) - 200px), 240px);
   position: fixed;
   inset: 0;
   z-index: 90;
@@ -23,7 +23,7 @@
 .hc-stage-inner {
   position: relative;
   width: 100%;
-  height: max(100%, calc(586 * var(--u) + 300px));
+  height: max(100%, calc(612 * var(--u) + 300px));
 }
 
 .hc-stage-bg {
@@ -116,7 +116,7 @@
   position: absolute;
   left: 0;
   right: 0;
-  top: calc(510 * var(--u));
+  top: calc(542 * var(--u));
   display: flex;
   align-items: center;
   justify-content: center;
@@ -139,7 +139,7 @@
 .hc-slot {
   position: absolute;
   left: 50%;
-  top: calc(586 * var(--u));
+  top: calc(612 * var(--u));
   width: min(760px, calc(100% - 32px));
   transform: translateX(-50%);
 }
@@ -255,4 +255,18 @@
   width: 0;
   background: var(--c-primary);
   transition: width 0.25s ease-out;
+}
+
+/* Slogan under the wordmark: one line with its own room (the tag and the progress slot sit below it). */
+.hc-slogan {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(494 * var(--u));
+  padding: 0 16px;
+  text-align: center;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 24px;
+  color: var(--c-text);
 }

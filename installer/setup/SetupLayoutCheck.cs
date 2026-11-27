@@ -38,7 +38,7 @@ internal static class SetupLayoutCheck
                 InstalledVersion = update ? "2026.11.4" : null,
                 LicenceText = template.LicenceText,
                 NoticeText = template.NoticeText,
-                InstallDir = @"C:\Users\Name\AppData\Local\HalfCube",
+                InstallDir = $@"C:\Users\Name\AppData\Local\{ProductInfo.Name}",
             };
             using (var window = new SetupWindow(state, (_, _) => Task.CompletedTask, scale))
             {
@@ -124,7 +124,7 @@ internal static class SetupLayoutCheck
 
         UiLang.Current = UiLang.English;
         ThemeMode.Set(false);
-        var state = new SetupState { Info = template.Info, LicenceText = template.LicenceText, NoticeText = template.NoticeText, InstallDir = @"C:\Users\Name\AppData\Local\HalfCube" };
+        var state = new SetupState { Info = template.Info, LicenceText = template.LicenceText, NoticeText = template.NoticeText, InstallDir = $@"C:\Users\Name\AppData\Local\{ProductInfo.Name}" };
         using var window = new SetupWindow(state, (_, _) => Task.CompletedTask, 1f);
         window.GoTo(1);
         var check = Descendants(window).OfType<HcCheck>().SingleOrDefault();

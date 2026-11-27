@@ -2,8 +2,7 @@
 // recorded from the real engine (record.ts). It computes nothing; a request without a recording is refused with
 // the list of what is recorded. Test and development use only, never shipped.
 //
-// Node:    new ReplayLink(loadAllRecordings())
-// Browser: build the recordings from the JSON files (Vite imports them) and the .bin files fetched as ArrayBuffer.
+// Usage: new ReplayLink(loadAllRecordings())
 import type { CommandInput, Reply, RequestHandle, RequestOptions } from "../../../app/src/engine/client.ts";
 import type { EngineLink } from "../../../app/src/model/engine-link.ts";
 import type { RecordedCase } from "./recording.ts";

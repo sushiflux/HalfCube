@@ -9,7 +9,7 @@ lang: "en"
 
 # 1 About this handbook
 
-HalfCube is in early development. This handbook describes what the program can do today. It is not complete yet and grows with the program. So far it covers how HalfCube keeps itself up to date.
+HalfCube is in early development. This handbook describes what the program can do today. It is not complete yet and grows with the program. So far it covers how HalfCube keeps itself up to date and which licence it is under.
 
 # 2 Updates and “What’s new”
 
@@ -215,6 +215,56 @@ At the top, the window says how many versions it contains. Below, every version 
 
 If you open the window from “What’s new”, it shows all versions of your channel that are built into HalfCube. It needs no internet connection for that. If you open it from the window “Update”, it shows the versions from the description of the new update.
 
-## 2.10 The browser version
+# 3 Licence and bundled components
 
-The browser version has no update function, no dot on the “i” and no card “Updates”. It is always current when you open it. “What’s new” exists there too: through the link in “About HalfCube” and in the settings on the tab “Updates”. It does not open by itself there.
+HalfCube does not consist of its own code alone. It contains **components** from other projects, for example for the geometry. Each component has its own **licence**. A licence is the permission of the author to use a work under certain conditions. This chapter tells you which licence HalfCube is under, which components belong to it and where to find the full texts.
+
+## 3.1 The licence of HalfCube
+
+HalfCube is provided under the **PolyForm Shield License 1.0.0**. The licence permits free use, private and commercial, and changes for your own use. For example, you can sell parts you designed with HalfCube. Offering products that compete with HalfCube is excluded. There is no warranty.
+
+The source code of HalfCube is public. Still, HalfCube does not call itself “open source”, because that term has a fixed meaning that this licence does not meet. The right word is “source-available”.
+
+> [!NOTE]
+> This is a plain summary, not legal advice. The licence text decides.
+
+## 3.2 Where to find the texts
+
+All licences are inside HalfCube itself. You do not need an internet connection for this.
+
+1. Click the “i” in the title bar. The window “About HalfCube” opens on the tab **Info**.
+2. The section **Licence** holds the summary. Click **Show licence text** to read the full text of the PolyForm Shield License.
+3. Click **View NOTICE file** to read the file `NOTICE`. It contains the required notices, the additional permission for the bundled libraries (see section 3.3) and the note about the earlier versions under the GPL.
+4. Click **Source code on GitHub** to open the public source code.
+
+All components are on the tab **Licences**:
+
+1. Open “About HalfCube” and switch to the tab **Licences**. You can also reach it with the link **Licences** below the sentence “Contains … under the LGPL-2.1” on the tab “Info”.
+2. The list is sorted by area: **This program**, **Construction kernel**, **User interface** and **Program shell**. Type a name into the field **Search components** to find what you are looking for faster.
+3. Click a component. You see its **licence**, the **copyright notice**, the **source** and below them the **licence text**.
+4. Click **All components** to go back to the list.
+
+The list shows only the components that are in the version you use.
+
+## 3.3 The most important components
+
+| Component | What HalfCube uses it for | Licence |
+|---|---|---|
+| Open CASCADE Technology (OCCT) | The geometry kernel. It calculates the bodies. | LGPL-2.1 with the Open CASCADE exception |
+| planegcs | The sketch solver from FreeCAD. It keeps the dimensions and constraints of a sketch. | LGPL-2.1 |
+| Eigen | Maths library for the sketch solver. | MPL-2.0 |
+| React, three.js and others | Interface and 3D view. | mostly MIT |
+| Geist and Geist Mono | The fonts of HalfCube. | SIL Open Font License 1.1 |
+| Electron, Chromium, Velopack, Microsoft Visual C++ runtime | Frame of the Windows program. | various, see the tab “Licences” |
+
+The full list with the exact licences is on the tab “Licences”.
+
+### Notice about Open CASCADE Technology
+
+HalfCube makes use of, and is based on facilities provided by, the **Open CASCADE Technology** software (OCCT, https://dev.opencascade.org). OCCT is licensed under the GNU Lesser General Public License, version 2.1 (LGPL-2.1), with the Open CASCADE exception (version 1.0). This exception requires the accompanying documentation to say so. This is that notice. The licence text of OCCT is on the tab “Licences”, under the component “Open CASCADE Technology (OCCT)”.
+
+The LGPL allows you to change the bundled libraries and to use HalfCube with the changed version. The file `NOTICE` adds a permission for this: you may change HalfCube for your own use, and you may reverse engineer it as far as that is needed to debug such changes. You find the source code through **Source code on GitHub**.
+
+## 3.4 Name and logo
+
+The name “HalfCube” and the logo are not part of the licence of the code. How you may use them is described in the file `TRADEMARKS.md` in the public source code (see section 3.2, step 4).

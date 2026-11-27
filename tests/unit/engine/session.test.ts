@@ -11,7 +11,7 @@ function setup(options: Partial<EngineSessionOptions> = {}, onNewTransport?: (t:
   const transports: FakeTransport[] = [];
   const session = new EngineSession({
     createTransport: () => {
-      const t = new FakeTransport("native");
+      const t = new FakeTransport();
       t.autoReply = healthyEngine;
       onNewTransport?.(t, transports.length);
       transports.push(t);

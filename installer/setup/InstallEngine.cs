@@ -51,7 +51,7 @@ internal sealed class InstallEngine(SetupLayout layout, Payload payload, Payload
         if (IsElevated()) throw new InstallException(SetupTexts.ErrElevated());
         // The check gets the path as it was given: a relative one is never fully qualified and never accepted
         if (CheckFolder(request.InstallDir) is { } problem) throw new InstallException(problem);
-        var temp = Path.Combine(Path.GetTempPath(), "HalfCube-Setup-" + Guid.NewGuid().ToString("N"));
+        var temp = Path.Combine(Path.GetTempPath(), $"{ProductInfo.Name}-Setup-" + Guid.NewGuid().ToString("N"));
         var neededTarget = info.InstalledBytes + 100L * 1024 * 1024;
         var neededTemp = info.SetupBytes + 50L * 1024 * 1024;
         var sameDrive = string.Equals(Path.GetPathRoot(target), Path.GetPathRoot(temp), StringComparison.OrdinalIgnoreCase);
@@ -337,7 +337,7 @@ internal sealed class UninstallEngine(SetupLayout layout)
         var installed = layout.FindInstalled() ?? throw new InstallException(UninstallTexts.ErrNotFound());
         var folder = installed.Folder;
         var total = Math.Max(1L, await Task.Run(() => InstallEngine.FolderSize(folder), ct));
-        var logFile = Path.Combine(Path.GetTempPath(), "HalfCube-Uninstall-" + Guid.NewGuid().ToString("N") + ".log");
+        var logFile = Path.Combine(Path.GetTempPath(), $"{ProductInfo.Name}-Uninstall-" + Guid.NewGuid().ToString("N") + ".log");
         progress.Report(new RemoveProgress(0.02f, 0));
 
         var start = new ProcessStartInfo(installed.Updater)

@@ -5,7 +5,7 @@ import type { UpdateState } from "../../../app/src/updates/types.ts";
 beforeEach(() => vi.useFakeTimers());
 afterEach(() => vi.useRealTimers());
 
-const options = (patch: Partial<DemoOptions> = {}): DemoOptions => ({ scenario: "found", progress: 42, check: "uptodate", restartFails: false, auto: true, browser: false, first: false, ...patch });
+const options = (patch: Partial<DemoOptions> = {}): DemoOptions => ({ scenario: "found", progress: 42, check: "uptodate", restartFails: false, auto: true, first: false, ...patch });
 const phaseOf = (s: UpdateState) => (s.supported ? s.phase.kind : "unsupported");
 
 describe("the demo parameters", () => {
@@ -15,7 +15,7 @@ describe("the demo parameters", () => {
     expect(parseDemoOptions("?updates-demo=found&updates-check=found&updates-restart=fail")).toEqual(options({ check: "found", restartFails: true }));
     expect(parseDemoOptions("?updates-demo=found&updates-auto=off")?.auto).toBe(false);
     expect(parseDemoOptions("?updates-demo=found")?.auto).toBe(true);
-    expect(parseDemoOptions("?updates-demo=news&updates-browser=1&updates-first=1")).toEqual(options({ scenario: "news", browser: true, first: true }));
+    expect(parseDemoOptions("?updates-demo=news&updates-first=1")).toEqual(options({ scenario: "news", first: true }));
   });
 
   it("ignores an unknown scenario and the absence of the parameter", () => {

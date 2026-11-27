@@ -14,6 +14,7 @@ import type {
 import { formatVersion, type Channel } from "../../../app/src/version.ts";
 import { describeFeed, type FeedSource } from "./feed.ts";
 import { mapPackVersion } from "./version-map.ts";
+import { branding } from "../../../app/src/branding.ts";
 
 /** An update package as the adapter reports it: the feed's version and sizes, plus Velopack's own object, opaque here. */
 export interface FoundUpdate {
@@ -283,7 +284,7 @@ export class UpdateService {
       return { ok: false, error: failure };
     }
     this.applying = true;
-    this.log(`Updates: ${phase.offer.display} wird installiert, HalfCube beendet sich und startet neu.`);
+    this.log(`Updates: ${phase.offer.display} wird installiert, ${branding.name} beendet sich und startet neu.`);
     this.options.quit();
     return new Promise<never>(() => undefined);
   }

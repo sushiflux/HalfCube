@@ -1,30 +1,21 @@
-// Starts clients against the real engines (native process, WebAssembly module in a Node worker) and checks every
-// command the client sends and every message the engine sends against the generated JSON Schema.
+// Starts clients against the real native engine process and checks every command the client sends and every message
+// the engine sends against the generated JSON Schema.
 import { EngineClient, type EngineClientOptions } from "../../../../app/src/engine/client.ts";
 import type { EngineMessage } from "../../../../app/src/engine/generated/protocol.ts";
 import type { EngineTransport, ExitInfo } from "../../../../app/src/engine/transport.ts";
-import { WorkerTransport } from "../../../../app/src/engine/transports/worker-transport.ts";
 import { NativeTransport } from "../../../../desktop/src/native-transport.ts";
-import { wasmModuleUrl } from "./builds.ts";
-import { nodeWorkerPort } from "./node-worker-port.ts";
 import { commandProblems, engineMessageProblems } from "./schema.ts";
 
-export type EngineKind = "native" | "wasm";
+export type EngineKind = "native";
 
-/** Where an engine of the given kind lives: the executable (native) or the folder with the module (wasm). */
+/** Where an engine lives: the path of the native executable. */
 export interface EngineLocation {
   kind: EngineKind;
   path: string;
 }
 
-export function transportFor(where: EngineLocation, opts: { sharedCancel?: boolean; startTimeoutMs?: number } = {}): EngineTransport {
-  if (where.kind === "native") return new NativeTransport({ exe: where.path });
-  return new WorkerTransport({
-    createPort: () => nodeWorkerPort(),
-    moduleUrl: wasmModuleUrl(where.path),
-    sharedCancel: opts.sharedCancel ?? true,
-    ...(opts.startTimeoutMs !== undefined ? { startTimeoutMs: opts.startTimeoutMs } : {}),
-  });
+export function transportFor(where: EngineLocation): EngineTransport {
+  return new NativeTransport({ exe: where.path });
 }
 
 export interface TestEngine {
@@ -40,9 +31,9 @@ export interface TestEngine {
 
 export async function startEngine(
   where: EngineLocation,
-  options: Partial<EngineClientOptions> & { sharedCancel?: boolean; start?: boolean } = {},
+  options: Partial<EngineClientOptions> & { start?: boolean } = {},
 ): Promise<TestEngine> {
-  const { sharedCancel, start = true, ...clientOptions } = options;
+  const { start = true, ...clientOptions } = options;
   const schemaErrors: string[] = [];
   const exits: ExitInfo[] = [];
   const unsolicited: EngineMessage[] = [];
@@ -51,7 +42,7 @@ export async function startEngine(
   const client = new EngineClient({
     clientName: "contract-tests",
     createTransport: () => {
-      const t = transportFor(where, sharedCancel === undefined ? {} : { sharedCancel });
+      const t = transportFor(where);
       const send = t.send.bind(t);
       t.send = (header, payload) => {
         const problems = skipCheck ? [] : commandProblems(JSON.parse(header));

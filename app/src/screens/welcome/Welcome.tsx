@@ -1,5 +1,6 @@
 import { motion } from "motion/react";
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
+import { branding } from "../../branding.ts";
 import { useT } from "../../i18n/runtime.ts";
 import type { MessageKey } from "../../i18n/types.ts";
 import { Button, IconButton } from "../../ui/Button.tsx";
@@ -19,8 +20,6 @@ export interface WelcomeProps {
   onNewProject: () => void;
   onOpenProject: () => void;
   onTour: () => void;
-  /** The licence hint line: opens "About HalfCube" on the Lizenzen tab with the HalfCube licence. */
-  onShowLicence: () => void;
   /** The checkbox "Don't show this at the next start". */
   dontShowAgain: boolean;
   onDontShowAgainChange: (value: boolean) => void;
@@ -36,11 +35,11 @@ const points: readonly { icon: ReactNode; key: MessageKey }[] = [
 ];
 
 /**
- * Welcome at program start, two pages: "Sketch first, then build" with the early-access note, then "How do you want
+ * Welcome at program start, two pages: the slogan "Sketch first, then build." with the early-access note, then "How do you want
  * to start?". It appears at every start until the user ticks "Don't show this at the next start". The language page
  * is not here: the setup chooses the language.
  */
-export function Welcome({ open, onClose, onNewProject, onOpenProject, onTour, onShowLicence, dontShowAgain, onDontShowAgainChange }: WelcomeProps) {
+export function Welcome({ open, onClose, onNewProject, onOpenProject, onTour, dontShowAgain, onDontShowAgainChange }: WelcomeProps) {
   const t = useT();
   const [page, setPage] = useState<Page>(1);
   const titleId = useId();
@@ -123,8 +122,9 @@ export function Welcome({ open, onClose, onNewProject, onOpenProject, onTour, on
           {page === 1 ? (
             <section aria-labelledby={titleId}>
               <div className="text-[11.5px] font-semibold tracking-[0.16em] text-primary uppercase">{t("welcome.introKicker")}</div>
-              <h2 id={titleId} className="mt-2 text-[27px] leading-[1.2] font-semibold tracking-[-0.015em]">
-                {t("welcome.introTitle")}
+              {/* The slogan is English in both languages, like on the loading screen; lang tells screen readers so. */}
+              <h2 id={titleId} lang="en" className="mt-2 text-[27px] leading-[1.2] font-semibold tracking-[-0.015em]">
+                {branding.slogan}
               </h2>
               <ul className="mt-[22px] flex list-none flex-col gap-1.5 p-0">
                 {points.map((point, index) => (
@@ -188,15 +188,6 @@ export function Welcome({ open, onClose, onNewProject, onOpenProject, onTour, on
             </section>
           )}
         </ScrollArea>
-
-        {/* The licence hint is on both pages and in both versions; the link opens the licence text in "About HalfCube". It has a row
-            of its own, as wide as the dialog's content, so it never wraps and nothing moves between the pages. */}
-        <p className="m-0 flex h-8 flex-none items-center px-10 text-[12px] whitespace-nowrap text-muted" data-testid="welcome-licence-hint">
-          {t("welcome.licenceHint")}&nbsp;<span aria-hidden="true">·</span>&nbsp;
-          <button type="button" onClick={onShowLicence} data-testid="welcome-licence-link" className="cursor-pointer rounded-sm font-medium text-primary hover:underline">
-            {t("welcome.licenceLink")}
-          </button>
-        </p>
 
         <div className="flex h-[76px] flex-none items-center gap-3.5 border-t border-line px-10">
           <Checkbox checked={dontShowAgain} onChange={onDontShowAgainChange} label={t("welcome.dontShowAgain")} className="min-w-0 flex-1" />

@@ -55,7 +55,6 @@ describe("catalogue parity (the type system already rejects a missing key; this 
       "theme.graphit",
       "error.meta",
       "error.environmentDesktop",
-      "error.environmentBrowser",
       "common.stepOf",
       "main.tree.label",
       "main.timeline.constraints.horizontal",
@@ -84,6 +83,8 @@ describe("catalogue parity (the type system already rejects a missing key; this 
       "sketch.reject.engineMessage",
       "sketch.dim.tip",
       "sketch.shape.spline",
+      // The graphics probe line of the 3D view's error: two technical names and two filled-in words.
+      "viewport.probeLine",
     ]);
     const unexpected = same.map(([key]) => key).filter((key) => !allowed.has(key));
     expect(unexpected).toEqual([]);
@@ -109,7 +110,7 @@ describe("normalizeLanguage and the initial language", () => {
     expect(normalizeLanguage("  ")).toBeUndefined();
   });
 
-  it("follows the first browser language (de* -> de, else en)", () => {
+  it("follows the first system language (de* -> de, else en)", () => {
     expect(resolveInitialLanguage({ browserLanguages: ["de-AT", "en"] })).toBe("de");
     expect(resolveInitialLanguage({ browserLanguages: ["fr-FR", "de"] })).toBe("en");
     expect(resolveInitialLanguage({ browserLanguages: [] })).toBe("en");

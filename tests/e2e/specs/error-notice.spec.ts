@@ -89,7 +89,7 @@ for (const lang of ["en", "de"] as const) {
     for (const part of [HEADLINE_START, "weil in der Datei die Datei manifest.json fehlt und der Inhalt sich nicht lesen lässt", CODE, DETAIL_TEXT, DETAIL_CODE, DETAIL_LAST, expectedVersionDisplay()]) {
       expect(foldedCopy, `the copied error text contains "${part}"`).toContain(part);
     }
-    expect(foldedCopy).toContain(app.target === "electron" ? "Desktop" : "Browser");
+    expect(foldedCopy).toContain("Desktop");
     expect(app.errors).toEqual([]);
   });
 }

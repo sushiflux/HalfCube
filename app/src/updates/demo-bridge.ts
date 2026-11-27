@@ -13,7 +13,6 @@
 //     failed    a manual check failed (code HC-UPDATE-001); the dot on the info icon carries the warning triangle
 //     faildl    the download failed (checksum, HC-UPDATE-002); "Erneut versuchen" starts a successful simulated download
 //     news      the program starts as the new version after an update: "Was ist neu" opens by itself
-//   &updates-browser=1                    no updater at all, as in the browser version: only "Was ist neu" works (with news: opens by itself)
 //   &updates-first=1                      the program counts as freshly installed ("Was ist neu" remembers the version and shows nothing)
 //   &updates-auto=off                     keeps "found" where it is: the download does not start by itself (for screenshots and tests)
 //   &updates-check=found|uptodate|error   what a check by hand finds (default: error in the scenario failed, otherwise uptodate)
@@ -23,6 +22,7 @@ import { currentVersion, formatVersion } from "../version.ts";
 import { demoChangelogMarkdown, demoIds } from "./demo-changelog.ts";
 import type { NewsSource } from "./news-logic.ts";
 import type { UpdateCheckResult, UpdateError, UpdateOffer, UpdatesBridge, UpdateState } from "./types.ts";
+import { branding } from "../branding.ts";
 
 export const demoScenarios = ["none", "uptodate", "found", "dl", "ready", "exit", "failed", "faildl", "newerfail", "news"] as const;
 export type DemoScenario = (typeof demoScenarios)[number];
@@ -35,8 +35,6 @@ export interface DemoOptions {
   restartFails: boolean;
   /** The download starts by itself when an update is found (the real program does); off freezes the state "found". */
   auto: boolean;
-  /** No updater, like the browser version. */
-  browser: boolean;
   /** A first installation: nothing was shown yet. */
   first: boolean;
 }
@@ -55,7 +53,6 @@ export function parseDemoOptions(search: string): DemoOptions | null {
     check: check === "found" || check === "uptodate" || check === "error" ? check : scenario === "failed" ? "error" : "uptodate",
     restartFails: q.get("updates-restart") === "fail",
     auto: q.get("updates-auto") !== "off",
-    browser: q.get("updates-browser") === "1",
     first: q.get("updates-first") === "1",
   };
 }
@@ -70,7 +67,7 @@ function demoTime(seconds = 0): string {
 function demoError(code: UpdateError["code"]): UpdateError {
   const at = demoTime(7);
   return code === "HC-UPDATE-002"
-    ? { code, at, detail: "SHA-256 expected: 9f2c4d81a07be3c1…e41a\nSHA-256 received: 3b7d90aa51c2f6b8…0c58\nPackage: HalfCube-delta.nupkg" }
+    ? { code, at, detail: `SHA-256 expected: 9f2c4d81a07be3c1…e41a\nSHA-256 received: 3b7d90aa51c2f6b8…0c58\nPackage: ${branding.name}-delta.nupkg` }
     : code === "HC-UPDATE-004"
       ? { code, at, detail: "The update could not be applied: the updater process did not start (the demo parameter updates-restart=fail)." }
       : { code, at, detail: "The update server (github.com) did not answer within 10000 ms (timeout)." };

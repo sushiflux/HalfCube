@@ -1,6 +1,6 @@
 // The 3D view (demo page ?demo=viewport): it draws with WebGPU or the WebGL2 fallback, follows the theme live, navigates with
 // the mouse and touchpad presets, turns with the axis navigator, picks and highlights, draws pixel-width lines with dashes,
-// renders only on demand and cleans up after itself. Also the sketch layer (?demo=viewport&sketch=1). Runs in the browser and in the Electron program.
+// renders only on demand and cleans up after itself. Also the sketch layer (?demo=viewport&sketch=1). Runs in the Electron program.
 import { mkdirSync } from "node:fs";
 import { join } from "node:path";
 import type { Page } from "@playwright/test";
@@ -1915,7 +1915,7 @@ test.describe("extrude command", () => {
 
   // Screenshots for the review (only with HALFCUBE_U3A_SHOTS=1): rest, hover, selection, preview and arrow in light and dark.
   test("screenshots of the states", async ({ app }) => {
-    test.skip(process.env.HALFCUBE_U3A_SHOTS !== "1" || app.target !== "browser", "set HALFCUBE_U3A_SHOTS=1 to write the screenshots (browser project)");
+    test.skip(process.env.HALFCUBE_U3A_SHOTS !== "1", "set HALFCUBE_U3A_SHOTS=1 to write the screenshots");
     const { page } = app;
     const dir = process.env.HALFCUBE_SHOTS_DIR ?? join(process.cwd(), "_build", "screenshots");
     mkdirSync(dir, { recursive: true });
@@ -1955,7 +1955,7 @@ test.describe("extrude command", () => {
 // a new sketch with an existing body and sketch in the view. The names read ebenen-<name>-... and achsen-<name>-... (name: vorher, nachher).
 test("screenshots of the origin planes and axes", async ({ app }) => {
   const name = process.env.HALFCUBE_SHOTS ?? "";
-  test.skip(name === "" || app.target !== "electron", "set HALFCUBE_SHOTS=vorher|nachher to write the screenshots (Electron project)");
+  test.skip(name === "", "set HALFCUBE_SHOTS=vorher|nachher to write the screenshots");
   const { page } = app;
   const dir = process.env.HALFCUBE_SHOTS_DIR ?? join(process.cwd(), "_build", "screenshots");
   mkdirSync(dir, { recursive: true });
@@ -2225,7 +2225,7 @@ test.describe("origin axes", () => {
       }
       return { best, bestDistance };
     };
-    // Antialiasing leaves no pixel of a thin line at exactly its colour (more so in the software renderer of the browser image), so the
+    // Antialiasing leaves no pixel of a thin line at exactly its colour (more so with a software renderer), so the
     // colour under the pointer is held to a distance, and to being clearly nearer to the full colour than the calm line is.
     const hoveredDistance = centreColour(hovered).bestDistance, restDistance = centreColour(rest).bestDistance;
     test.info().annotations.push({ type: "distance of the axis centre to its full colour", description: "hovered " + hoveredDistance + ", at rest " + restDistance });

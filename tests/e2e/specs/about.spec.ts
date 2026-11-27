@@ -1,22 +1,20 @@
-// "About HalfCube" dialog: how it opens (status bar, title bar, the welcome screen's licence hint), Esc and
+// "About HalfCube" dialog: how it opens (status bar, title bar), Esc and
 // the close button, the Info and Lizenzen tabs at exactly the same height, the credit line level with the last row of the right
 // column, "Copied" and the search moving nothing, the licence texts loading, a reload keeping tab and component in the address, the
-// browser hiding the desktop-only entries, the outside links going through the main process on the desktop, and the contrast of the
-// whole view in every theme, light and dark. Runs in the browser and in the Electron program.
+// outside links going through the main process, and the contrast of the whole view in every theme, light and dark. Runs in the
+// Electron program.
 import type { Page } from "@playwright/test";
 import { expect, test, type AppUnderTest } from "../support/fixtures.ts";
 import { expectNothingMoved, snapshot, type Targets } from "../support/layout.ts";
 import type { Lang } from "../support/paths.ts";
 
-const words: Record<Lang, { title: string; close: string; tabInfo: string; tabLicences: string; early: string; licenceHint: string; licenceLink: string; copyVersion: string; copied: string; news: RegExp }> = {
+const words: Record<Lang, { title: string; close: string; tabInfo: string; tabLicences: string; early: string; copyVersion: string; copied: string; news: RegExp }> = {
   en: {
     title: "About HalfCube",
     close: "Close window “About HalfCube”",
     tabInfo: "Info",
     tabLicences: "Licences",
     early: "Early access",
-    licenceHint: "Licensed under the PolyForm Shield License 1.0.0",
-    licenceLink: "View licence",
     copyVersion: "Copy version",
     copied: "Copied",
     news: /what.s new/i,
@@ -27,8 +25,6 @@ const words: Record<Lang, { title: string; close: string; tabInfo: string; tabLi
     tabInfo: "Info",
     tabLicences: "Lizenzen",
     early: "Frühphase",
-    licenceHint: "Es gilt die PolyForm Shield License 1.0.0",
-    licenceLink: "Lizenz anzeigen",
     copyVersion: "Version kopieren",
     copied: "Kopiert",
     news: /was ist neu/i,
@@ -61,7 +57,6 @@ async function box(page: Page, testId: string): Promise<{ x: number; y: number; 
 
 /** Counts what the system would open: stubs the two calls of the Electron main process so no test ever starts a real browser or viewer. */
 async function stubOpeners(app: AppUnderTest): Promise<void> {
-  if (!app.electron) return;
   await app.electron.evaluate(({ shell }) => {
     const g = globalThis as unknown as { __opened?: string[] };
     g.__opened = [];
@@ -77,7 +72,6 @@ async function stubOpeners(app: AppUnderTest): Promise<void> {
 }
 
 async function opened(app: AppUnderTest): Promise<string[]> {
-  if (!app.electron) return [];
   return app.electron.evaluate(() => (globalThis as unknown as { __opened?: string[] }).__opened ?? []);
 }
 
@@ -106,42 +100,16 @@ test.describe("About HalfCube: entry points", () => {
     });
   }
 
-  test("opens from the licence hint line of the welcome screen, on the Lizenzen tab with the HalfCube licence", async ({ app }) => {
+  test("the welcome screen carries no licence hint line: the licence lives in the setup and in About HalfCube", async ({ app }) => {
     const { page } = app;
     await app.open("?lang=en");
-    const welcome = page.getByRole("dialog", { name: "Sketch first, then build" });
+    const welcome = page.getByRole("dialog", { name: "Sketch first, then build." });
     await expect(welcome).toBeVisible({ timeout: 60_000 });
-
-    // The hint is on both pages, in this version and in the other one (it is the same line on both platforms).
-    const hint = welcome.getByTestId("welcome-licence-hint");
-    await expect(hint).toHaveText(`${words.en.licenceHint} · ${words.en.licenceLink}`);
+    await expect(page.getByTestId("welcome-licence-hint")).toHaveCount(0);
+    await expect(welcome).not.toContainText("PolyForm Shield");
     await welcome.getByRole("button", { name: "Next" }).click();
-    const second = page.getByRole("dialog", { name: "How do you want to start?" });
-    await expect(second.getByTestId("welcome-licence-hint")).toBeVisible();
-
-    await second.getByRole("button", { name: words.en.licenceLink }).click();
-    const about = dialogOf(page, "en");
-    await expect(about).toBeVisible();
-    await expect(page.getByTestId("about-tab-licenses")).toHaveAttribute("aria-selected", "true");
-    await expect(page.getByTestId("about-licence-detail")).toHaveAttribute("data-item", "halfcube");
-    await expect(about.getByRole("heading", { name: "HalfCube", exact: true })).toBeVisible();
-    const query = new URL(page.url()).searchParams;
-    expect(query.get("about")).toBe("licenses");
-    expect(query.get("item")).toBe("halfcube");
-
-    // The welcome screen stays underneath: Esc closes only the view on top.
-    await page.keyboard.press("Escape");
-    await expect(about).toHaveCount(0);
-    await expect(second).toBeVisible();
-    expect(new URL(page.url()).searchParams.has("about")).toBe(false);
-  });
-
-  test("the welcome screen shows the hint in German too", async ({ app }) => {
-    const { page } = app;
-    await app.open("?lang=de");
-    const welcome = page.getByRole("dialog", { name: "Erst skizzieren, dann bauen" });
-    await expect(welcome).toBeVisible({ timeout: 60_000 });
-    await expect(welcome.getByTestId("welcome-licence-hint")).toHaveText(`${words.de.licenceHint} · ${words.de.licenceLink}`);
+    await expect(page.getByRole("dialog", { name: "How do you want to start?" })).toBeVisible();
+    await expect(page.getByTestId("welcome-licence-hint")).toHaveCount(0);
   });
 });
 
@@ -337,7 +305,7 @@ test.describe("About HalfCube: contents", () => {
           ? "HalfCube wird unter der PolyForm Shield License 1.0.0 bereitgestellt. Sie erlaubt die kostenlose Nutzung, privat und geschäftlich, sowie Änderungen für den eigenen Gebrauch. Ausgenommen ist das Anbieten von Produkten, die mit HalfCube im Wettbewerb stehen. Ohne Gewährleistung."
           : "HalfCube is provided under the PolyForm Shield License 1.0.0. It permits free use, private and commercial, and changes for your own use. Offering products that compete with HalfCube is excluded. No warranty.";
       await expect(page.getByTestId("about-licence-summary")).toHaveText(summary);
-      // Without an updater (the browser, a dev build) the only update entry is the link to "What's new" next to "Copy version"; the update slot is not there.
+      // Without an updater (a dev build) the only update entry is the link to "What's new" next to "Copy version"; the update slot is not there.
       await expect(dialog.getByText(words[lang].news)).toHaveCount(1);
       await expect(page.getByTestId("update-news-link")).toBeVisible();
       await expect(page.getByTestId("update-slot")).toHaveCount(0);
@@ -373,7 +341,7 @@ test.describe("About HalfCube: contents", () => {
     await expect(page.getByTestId("licence-text")).toContainText("Required Notice");
   });
 
-  test("the source link opens outside the window: a new tab in the browser, the system browser through the main process on the desktop", async ({ app }) => {
+  test("the source link opens outside the window, in the system browser through the main process", async ({ app }) => {
     const { page } = app;
     await stubOpeners(app);
     await openAbout(app, "en");
@@ -381,14 +349,13 @@ test.describe("About HalfCube: contents", () => {
     await expect(link).toHaveAttribute("href", "https://github.com/sushiflux/HalfCube");
     await expect(link).toHaveAttribute("target", "_blank");
     await expect(link).toHaveAttribute("rel", /noopener/);
-    if (app.target !== "electron") return;
 
     const before = page.url();
-    const windows = app.electron ? app.electron.windows().length : 0;
+    const windows = app.electron.windows().length;
     await link.click();
     await expect.poll(() => opened(app)).toEqual(["external:https://github.com/sushiflux/HalfCube"]);
     expect(page.url()).toBe(before);
-    expect(app.electron?.windows().length).toBe(windows);
+    expect(app.electron.windows().length).toBe(windows);
     await expect(dialogOf(page, "en")).toBeVisible();
 
     // The main process never opens anything but plain https addresses, whatever the page asks.
@@ -400,21 +367,17 @@ test.describe("About HalfCube: contents", () => {
     expect(await opened(app)).toEqual(["external:https://github.com/sushiflux/HalfCube"]);
   });
 
-  test("technical details: the geometry kernel always, Electron only in the desktop program", async ({ app }) => {
+  test("technical details: the geometry kernel and the Electron version", async ({ app }) => {
     const { page } = app;
     await openAbout(app, "en");
     await expect(page.getByTestId("about-kernel")).toHaveText(/^OCCT \d+\.\d+\.\d+$/);
-    if (app.target === "electron") {
-      const expected = await page.evaluate(() => (window as unknown as { desktopBridge: { versions: { electron: string } } }).desktopBridge.versions.electron);
-      await expect(page.getByTestId("about-electron")).toHaveText(expected);
-    } else {
-      await expect(page.getByTestId("about-electron")).toHaveCount(0);
-    }
+    const expected = await page.evaluate(() => (window as unknown as { desktopBridge: { versions: { electron: string } } }).desktopBridge.versions.electron);
+    await expect(page.getByTestId("about-electron")).toHaveText(expected);
   });
 });
 
 test.describe("About HalfCube: licences", () => {
-  test("the list is grouped, the browser leaves out the desktop-only entries, the desktop shows them", async ({ app }) => {
+  test("the list is grouped: the program itself, the engine, the UI and the desktop shell", async ({ app }) => {
     const { page } = app;
     await openAbout(app, "en", "about=licenses");
     await expect(page.getByTestId("about-licences-list")).toBeVisible();
@@ -425,20 +388,9 @@ test.describe("About HalfCube: licences", () => {
     await expect(page.getByTestId("licence-row-occt")).toBeVisible();
     await expect(page.getByTestId("about-group-ui")).toBeVisible();
     const order = await page.locator("[data-testid^='about-group-']").evaluateAll((els) => els.map((el) => el.getAttribute("data-testid")));
-    const expectedOrder = app.target === "electron" ? ["about-group-self", "about-group-engine", "about-group-ui", "about-group-shell"] : ["about-group-self", "about-group-engine", "about-group-ui"];
-    expect(order).toEqual(expectedOrder);
-
-    if (app.target === "electron") {
-      await expect(page.getByTestId("licence-row-electron")).toBeVisible();
-      await expect(page.getByTestId("licence-row-chromium")).toBeVisible();
-    } else {
-      await expect(page.getByTestId("about-group-shell")).toHaveCount(0);
-      await expect(page.getByTestId("licence-row-electron")).toHaveCount(0);
-      await expect(page.getByTestId("licence-row-chromium")).toHaveCount(0);
-      // An address that names a desktop-only entry shows the list instead.
-      await app.open("?screen=main&lang=en&about=licenses&item=electron");
-      await expect(page.getByTestId("about-licences-list")).toBeVisible({ timeout: 60_000 });
-    }
+    expect(order).toEqual(["about-group-self", "about-group-engine", "about-group-ui", "about-group-shell"]);
+    await expect(page.getByTestId("licence-row-electron")).toBeVisible();
+    await expect(page.getByTestId("licence-row-chromium")).toBeVisible();
   });
 
   test("the search narrows the list and moves nothing", async ({ app }) => {
@@ -497,18 +449,21 @@ test.describe("About HalfCube: licences", () => {
 
   test("a licence text that cannot be loaded says what failed and can be copied", async ({ app }) => {
     const { page } = app;
-    // Only meaningful where the page can be intercepted (the browser); the desktop serves the same files through its own protocol.
-    test.skip(app.target === "electron", "the browser target can intercept the request");
-    await page.route("**/licenses/occt.txt", (route) => route.fulfill({ status: 404, body: "gone" }));
-    await openAbout(app, "en", "about=licenses&item=occt");
+    // The app:// protocol cannot be intercepted by the test, so the page's own fetch answers 404 for this one file. The override
+    // lasts until the next navigation (app.open loads a fresh document), so it never reaches another test.
+    await openAbout(app, "en", "about=licenses");
+    await page.evaluate(() => {
+      const real = window.fetch.bind(window);
+      window.fetch = (input, init) => ((input instanceof Request ? input.url : String(input)).endsWith("/licenses/occt.txt") ? Promise.resolve(new Response("gone", { status: 404 })) : real(input, init));
+    });
+    await page.getByTestId("licence-row-occt").click();
     const text = page.getByTestId("licence-text");
     await expect(text).toHaveAttribute("data-state", "failed");
     await expect(text).toContainText("The licence text could not be loaded: licenses/occt.txt: HTTP 404");
     await expect(text.getByRole("button", { name: "Copy" })).toBeVisible();
   });
 
-  test("Chromium on the desktop opens Electron's own licence file through the main process", async ({ app }) => {
-    test.skip(app.target !== "electron", "Chromium is a desktop entry");
+  test("Chromium opens Electron's own licence file through the main process", async ({ app }) => {
     const { page } = app;
     await stubOpeners(app);
     await openAbout(app, "en", "about=licenses&item=chromium");
@@ -522,12 +477,6 @@ test.describe("About HalfCube: licences", () => {
     } else {
       expect(state).toBe("ready");
     }
-  });
-
-  test("the browser has no Chromium entry to open", async ({ app }) => {
-    test.skip(app.target !== "browser", "browser only");
-    await openAbout(app, "en", "about=licenses");
-    await expect(app.page.getByTestId("licence-row-chromium")).toHaveCount(0);
   });
 });
 

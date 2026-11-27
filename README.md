@@ -1,4 +1,12 @@
-# HalfCube
+<h1 align="center">
+  <img src="branding/icons/icon-128.png" alt="" width="96" height="96"><br>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="branding/wordmark/halfcube-wordmark-dark.svg">
+    <img src="branding/wordmark/halfcube-wordmark-light.svg" alt="HalfCube" height="48">
+  </picture>
+</h1>
+
+<p align="center">Sketch first, then build.</p>
 
 **[English](#english) · [Deutsch](#deutsch)**
 
@@ -12,7 +20,7 @@ HalfCube will be a source-available, parametric 3D CAD program. You sketch in 2D
 
 ### Platforms
 
-Windows comes first, then Linux. A browser version is planned from the start. macOS follows later.
+HalfCube is a desktop program. Windows comes first, Linux and macOS follow later as native programs.
 
 ### Status
 
@@ -34,7 +42,7 @@ HalfCube is provided under the PolyForm Shield License 1.0.0. It permits free us
 - The license may become more open later (for example the GPL). Going from open to strict later is harder than the other way round, which is why the strict license comes first.
 - Versions published up to commit `e18de2c` (2026-11-25) were released under GPL-3.0-or-later and stay under it for those copies.
 
-Required notices and an additional permission for the bundled libraries (Open CASCADE Technology, planegcs) are in [NOTICE](NOTICE). The name "HalfCube" and the logo are not covered by the code license. Rules for using them will follow.
+Required notices and an additional permission for the bundled libraries (Open CASCADE Technology, planegcs) are in [NOTICE](NOTICE). The name "HalfCube" and the logo are not covered by the code license. The rules for using them are in [TRADEMARKS.md](TRADEMARKS.md).
 
 HalfCube is developed with AI assistance. Every decision is made by the developer.
 
@@ -50,7 +58,7 @@ HalfCube wird ein quelloffenes, parametrisches 3D-CAD-Programm. Man skizziert zu
 
 ### Plattformen
 
-Zuerst kommt Windows, dann Linux. Eine Browser-Version ist von Anfang an geplant. macOS folgt später.
+HalfCube ist ein Desktop-Programm. Zuerst kommt Windows, Linux und macOS folgen später als native Programme.
 
 ### Status
 
@@ -72,7 +80,7 @@ HalfCube wird unter der PolyForm Shield License 1.0.0 bereitgestellt. Sie erlaub
 - Die Lizenz kann später offener werden (zum Beispiel GPL). Von offen zu streng zu wechseln ist später schwerer als umgekehrt, deshalb steht die strengere Lizenz am Anfang.
 - Fassungen, die bis zum Commit `e18de2c` (2026-11-25) veröffentlicht wurden, erschienen unter GPL-3.0-or-later und bleiben für diese Kopien darunter.
 
-Pflichthinweise und eine Zusatzerlaubnis für die mitgelieferten Bibliotheken (Open CASCADE Technology, planegcs) stehen in [NOTICE](NOTICE). Der Name „HalfCube“ und das Logo gehören nicht zur Code-Lizenz. Regeln für ihre Nutzung folgen.
+Pflichthinweise und eine Zusatzerlaubnis für die mitgelieferten Bibliotheken (Open CASCADE Technology, planegcs) stehen in [NOTICE](NOTICE). Der Name „HalfCube“ und das Logo gehören nicht zur Code-Lizenz. Die Regeln für ihre Nutzung stehen in [TRADEMARKS.md](TRADEMARKS.md).
 
 HalfCube entsteht mit KI-Unterstützung. Jede Entscheidung trifft der Entwickler.
 

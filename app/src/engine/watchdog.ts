@@ -5,9 +5,8 @@
 // not count against it. Commands therefore run in lanes:
 //   serial  the engine works them off one at a time in the order they were sent. The budget of a command starts when
 //           it becomes the first of its lane (sent into an empty lane, or the one before it was answered).
-//           WebAssembly: every command is serial, the single thread answers even ping only between commands.
-//   direct  the engine answers at once, also while it computes (native hello, ping, cancel). The budget starts when
-//           the command is sent.
+//   direct  the engine answers at once, also while it computes (hello, ping, cancel). The budget starts when the
+//           command is sent.
 // A timeout of 0 or Infinity means "no limit" (the native engine is supervised by pings from the main process).
 
 export interface WatchdogClock {

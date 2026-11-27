@@ -3,14 +3,12 @@ project(halfcube_engine LANGUAGES CXX)
 
 # HalfCube engine: one C++20 code base built as
 #   - halfcube-engine          native process (stdio frames), Windows now, Linux compile-only for CI
-#   - halfcube-engine.mjs/.wasm WebAssembly module for the browser's Web Worker (Emscripten)
-#   - halfcube-engine-tests    C++ unit tests (native only)
+#   - halfcube-engine-tests    C++ unit tests
 # Third-party sources come from engine/_deps (scripts/fetch-deps.ps1 or scripts/fetch-deps.sh); OCCT is found
-# through OpenCASCADE_DIR (the "cmake" folder of an OCCT 8.0.2 installation: shared on Windows and Linux, static for
-# WebAssembly with the flags of scripts/build-wasm.ps1).
+# through OpenCASCADE_DIR (the "cmake" folder of an OCCT 8.0.2 installation, built as shared libraries).
 
 option(HALFCUBE_TEST_COMMANDS "Build the test commands diagnostics.crash and diagnostics.hang" OFF)
-option(HALFCUBE_BUILD_TESTS "Build the C++ unit tests (not for WebAssembly)" ON)
+option(HALFCUBE_BUILD_TESTS "Build the C++ unit tests" ON)
 option(HALFCUBE_WARNINGS_AS_ERRORS "Treat warnings in HalfCube's own code as errors" ON)
 set(HALFCUBE_DEPS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/_deps" CACHE PATH "Folder with the fetched third-party sources")
 
@@ -43,10 +41,7 @@ if(EXISTS "${HC_REPO_DIR}/version.txt")
     set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${HC_REPO_DIR}/version.txt")
 endif()
 
-if(EMSCRIPTEN)
-    set(HC_PLATFORM "wasm")
-    set(HC_OS "wasm32")
-elseif(WIN32)
+if(WIN32)
     set(HC_PLATFORM "native")
     if(CMAKE_SIZEOF_VOID_P EQUAL 8)
         set(HC_OS "windows-x64")
@@ -91,11 +86,7 @@ else()
     endif()
 endif()
 
-if(EMSCRIPTEN)
-    # Must match the static OCCT build: native WebAssembly exceptions, OCCT's signal conversion off (with it the
-    # -fwasm-exceptions link fails in wasm-opt). "-include mutex" is only needed to compile OCCT itself.
-    set(HC_PLATFORM_FLAGS -fwasm-exceptions -UOCC_CONVERT_SIGNALS)
-elseif(NOT MSVC)
+if(NOT MSVC)
     # OCCT builds with OCC_CONVERT_SIGNALS on non-MSVC native targets; its headers must see the same setting.
     set(HC_PLATFORM_FLAGS -DOCC_CONVERT_SIGNALS)
 endif()
@@ -126,10 +117,8 @@ target_link_libraries(halfcube_engine_core PUBLIC ${HC_OCCT_LIBS} hc::json PRIVA
 target_compile_options(halfcube_engine_core PRIVATE ${HC_WARNING_FLAGS} PUBLIC ${HC_PLATFORM_FLAGS})
 target_compile_definitions(halfcube_engine_core PRIVATE "HC_BUILD_TYPE=\"$<CONFIG>\""
     PUBLIC $<$<BOOL:${HALFCUBE_TEST_COMMANDS}>:HALFCUBE_TEST_COMMANDS=1>)
-if(NOT EMSCRIPTEN)
-    find_package(Threads REQUIRED)
-    target_link_libraries(halfcube_engine_core PUBLIC Threads::Threads)
-endif()
+find_package(Threads REQUIRED)
+target_link_libraries(halfcube_engine_core PUBLIC Threads::Threads)
 
 # Linux: binaries in the build tree find the OCCT shared libraries without LD_LIBRARY_PATH. DT_RPATH instead of the
 # default DT_RUNPATH, because only DT_RPATH also applies to the OCCT libraries loading each other.
@@ -140,29 +129,7 @@ endfunction()
 
 # ------------------------------------------------------------------------------------------------ engine executable
 
-if(EMSCRIPTEN)
-    add_executable(halfcube-engine src/platform/main_wasm.cpp)
-    set_target_properties(halfcube-engine PROPERTIES SUFFIX ".mjs")
-    target_link_options(halfcube-engine PRIVATE
-        -fwasm-exceptions
-        -sMODULARIZE=1
-        -sEXPORT_ES6=1
-        -sEXPORT_NAME=createEngineModule
-        -sENVIRONMENT=web,worker,node
-        # Memory grows on demand so large sketches and bodies fit; 4 GB is the wasm32 limit.
-        -sALLOW_MEMORY_GROWTH=1
-        -sINITIAL_MEMORY=32MB
-        -sMAXIMUM_MEMORY=4GB
-        # Explicit stack: the solver needs more than Emscripten's default of 64 KB for interactive sketch solving;
-        # 4 MB leaves room for large sketches and the kernel's recursion on bodies.
-        -sSTACK_SIZE=4MB
-        -sEXIT_RUNTIME=0
-        -sINVOKE_RUN=0
-        -sEXPORTED_FUNCTIONS=_hc_init,_hc_handle,_malloc,_free
-        -sEXPORTED_RUNTIME_METHODS=HEAPU8)
-else()
-    add_executable(halfcube-engine src/platform/main_native.cpp)
-endif()
+add_executable(halfcube-engine src/platform/main_native.cpp)
 target_link_libraries(halfcube-engine PRIVATE halfcube_engine_core)
 target_compile_options(halfcube-engine PRIVATE ${HC_WARNING_FLAGS})
 
@@ -175,7 +142,7 @@ endif()
 
 # ------------------------------------------------------------------------------------------------ unit tests
 
-if(HALFCUBE_BUILD_TESTS AND NOT EMSCRIPTEN)
+if(HALFCUBE_BUILD_TESTS)
     enable_testing()
     add_executable(halfcube-engine-tests
         tests/unit/main.cpp
@@ -196,7 +163,7 @@ if(HALFCUBE_BUILD_TESTS AND NOT EMSCRIPTEN)
     add_test(NAME engine-unit-tests COMMAND halfcube-engine-tests)
 endif()
 
-if(UNIX AND NOT EMSCRIPTEN)
+if(UNIX)
     hc_linux_build_rpath(halfcube-engine)
 endif()
 

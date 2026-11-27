@@ -3,7 +3,6 @@
 import { existsSync } from "node:fs";
 import { describe } from "vitest";
 import { join } from "node:path";
-import { pathToFileURL } from "node:url";
 import { repoRoot } from "../../../../config/build-info.ts";
 
 const exeName = process.platform === "win32" ? "halfcube-engine.exe" : "halfcube-engine";
@@ -13,20 +12,10 @@ const build = join(repoRoot, "engine", "_build");
 export const nativeTestingExe = process.env.HC_ENGINE_TESTING_EXE ?? join(build, "windows-release-testing", "bin", exeName);
 /** Native release engine; override with HC_ENGINE_RELEASE_EXE. */
 export const nativeReleaseExe = process.env.HC_ENGINE_RELEASE_EXE ?? join(build, "windows-release", "bin", exeName);
-/** WebAssembly engine with test commands; override with HC_ENGINE_WASM_TESTING_DIR. */
-export const wasmTestingDir = process.env.HC_ENGINE_WASM_TESTING_DIR ?? join(build, "wasm-testing");
-/** WebAssembly release engine; override with HC_ENGINE_WASM_DIR. */
-export const wasmReleaseDir = process.env.HC_ENGINE_WASM_DIR ?? join(build, "wasm");
-
-export const wasmModuleUrl = (dir: string): string => pathToFileURL(join(dir, "halfcube-engine.mjs")).href;
-
-const wasmPresent = (dir: string) => existsSync(join(dir, "halfcube-engine.mjs")) && existsSync(join(dir, "halfcube-engine.wasm"));
 
 /** Reason to skip when the build is missing, otherwise false (the shape describe(..., { skip }) wants). */
 export const skipUnlessNativeTesting = process.platform !== "win32" || !existsSync(nativeTestingExe) ? `native testing build missing (${nativeTestingExe})` : false;
 export const skipUnlessNativeRelease = process.platform !== "win32" || !existsSync(nativeReleaseExe) ? `native release build missing (${nativeReleaseExe})` : false;
-export const skipUnlessWasmTesting = wasmPresent(wasmTestingDir) ? false : `WebAssembly testing build missing (${wasmTestingDir})`;
-export const skipUnlessWasmRelease = wasmPresent(wasmReleaseDir) ? false : `WebAssembly release build missing (${wasmReleaseDir})`;
 
 /**
  * describe() that is skipped, with the reason in its name, when a build is missing. Pass one of the skipUnless values.

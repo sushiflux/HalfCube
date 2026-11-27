@@ -4,7 +4,7 @@
 // produces a new key, so a stale OCCT is never reused. Fails when the options block cannot be found (a refactored
 // build script must break CI loudly instead of silently keeping an old cache).
 //
-//   node scripts/ci/occt-key.mjs <windows|linux|wasm>      prints "<platform>-<commit8>-<hash12>"
+//   node scripts/ci/occt-key.mjs <windows|linux>           prints "<platform>-<commit8>-<hash12>"
 // In GitHub Actions the line "key=<value>" is also appended to $GITHUB_OUTPUT.
 import { createHash } from "node:crypto";
 import { appendFileSync, readFileSync } from "node:fs";
@@ -18,7 +18,6 @@ const platform = process.argv[2];
 const regions = {
   windows: { file: "engine/scripts/build-windows.ps1", pattern: /\$occtOptions = @\([\s\S]*?-DUSE_EIGEN=OFF'\)/ },
   linux: { file: "engine/scripts/build-linux.sh", pattern: /occt_stamp=[\s\S]*?-DUSE_EIGEN=OFF/ },
-  wasm: { file: "engine/docker/wasm-build.sh", pattern: /OCCT_CXX_FLAGS=[\s\S]*?-DUSE_EIGEN=OFF/ },
 };
 const region = regions[platform];
 if (!region) {

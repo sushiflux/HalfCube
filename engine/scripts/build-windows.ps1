@@ -49,7 +49,7 @@ function Test-OcctInstallMoved([string]$Install, [string]$EngineDir) {
     return $false
 }
 
-# OCCT configure options. Same modules and switches as the WebAssembly and Linux builds; DataExchange is kept for
+# OCCT configure options. Same modules and switches as the Linux build; DataExchange is kept for
 # the STEP, IGES and STL work of later phases.
 $occtOptions = @(
     '-DCMAKE_BUILD_TYPE=Release', '-DBUILD_LIBRARY_TYPE=Shared', '-DBUILD_CPP_STANDARD=C++20',

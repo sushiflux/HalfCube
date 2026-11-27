@@ -2,6 +2,7 @@
 
 #include "core/errors.hpp"
 #include "diagnostics/test_commands.hpp"
+#include "generated/branding.hpp"
 #include "kernel/kernel_selftest.hpp"
 #include "model/model.hpp"
 #include "halfcube/build_info.hpp"
@@ -11,10 +12,6 @@
 #include <Standard_Version.hxx>
 
 #include <cstdio>
-
-#ifdef __EMSCRIPTEN__
-#include <emscripten/version.h>
-#endif
 
 #ifndef HC_BUILD_TYPE
 #define HC_BUILD_TYPE "unknown"
@@ -62,7 +59,7 @@ const char* fieldErrorCode(const std::string& type, const protocol::FieldError& 
     return err::kBadMessage;
 }
 
-// A document from a newer HalfCube is refused before its fields are read, so the user learns the real reason
+// A document from a newer version of the program is refused before its fields are read, so the user learns the real reason
 // instead of a field error about something this engine does not know yet.
 void checkDocumentFormat(const std::string& type, const Json& msg) {
     if (type != cmd::kModelSync) return;
@@ -74,16 +71,11 @@ void checkDocumentFormat(const std::string& type, const Json& msg) {
     if (value > static_cast<std::int64_t>(protocol::kDocumentFormat))
         throw EngineError(err::kUnsupportedDocument,
                           "The document has format version " + std::to_string(value) + ", this engine reads up to version " +
-                              std::to_string(protocol::kDocumentFormat) + ". It was saved by a newer HalfCube; update HalfCube to open it.");
+                              std::to_string(protocol::kDocumentFormat) + ". It was saved by a newer " + std::string(branding::kName) + "; update " + std::string(branding::kName) + " to open it.");
 }
 
 std::string compilerText() {
-    std::string s = build::kCompiler;
-#ifdef __EMSCRIPTEN__
-    s += " (Emscripten " + std::to_string(__EMSCRIPTEN_MAJOR__) + "." + std::to_string(__EMSCRIPTEN_MINOR__) + "." +
-         std::to_string(__EMSCRIPTEN_TINY__) + ")";
-#endif
-    return s;
+    return build::kCompiler;
 }
 
 std::string jsonLibraryVersion() {
@@ -212,7 +204,7 @@ void Engine::handleHello(std::int64_t id, const Json& msg) {
         sendError(id, err::kProtocolMismatch,
                   "The engine speaks protocol version " + std::to_string(protocol::kVersion) + ", the client \"" + c.client +
                       "\" asked for version " + std::to_string(c.protocol) +
-                      ". User interface and engine come from different builds; reinstall HalfCube.",
+                      ". User interface and engine come from different builds; reinstall " + std::string(branding::kName) + ".",
                   {}, cmd::kHello);
         return;
     }
@@ -222,7 +214,7 @@ void Engine::handleHello(std::int64_t id, const Json& msg) {
                   "The engine speaks protocol \"" + std::string(protocol::kProtocolId) + "\" (version " + std::to_string(protocol::kVersion) +
                       "), the client \"" + c.client + "\" named protocol " +
                       (c.protocolId ? "\"" + *c.protocolId + "\"" : std::string("nothing (no protocolId in hello)")) + " (version " +
-                      std::to_string(c.protocol) + "). User interface and engine come from different builds; reinstall HalfCube.",
+                      std::to_string(c.protocol) + "). User interface and engine come from different builds; reinstall " + std::string(branding::kName) + ".",
                   {}, cmd::kHello);
         return;
     }
@@ -276,8 +268,7 @@ void Engine::handleCancel(std::int64_t id, const Json& msg) {
 }
 
 bool Engine::isCancelled(std::int64_t id) const {
-    if (stop_ || cancelTarget_.load() == id) return true;
-    return opt_.externalCancel && opt_.externalCancel(id);
+    return stop_ || cancelTarget_.load() == id;
 }
 
 void Engine::requestStop() {

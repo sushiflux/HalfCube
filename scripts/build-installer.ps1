@@ -2,14 +2,14 @@
 # No push, no tag, no CI run. Official Nightly, Beta and Release packages are built by CI.
 #
 # Usage: powershell -ExecutionPolicy Bypass -File scripts\build-installer.ps1 [-Channel dev] [-Neubau] [-OhneEngine]
-#          [-AlleSprachen] [-LayoutPruefung] [-PackId HalfCube] [-Title HalfCube] [-OutDir <folder>]
+#          [-AlleSprachen] [-LayoutPruefung] [-PackId <name>] [-Title <name>] [-OutDir <folder>]
 #          [-VersionId v2026.11.20.1.1] [-FeedDir <folder>]
 #          CI (release job of .github/workflows/ci.yml): -Ci -Channel nightly -ReleaseNotes <file> [-PreviousFrom https://github.com/<owner>/<repo>]
 #   -Neubau         rebuild every step even if its inputs did not change
 #   -OhneEngine     build without the engine (only for tests of the installer itself; the program then has no geometry)
 #   -AlleSprachen   keep all Chromium locale files (by default only en-US and de stay: the program speaks German and English)
 #   -LayoutPruefung renders every page of the setup (light/dark, DE/EN, 100/150/200 %) offscreen into <OutDir>/layout-check and fails on a layout problem
-#   -PackId/-Title  Velopack app id and display name (default HalfCube); tests use another id so a real installation is never touched
+#   -PackId/-Title  Velopack app id and display name (default: the product name of branding\branding.json); tests use another id so a real installation is never touched
 #   -OutDir         where the result goes (default _build\installer)
 #   -VersionId      TEST ONLY: bakes this five-part id into the bundles, the package and the setup instead of version.txt line 2 (through
 #                   HALFCUBE_VERSION_ID, read by config/build-info.ts). Rejected together with -Ci and in a CI tag build. A build with it
@@ -50,8 +50,8 @@
 # dev environment uses; run scripts\dev.ps1 -Neubau afterwards.
 param(
     [ValidateSet('dev', 'nightly', 'beta', 'release')][string]$Channel = 'dev',
-    [string]$PackId = 'HalfCube',
-    [string]$Title = 'HalfCube',
+    [string]$PackId,
+    [string]$Title,
     [string]$OutDir,
     [string]$VersionId,
     [string]$FeedDir,
@@ -87,6 +87,14 @@ $githubToken = $env:GITHUB_TOKEN
 Remove-Item Env:\GITHUB_TOKEN -ErrorAction SilentlyContinue
 
 $root = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
+# The product name comes from branding\branding.json, the one place that holds it (same file as the app, the engine and the setup read).
+$brand = Get-Content -Raw -Encoding UTF8 (Join-Path $root 'branding\branding.json') | ConvertFrom-Json
+$productName = $brand.name
+$productSlug = $brand.slug
+if (-not $productName) { throw 'branding\branding.json hat keinen Namen ("name").' }
+if (-not $PackId) { $PackId = $productName }
+if (-not $Title) { $Title = $productName }
+$mainExeName = "$productName.exe"
 $out = if ($OutDir) { $OutDir } else { Join-Path $root '_build\installer' }
 New-Item -ItemType Directory -Force -Path $out | Out-Null
 $out = (Resolve-Path $out).Path
@@ -161,7 +169,7 @@ $display = if ($symbols[$Channel] -eq '') { $id } else { "$id ($($symbols[$Chann
 $packVersion = Get-PackVersion $Channel
 $fileSuffix = if ($Channel -eq 'release') { '' } else { "-$Channel" }
 $fileId = if ($Channel -eq 'release') { "v$vYear.$vMonth.$vCommit" } else { $id }
-$finalName = "HalfCube-Setup-$fileId$fileSuffix.exe"
+$finalName = "$productName-Setup-$fileId$fileSuffix.exe"
 # The names vpk gives its files: <packId>-<channel>-Setup.exe and <packId>-<packVersion>-<channel>-full.nupkg
 $vpkSetupName = "$PackId-$Channel-Setup.exe"
 $vpkFullName = "$PackId-$packVersion-$Channel-full.nupkg"
@@ -214,7 +222,7 @@ try {
     $bundleForeign = $bundleState -ne 'match'
     if ($bundleForeign) { Say "Die Bundles in _build passen nicht zu diesem Bau, sie werden neu gebaut. $bundleState" }
     # A CI build starts from a clean checkout; it rebuilds anyway so no leftover can reach a package
-    if ($Neubau -or $Ci -or $bundleForeign -or (Test-Stale $webBundle $appInputs)) { Step 'Browser-Version bauen' { Npm 'run' 'build:web' } }
+    if ($Neubau -or $Ci -or $bundleForeign -or (Test-Stale $webBundle $appInputs)) { Step 'Oberflaeche bauen' { Npm 'run' 'build:web' } }
     if ($Neubau -or $Ci -or $bundleForeign -or (Test-Stale $mainBundle $desktopInputs)) { Step 'Desktop-Programm bauen' { Npm 'run' 'build:desktop' } }
     foreach ($f in @($webBundle, $mainBundle, (Join-Path $root '_build\desktop\preload.cjs'))) {
         if (-not (Test-Path $f)) { throw "Bundle fehlt nach dem Bau: $f" }
@@ -275,6 +283,9 @@ try {
             Copy-Item (Join-Path $root 'installer\app\package-lock.json') $stageApp
             $pkgJson = Get-Content -Raw (Join-Path $root 'installer\app\package.json') | ConvertFrom-Json
             $pkgJson.version = $packVersion
+            # Name and product name of the packaged app come from branding.json, not from the copy in installer\app\package.json
+            $pkgJson.name = $productSlug
+            $pkgJson.productName = $productName
             # UTF-8 without BOM: Electron's JSON reader does not accept a byte order mark
             [IO.File]::WriteAllText((Join-Path $stageApp 'package.json'), ($pkgJson | ConvertTo-Json -Depth 5), (New-Object Text.UTF8Encoding $false))
             Copy-Item (Join-Path $root '_build\desktop') (Join-Path $stageApp '_build\desktop') -Recurse
@@ -295,19 +306,19 @@ try {
         }
         Step 'Electron verpacken' {
             Remove-Item $pkgOut -Recurse -Force -ErrorAction SilentlyContinue
-            $packagerArgs = @($packagerBin, $stageApp, 'HalfCube',
+            $packagerArgs = @($packagerBin, $stageApp, $productName,
                 '--platform=win32', '--arch=x64', "--out=$pkgOut", '--overwrite', "--electron-version=$electronVersion",
                 "--icon=$(Join-Path $root 'branding\icons\icon.ico')",
                 # The Windows file version has four numeric parts (year, month, commit of the year, prompts)
                 '--asar.unpack=**/*.node',
                 "--app-version=$vYear.$vMonth.$vCommit.$vPrompts", "--app-copyright=(c) $((Get-Date).Year) SushiFlux",
-                '--win32metadata.CompanyName=SushiFlux', '--win32metadata.ProductName=HalfCube',
-                '--win32metadata.FileDescription=HalfCube', '--win32metadata.OriginalFilename=HalfCube.exe')
+                '--win32metadata.CompanyName=SushiFlux', "--win32metadata.ProductName=$productName",
+                "--win32metadata.FileDescription=$productName", "--win32metadata.OriginalFilename=$mainExeName")
             if ($engineFiles.Count -gt 0) { $packagerArgs += "--extra-resource=$(Join-Path $extra 'engine')" }
             Run 'node' @packagerArgs
         }
         $pkgDir = (Get-ChildItem $pkgOut -Directory | Select-Object -First 1).FullName
-        if (-not (Test-Path (Join-Path $pkgDir 'HalfCube.exe'))) { throw "HalfCube.exe fehlt im verpackten Ordner $pkgDir" }
+        if (-not (Test-Path (Join-Path $pkgDir $mainExeName))) { throw "$mainExeName fehlt im verpackten Ordner $pkgDir" }
         if ($engineFiles.Count -gt 0 -and -not (Test-Path (Join-Path $pkgDir 'resources\engine\halfcube-engine.exe'))) { throw 'resources\engine\halfcube-engine.exe fehlt im verpackten Ordner.' }
         if (-not $AlleSprachen) {
             # The program speaks German and English; Chromium falls back to en-US for everything else (about 35 MB less)
@@ -331,7 +342,7 @@ try {
             # package; the setup removes the ones the user switches off.
             $delta = if ($FeedDir -or $PreviousFrom) { 'BestSpeed' } else { 'None' }
             $packArgs = @('pack', '--packId', $PackId, '--packVersion', $packVersion, '--packDir', $pkgDir,
-                '--mainExe', 'HalfCube.exe', '--packTitle', $Title, '--packAuthors', 'SushiFlux',
+                '--mainExe', $mainExeName, '--packTitle', $Title, '--packAuthors', 'SushiFlux',
                 '--icon', (Join-Path $root 'branding\icons\icon.ico'), '--channel', $Channel, '--runtime', 'win-x64',
                 '--outputDir', $feed, '--delta', $delta, '--noPortable', '--shortcuts', 'Desktop,StartMenuRoot')
             if ($ReleaseNotes) { $packArgs += @('--releaseNotes', (Resolve-Path -LiteralPath $ReleaseNotes).Path) }
@@ -354,7 +365,7 @@ try {
 
     # ---------------------------------------------------------------- 5. the designed setup
     $setupSources = @('installer\setup', 'installer\Directory.Build.props', 'branding\icons\icon-512.png', 'branding\icons\icon.ico')
-    $setupPublished = Join-Path $setupOut 'HalfCube-Setup.exe'
+    $setupPublished = Join-Path $setupOut "$productName-Setup.exe"
     $setupStale = $Neubau -or (Test-Stale $setupPublished $setupSources)
     # NuGet's restore files hold absolute paths; after a move or rename of the project folder they are recreated from scratch.
     $setupObj = Join-Path $out 'obj\HalfCube.Setup'
@@ -382,7 +393,7 @@ try {
             version        = $id
             displayVersion = $display
             channel        = $Channel
-            mainExe        = 'HalfCube.exe'
+            mainExe        = $mainExeName
             installedBytes = $installedBytes
             setupBytes     = [int64]$vpkSetup[0].Length
         }
@@ -400,7 +411,7 @@ try {
         $final = Join-Path $out $finalName
         # Test builds with -FeedDir or -VersionId keep the older setups (the first one is installed, the later ones are updates)
         if (-not $FeedDir -and -not $VersionId) {
-            Get-ChildItem $out -Filter 'HalfCube-Setup-*.exe' -File | Where-Object { $_.Name -ne $finalName } | Remove-Item -Force -ErrorAction SilentlyContinue
+            Get-ChildItem $out -Filter "$productName-Setup-*.exe" -File | Where-Object { $_.Name -ne $finalName } | Remove-Item -Force -ErrorAction SilentlyContinue
         }
         Copy-Item $setupPublished $final -Force
         # The published exe appends the payload to the copy (a running exe cannot be written, and it is a window program: wait for it)

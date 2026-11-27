@@ -3,8 +3,6 @@
 // (protocol/engine-protocol.schema.json). No dependencies besides Node.
 //
 //   node engine/tests/drive-engine.mjs --native <halfcube-engine.exe> [--out result.json]
-//   node engine/tests/drive-engine.mjs --wasm <folder with halfcube-engine.mjs> [--out result.json]
-//   node engine/tests/drive-engine.mjs --compare <a.json> <b.json>
 //
 // Runs hello, ping, error cases, both self-tests, cancel and shutdown. Engines built with test commands also get
 // diagnostics.hang (busy, cancelled while running, frozen) and diagnostics.crash (abort, nullcall, intdiv), each
@@ -12,8 +10,7 @@
 import { spawn } from "node:child_process";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
-import { fileURLToPath, pathToFileURL } from "node:url";
-import { Worker } from "node:worker_threads";
+import { fileURLToPath } from "node:url";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const repo = resolve(here, "..", "..");
@@ -103,41 +100,6 @@ class NativeEngine {
   }
 }
 
-class WasmEngine {
-  constructor(dir, withCancelFlags = true) {
-    this.moduleUrl = pathToFileURL(join(dir, "halfcube-engine.mjs")).href;
-    this.cancelFlags = withCancelFlags ? new Int32Array(new SharedArrayBuffer(4)) : null;
-    this.worker = new Worker(join(here, "wasm-worker.mjs"));
-    this.stderr = "";
-    this.fatal = null;
-    this.ready = new Promise((res, rej) => {
-      this.worker.on("message", (m) => {
-        if (m.kind === "ready") res(m.instantiateMs);
-        else if (m.kind === "msg") this.onMessage?.(JSON.parse(m.header));
-        else if (m.kind === "log") this.stderr += m.text + "\n";
-        else if (m.kind === "fatal") {
-          this.fatal = m.message;
-          this.onFatal?.(m.message);
-          rej(new Error(m.message));
-        }
-      });
-      this.worker.on("error", (e) => rej(e));
-    });
-    this.ready.catch(() => {});
-    this.worker.postMessage({ kind: "init", moduleUrl: this.moduleUrl, cancelFlags: this.cancelFlags });
-  }
-  send(obj) {
-    this.worker.postMessage({ kind: "msg", header: JSON.stringify(obj) });
-  }
-  async close() {
-    await this.worker.terminate();
-    return { code: 0, signal: null };
-  }
-  kill() {
-    return this.close();
-  }
-}
-
 // ------------------------------------------------------------------------------------ test session
 
 const checks = [];
@@ -192,10 +154,9 @@ class Session {
 
 const stripTimes = (o) => JSON.parse(JSON.stringify(o, (k, v) => (k === "timeMs" || k === "replyTo" ? undefined : v)));
 
-async function startEngine(kind, target) {
-  const engine = kind === "native" ? new NativeEngine(target) : new WasmEngine(target);
+async function startEngine(target) {
+  const engine = new NativeEngine(target);
   const t0 = performance.now();
-  if (kind === "wasm") await engine.ready;
   const s = new Session(engine);
   const hello = await s.call("hello", { protocol: PROTOCOL_VERSION, protocolId: PROTOCOL_ID, client: "drive-engine.mjs" }, 20000);
   return { engine, s, hello, startMs: performance.now() - t0 };
@@ -203,16 +164,15 @@ async function startEngine(kind, target) {
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-async function run(kind, target) {
-  const result = { kind, target, checks };
-  const { engine, s, hello, startMs } = await startEngine(kind, target);
+async function run(target) {
+  const result = { kind: "native", target, checks };
+  const { engine, s, hello, startMs } = await startEngine(target);
   result.startAndHelloMs = startMs;
   check("hello answers helloResult", hello?.type === "helloResult", hello?.type === "error" ? hello.message : hello ? "" : `no answer; engine stderr: ${engine.stderr.trim() || "(empty)"}`);
   if (hello?.type !== "helloResult") return finish(result, engine);
   result.hello = stripTimes(hello);
-  const expectPlatform = kind === "native" ? "native" : "wasm";
   check("hello names the protocol version and id", hello.protocol === PROTOCOL_VERSION && hello.protocolId === PROTOCOL_ID, `${hello.protocol} / ${hello.protocolId}`);
-  check("hello names the platform", hello.engine.platform === expectPlatform, hello.engine.platform);
+  check("hello names the platform", hello.engine.platform === "native", hello.engine.platform);
   check("hello names OCCT 8.0.2", hello.components.occt === "8.0.2", hello.components.occt);
   check("hello names planegcs FreeCAD 1.1.4 4fd3bf32", hello.components.planegcs.source === "FreeCAD 1.1.4" && hello.components.planegcs.commit.startsWith("4fd3bf32"));
   check("hello names Eigen 3.4.0", hello.components.eigen === "3.4.0", hello.components.eigen);
@@ -306,30 +266,25 @@ async function run(kind, target) {
   } else {
     const busy = await s.call("diagnostics.hang", { mode: "busy", ms: 30 });
     check("hang busy 30 ms answers", busy?.type === "hangResult" && busy.ms >= 30, `${busy?.ms?.toFixed(1)} ms`);
-    // Cancel a running command: native through a cancel command, WebAssembly through the shared cancel flag.
+    // Cancel a running command through a cancel command.
     const long = s.request("diagnostics.hang", { mode: "busy" });
     await sleep(150);
-    if (kind === "native") {
-      const ping = await s.call("ping", {}, 2000);
-      check("native ping is answered while a command runs", ping?.busyWith === long.id, JSON.stringify(ping));
-      const cancel = await s.call("cancel", { target: long.id }, 2000);
-      check("cancel finds the running command", cancel?.state === "running", JSON.stringify(cancel));
-    } else {
-      Atomics.store(engine.cancelFlags, 0, long.id);
-    }
+    const ping = await s.call("ping", {}, 2000);
+    check("ping is answered while a command runs", ping?.busyWith === long.id, JSON.stringify(ping));
+    const cancel = await s.call("cancel", { target: long.id }, 2000);
+    check("cancel finds the running command", cancel?.state === "running", JSON.stringify(cancel));
     const cancelled = await long.reply;
     check("running command ends as cancelled", cancelled?.code === "cancelled", cancelled?.message);
-    if (kind === "wasm") Atomics.store(engine.cancelFlags, 0, 0);
   }
 
   const bye = await s.call("shutdown");
   check("shutdown answers bye", bye?.type === "bye");
   const exit = await engine.close();
-  if (kind === "native") check("native engine exits with 0 after shutdown", exit.code === 0, `exit ${exit.code}`);
+  check("engine exits with 0 after shutdown", exit.code === 0, `exit ${exit.code}`);
 
   if (testCommands) {
     // Freeze: no answer at all, not even to ping, until the engine is ended from outside.
-    const f = await startEngine(kind, target);
+    const f = await startEngine(target);
     f.s.request("diagnostics.hang", { mode: "frozen" });
     await sleep(200);
     const t0 = performance.now();
@@ -337,19 +292,11 @@ async function run(kind, target) {
     check("frozen engine answers no ping within 2 s", ping === null, ping ? JSON.stringify(ping) : `${(performance.now() - t0).toFixed(0)} ms without answer`);
     await f.engine.kill();
     for (const mode of ["abort", "nullcall", "intdiv"]) {
-      const c = await startEngine(kind, target);
-      let fatal = null;
-      if (kind === "wasm") c.engine.onFatal = (m) => (fatal = m);
+      const c = await startEngine(target);
       c.s.request("diagnostics.crash", { mode }, 5000);
-      if (kind === "native") {
-        const ex = await Promise.race([c.engine.exit, sleep(5000).then(() => null)]);
-        check(`crash ${mode} ends the native process`, ex && ex.code !== 0, ex ? `exit code ${ex.code} (0x${(ex.code >>> 0).toString(16)})` : "still running");
-        if (!ex) await c.engine.kill();
-      } else {
-        await sleep(1000);
-        check(`crash ${mode} traps the WebAssembly module`, fatal !== null, fatal ?? "no trap");
-        await c.engine.close();
-      }
+      const ex = await Promise.race([c.engine.exit, sleep(5000).then(() => null)]);
+      check(`crash ${mode} ends the native process`, ex && ex.code !== 0, ex ? `exit code ${ex.code} (0x${(ex.code >>> 0).toString(16)})` : "still running");
+      if (!ex) await c.engine.kill();
     }
   }
   return finish(result);
@@ -361,33 +308,6 @@ function finish(result, engine) {
   return result;
 }
 
-// ------------------------------------------------------------------------------------ compare
-
-function compare(aPath, bPath) {
-  const a = JSON.parse(readFileSync(aPath, "utf8"));
-  const b = JSON.parse(readFileSync(bPath, "utf8"));
-  let maxRel = 0;
-  const diffs = [];
-  const walk = (x, y, path) => {
-    if (typeof x === "number" && typeof y === "number") {
-      const rel = x === y ? 0 : Math.abs(x - y) / Math.max(Math.abs(x), Math.abs(y), 1e-300);
-      if (rel > maxRel) maxRel = rel;
-      if (rel > 1e-9) diffs.push(`${path}: ${x} vs ${y}`);
-      return;
-    }
-    if (typeof x !== typeof y || Array.isArray(x) !== Array.isArray(y)) return diffs.push(`${path}: ${JSON.stringify(x)} vs ${JSON.stringify(y)}`);
-    if (x && typeof x === "object") {
-      for (const k of new Set([...Object.keys(x), ...Object.keys(y)])) walk(x[k], y[k], `${path}.${k}`);
-      return;
-    }
-    if (x !== y) diffs.push(`${path}: ${JSON.stringify(x)} vs ${JSON.stringify(y)}`);
-  };
-  for (const key of ["kernelSelftest", "solverSelftest"]) walk(stripTimes(a[key]), stripTimes(b[key]), key);
-  console.log(`compared ${aPath} (${a.kind}) with ${bPath} (${b.kind}): ${diffs.length} differences above 1e-9 relative, largest relative difference ${maxRel}`);
-  for (const d of diffs) console.log(`  ${d}`);
-  process.exit(diffs.length ? 1 : 0);
-}
-
 // ------------------------------------------------------------------------------------ main
 
 const args = process.argv.slice(2);
@@ -395,22 +315,18 @@ const opt = (name) => {
   const i = args.indexOf(name);
   return i >= 0 ? args[i + 1] : undefined;
 };
-if (args[0] === "--compare") compare(args[1], args[2]);
-else {
-  const kind = opt("--native") ? "native" : opt("--wasm") ? "wasm" : null;
-  if (!kind) {
-    console.error("usage: drive-engine.mjs --native <exe> | --wasm <folder> [--out result.json] | --compare <a.json> <b.json>");
-    process.exit(64);
-  }
-  const target = resolve(opt(`--${kind}`));
-  const result = await run(kind, target);
-  const out = opt("--out");
-  if (out) {
-    // CI starts from a clean checkout, so the result folder may not exist yet.
-    mkdirSync(dirname(resolve(out)), { recursive: true });
-    writeFileSync(out, JSON.stringify(result, null, 2) + "\n");
-  }
-  const failed = checks.filter((c) => !c.ok).length;
-  console.log(`${checks.length - failed} of ${checks.length} checks passed`);
-  process.exit(failed ? 1 : 0);
+const target = opt("--native");
+if (!target) {
+  console.error("usage: drive-engine.mjs --native <exe> [--out result.json]");
+  process.exit(64);
 }
+const result = await run(resolve(target));
+const out = opt("--out");
+if (out) {
+  // CI starts from a clean checkout, so the result folder may not exist yet.
+  mkdirSync(dirname(resolve(out)), { recursive: true });
+  writeFileSync(out, JSON.stringify(result, null, 2) + "\n");
+}
+const failed = checks.filter((c) => !c.ok).length;
+console.log(`${checks.length - failed} of ${checks.length} checks passed`);
+process.exit(failed ? 1 : 0);

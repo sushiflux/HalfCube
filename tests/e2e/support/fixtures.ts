@@ -1,23 +1,17 @@
-// Fixtures of the suite. One spec runs unchanged against both targets:
-//   browser   the web build in a Chromium browser. Default: the official Playwright Docker image, reached with
-//             Playwright's remote connection (HALFCUBE_E2E_BROWSER=docker, HALFCUBE_E2E_WS). Marked fallback:
-//             an installed Chrome, Brave or Edge, headless (HALFCUBE_E2E_BROWSER=local).
-//   electron  the real Electron program, window inactive, own user data folder.
-// `app` is the page under test plus the few things that differ between the targets.
-import { existsSync, mkdirSync, rmSync } from "node:fs";
+// Fixtures of the suite. Every spec runs against the real Electron program (the native engine process behind the preload
+// bridge): window inactive, own user data folder, one program per worker.
+// `app` is the page under test plus a few helpers around the program.
+import { mkdirSync, rmSync } from "node:fs";
 import { join } from "node:path";
-import { chromium, expect, test as base, type Browser, type CDPSession, type ElectronApplication, type Page } from "@playwright/test";
+import { expect, test as base, type CDPSession, type ElectronApplication, type Page } from "@playwright/test";
 import { engineChildren, launchElectron, type LaunchedElectron } from "./electron-app.ts";
-import { browserMode, e2eBuild, serverPort, type BrowserMode, type Target } from "./paths.ts";
-
-export type { Target };
+import { e2eBuild } from "./paths.ts";
 
 export interface AppUnderTest {
-  target: Target;
   page: Page;
-  /** The Electron program itself (main process), for tests that stub what it opens outside the window; only on the electron target. */
-  electron?: ElectronApplication;
-  /** What the target is, for the report: "chromium 142.0.x (official Playwright Docker image)", "electron 45.x (chrome 140.x)". */
+  /** The Electron program itself (main process), for tests that stub what it opens outside the window. */
+  electron: ElectronApplication;
+  /** What the program is, for the report: "electron 45.x (chrome 140.x)". */
   description: string;
   /** Console errors and uncaught page errors since the test began. */
   errors: string[];
@@ -29,31 +23,10 @@ export interface AppUnderTest {
   setWidth(width: number): Promise<number>;
   readClipboard(): Promise<string>;
   /**
-   * Ends the engine on purpose, the way a crash does (the session then restarts it): the browser's test engine gets
-   * diagnostics.crash (open the page with `engine=testing`), the native engine process is ended from outside. Resolves with
-   * whether an engine was found and ended.
+   * Ends the native engine process on purpose, from outside, the way a crash does (the session then restarts it). Resolves
+   * with whether an engine process was found and ended.
    */
   crashEngine(): Promise<boolean>;
-}
-
-interface BrowserHandle {
-  browser: Browser;
-  mode: BrowserMode;
-  description: string;
-}
-
-function localBrowserPath(): string {
-  const candidates = [
-    process.env.HALFCUBE_E2E_CHROME,
-    "C:/Program Files/Google/Chrome/Application/chrome.exe",
-    "C:/Program Files/BraveSoftware/Brave-Browser/Application/brave.exe",
-    "C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe",
-  ].filter((c): c is string => typeof c === "string" && c !== "");
-  const found = candidates.find((c) => existsSync(c));
-  if (!found) {
-    throw new Error(`HALFCUBE_E2E_BROWSER=local needs an installed Chrome, Brave or Edge (or HALFCUBE_E2E_CHROME). Looked for: ${candidates.join("; ")}`);
-  }
-  return found;
 }
 
 /**
@@ -61,8 +34,8 @@ function localBrowserPath(): string {
  * cross-process lock for its whole run, so no other worker overwrites the clipboard between its copy and its read.
  */
 const clipboardLock = join(e2eBuild, "clipboard.lock");
-async function withClipboardLock(testInfo: { tags: string[] }, target: Target, run: () => Promise<void>): Promise<void> {
-  if (target !== "electron" || !testInfo.tags.includes("@clipboard")) return run();
+async function withClipboardLock(testInfo: { tags: string[] }, run: () => Promise<void>): Promise<void> {
+  if (!testInfo.tags.includes("@clipboard")) return run();
   mkdirSync(e2eBuild, { recursive: true });
   const deadline = Date.now() + 120_000;
   for (;;) {
@@ -81,39 +54,10 @@ async function withClipboardLock(testInfo: { tags: string[] }, target: Target, r
   }
 }
 
-export const test = base.extend<{ app: AppUnderTest }, { target: Target; browserHandle: BrowserHandle | undefined; electronHandle: LaunchedElectron | undefined }>({
-  target: ["browser", { scope: "worker", option: true }],
-
-  browserHandle: [
-    async ({ target }, provide) => {
-      if (target !== "browser") {
-        await provide(undefined);
-        return;
-      }
-      const mode = browserMode();
-      let browser: Browser;
-      let where: string;
-      if (mode === "docker") {
-        const ws = process.env.HALFCUBE_E2E_WS ?? "ws://127.0.0.1:3100/";
-        browser = await chromium.connect(ws, { timeout: 30_000 });
-        where = "official Playwright Docker image";
-      } else {
-        const executablePath = localBrowserPath();
-        browser = await chromium.launch({ executablePath, headless: true });
-        where = `LOCAL FALLBACK, not the Docker image: ${executablePath}`;
-      }
-      await provide({ browser, mode, description: `chromium ${browser.version()} (${where})` });
-      await browser.close();
-    },
-    { scope: "worker" },
-  ],
-
+export const test = base.extend<{ app: AppUnderTest }, { electronHandle: LaunchedElectron }>({
   electronHandle: [
-    async ({ target }, provide) => {
-      if (target !== "electron") {
-        await provide(undefined);
-        return;
-      }
+    // eslint-disable-next-line no-empty-pattern
+    async ({}, provide) => {
       const launched = await launchElectron({ language: "en", colorMode: "light" });
       await provide(launched);
       await launched.close();
@@ -121,7 +65,7 @@ export const test = base.extend<{ app: AppUnderTest }, { target: Target; browser
     { scope: "worker" },
   ],
 
-  app: async ({ target, browserHandle, electronHandle }, provide, testInfo) => {
+  app: async ({ electronHandle }, provide, testInfo) => {
     const errors: string[] = [];
     const watch = (page: Page) => {
       page.on("pageerror", (e) => errors.push(`pageerror: ${e.message}`));
@@ -135,57 +79,13 @@ export const test = base.extend<{ app: AppUnderTest }, { target: Target; browser
       if (body) await testInfo.attach("failure-screenshot", { body, contentType: "image/png" });
     };
 
-    if (target === "browser") {
-      if (!browserHandle) throw new Error("No browser for the browser target.");
-      // In the container, tests/e2e/run.mjs forwards localhost:<port> to the host's loopback server. "localhost" is a
-      // trustworthy origin (clipboard, COOP/COEP and SharedArrayBuffer work); host.docker.internal is not.
-      const host = browserHandle.mode === "docker" ? "localhost" : "127.0.0.1";
-      const origin = `http://${host}:${serverPort}`;
-      const context = await browserHandle.browser.newContext({
-        viewport: { width: 1280, height: 800 },
-        locale: "en-US",
-        colorScheme: "light",
-        permissions: ["clipboard-read", "clipboard-write"],
-      });
-      const page = await context.newPage();
-      watch(page);
-      testInfo.annotations.push({ type: "target", description: browserHandle.description });
-      const handle: AppUnderTest = {
-        target,
-        page,
-        description: browserHandle.description,
-        errors,
-        open: async (search = "") => {
-          await page.goto(`${origin}/index.html${search}`);
-        },
-        url: (path) => `${origin}${path}`,
-        setWidth: async (width) => {
-          await page.setViewportSize({ width, height: 800 });
-          return page.evaluate(() => window.innerWidth);
-        },
-        readClipboard: () => page.evaluate(() => navigator.clipboard.readText()),
-        crashEngine: () =>
-          page.evaluate(async () => {
-            const session = (window as unknown as { __halfcubeSession?: { client: { request(c: unknown): { reply: Promise<unknown> } } } }).__halfcubeSession;
-            if (!session) return false;
-            await session.client.request({ type: "diagnostics.crash", mode: "intdiv" }).reply.catch(() => undefined);
-            return true;
-          }),
-      };
-      await provide(handle);
-      await attachScreenshot(page);
-      await context.close();
-      return;
-    }
-
-    if (!electronHandle) throw new Error("No Electron program for the electron target.");
     const { app: electron, page } = electronHandle;
     const description = await electron.evaluate(() => `electron ${process.versions.electron} (chrome ${process.versions.chrome})`);
     testInfo.annotations.push({ type: "target", description });
     watch(page);
     // The page and its window are shared by all tests of a worker. Playwright's own page.setViewportSize would leave a viewport
     // override behind (its size and device scale 1 instead of the window's real scale, 1.5 here), which makes the layout of every
-    // later test fractional in a different way. So on this target the call becomes an override held by a session of this test only;
+    // later test fractional in a different way. So the call becomes an override held by a session of this test only;
     // detaching that session at the end of the test removes it, and the page keeps the window's real size and scale for the next one.
     let emulation: CDPSession | undefined;
     page.setViewportSize = async ({ width, height }) => {
@@ -203,7 +103,6 @@ export const test = base.extend<{ app: AppUnderTest }, { target: Target; browser
         { width, height },
       );
     const handle: AppUnderTest = {
-      target,
       page,
       electron,
       description,
@@ -235,7 +134,7 @@ export const test = base.extend<{ app: AppUnderTest }, { target: Target; browser
         return engines.length > 0;
       },
     };
-    await withClipboardLock(testInfo, target, async () => {
+    await withClipboardLock(testInfo, async () => {
       try {
         await provide(handle);
         await attachScreenshot(page);

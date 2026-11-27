@@ -1,5 +1,5 @@
 // Engine client against a scripted fake transport: correlation, errors, interim messages, superseding, crash and hang
-// handling, restart. No engine process involved; the contract tests (native.test.ts, wasm.test.ts) cover the real ones.
+// handling, restart. No engine process involved; the contract tests (native.test.ts) cover the real ones.
 import { describe, expect, it } from "vitest";
 import { EngineClient, type EngineClientOptions } from "../../../app/src/engine/client.ts";
 import {
@@ -14,14 +14,14 @@ import type { ExitInfo } from "../../../app/src/engine/transport.ts";
 import { FakeTransport, healthyEngine, helloResult } from "./helpers/fake-transport.ts";
 import { ManualClock } from "./helpers/manual-clock.ts";
 
-function setup(kind: "native" | "wasm" = "native", extra: Partial<EngineClientOptions> = {}) {
+function setup(extra: Partial<EngineClientOptions> = {}) {
   const transports: FakeTransport[] = [];
   const clock = new ManualClock();
   const exits: ExitInfo[] = [];
   const unsolicited: EngineMessage[] = [];
   const client = new EngineClient({
     createTransport: () => {
-      const t = new FakeTransport(kind);
+      const t = new FakeTransport();
       t.autoReply = healthyEngine;
       transports.push(t);
       return t;
@@ -179,13 +179,12 @@ describe("EngineClient requests", () => {
 });
 
 describe("EngineClient cancel and superseding", () => {
-  it("sets the shared cancel flag before the cancel command (WebAssembly)", async () => {
-    const { client, current } = setup("wasm");
+  it("sends the cancel command for the target request", async () => {
+    const { client, current } = setup();
     await client.start();
     current().autoReply = null;
     const work = client.request({ type: "diagnostics.hang", mode: "busy" });
     client.cancel(work.id);
-    expect(current().cancelFlagCalls).toEqual([work.id]);
     expect(current().last("cancel").raw).toMatchObject({ target: work.id });
   });
 
@@ -309,30 +308,8 @@ describe("EngineClient restart and stop", () => {
 });
 
 describe("EngineClient hang watchdog", () => {
-  it("stops a WebAssembly engine that does not answer within the default limit and reports a hang", async () => {
-    const { client, current, clock, exits } = setup("wasm");
-    await client.start();
-    current().autoReply = null;
-    current().diagnostics = "[stderr] diagnostics.hang frozen requested";
-    const stuck = client.request({ type: "diagnostics.hang", mode: "frozen" });
-    const outcome = stuck.reply.catch((e: unknown) => e);
-    clock.advance(59_999);
-    expect(exits).toEqual([]);
-    clock.advance(1);
-    const e = (await outcome) as EngineCrashedError;
-    expect(e).toBeInstanceOf(EngineCrashedError);
-    expect(e.info.kind).toBe("hang");
-    expect(e.info.message).toBe(
-      "The engine did not answer diagnostics.hang (request 2) within 60 s (waited 60.0 s) and was stopped. The engine worker was terminated.",
-    );
-    expect(e.info.diagnostics).toContain("frozen requested");
-    expect(current().killed).toBe(true);
-    expect(exits).toHaveLength(1);
-    expect(client.state).toBe("down");
-  });
-
   it("does not limit compute commands on the native engine by default (the main process pings it)", async () => {
-    const { client, current, clock, exits } = setup("native");
+    const { client, current, clock, exits } = setup();
     await client.start();
     current().autoReply = null;
     client.request({ type: "diagnostics.hang", mode: "busy" }).reply.catch(() => {});
@@ -340,37 +317,57 @@ describe("EngineClient hang watchdog", () => {
     expect(exits).toEqual([]);
   });
 
-  it("applies a per-request limit on the native engine too", async () => {
-    const { client, current, clock, exits } = setup("native");
+  it("applies a per-request limit, stops the engine and reports a complete hang message with its diagnostics", async () => {
+    const { client, current, clock, exits } = setup();
     await client.start();
     current().autoReply = null;
+    current().diagnostics = "[stderr] diagnostics.hang frozen requested";
     const r = client.request({ type: "diagnostics.hang", mode: "busy" }, { timeoutMs: 2000 });
     const outcome = r.reply.catch((e: unknown) => e);
-    clock.advance(2000);
+    clock.advance(1999);
+    expect(exits).toEqual([]);
+    clock.advance(1);
+    const e = (await outcome) as EngineCrashedError;
+    expect(e).toBeInstanceOf(EngineCrashedError);
+    expect(e.info.kind).toBe("hang");
+    expect(e.info.message).toBe("The engine did not answer diagnostics.hang (request 2) within 2 s (waited 2.0 s) and was stopped.");
+    expect(e.info.diagnostics).toContain("frozen requested");
+    expect(current().killed).toBe(true);
+    expect(exits).toHaveLength(1);
+    expect(client.state).toBe("down");
+  });
+
+  it("applies defaultTimeoutMs to commands without a limit of their own", async () => {
+    const { client, current, clock, exits } = setup({ defaultTimeoutMs: 3000 });
+    await client.start();
+    current().autoReply = null;
+    const r = client.request({ type: "diagnostics.hang", mode: "busy" });
+    const outcome = r.reply.catch((e: unknown) => e);
+    clock.advance(3000);
     expect(((await outcome) as EngineCrashedError).info.kind).toBe("hang");
     expect(exits).toHaveLength(1);
   });
 
-  it("does not count the time a WebAssembly command waits behind a long one", async () => {
-    const { client, current, clock, exits } = setup("wasm");
+  it("does not count the time a compute command waits behind a long one (serial lane)", async () => {
+    const { client, current, clock, exits } = setup();
     await client.start();
     current().autoReply = null;
     const long = client.request({ type: "diagnostics.hang", mode: "busy", ms: 50_000 }, { timeoutMs: 100_000 });
-    const quick = client.request({ type: "ping" });
+    const next = client.request({ type: "diagnostics.hang", mode: "busy", ms: 10 }, { timeoutMs: 5000 });
     clock.advance(50_000);
     current().say({ type: "hangResult", replyTo: long.id, mode: "busy", ms: 50_000 });
     await long.reply;
-    // The ping has waited 50 s, but its 5 s only start now.
+    // The second command has waited 50 s, but its 5 s only start now.
     clock.advance(4999);
     expect(exits).toEqual([]);
-    current().say({ type: "pong", replyTo: quick.id, busyWith: null, queued: 0 });
-    await quick.reply;
+    current().say({ type: "hangResult", replyTo: next.id, mode: "busy", ms: 10 });
+    await next.reply;
     clock.advance(60_000);
     expect(exits).toEqual([]);
   });
 
   it("lets an interim message keep a long command alive", async () => {
-    const { client, current, clock, exits } = setup("wasm");
+    const { client, current, clock, exits } = setup();
     await client.start();
     current().autoReply = null;
     const r = client.request({ type: "diagnostics.hang", mode: "busy" }, { timeoutMs: 1000 });
@@ -385,7 +382,7 @@ describe("EngineClient hang watchdog", () => {
   });
 
   it("answers ping on the native engine even while it computes (direct lane, 5 s limit)", async () => {
-    const { client, current, clock, exits } = setup("native");
+    const { client, current, clock, exits } = setup();
     await client.start();
     current().autoReply = null;
     client.request({ type: "diagnostics.hang", mode: "frozen" }).reply.catch(() => {});
@@ -399,9 +396,9 @@ describe("EngineClient hang watchdog", () => {
 
 describe("EngineClient hello details", () => {
   it("keeps the hello result readable after the handshake", async () => {
-    const { client } = setup("wasm");
+    const { client } = setup();
     const hello = await client.start();
-    expect(hello).toMatchObject({ protocol: PROTOCOL_VERSION, engine: { platform: "wasm" } });
-    expect(helloResult(1, "wasm")).toMatchObject({ type: "helloResult" });
+    expect(hello).toMatchObject({ protocol: PROTOCOL_VERSION, engine: { platform: "native" } });
+    expect(helloResult(1)).toMatchObject({ type: "helloResult" });
   });
 });

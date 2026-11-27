@@ -1,10 +1,9 @@
-// The licence list of "About HalfCube": the project's own texts plus the generated third-party data, filtered for the
-// platform, grouped, searched. Pure functions; the generated data and the platform come in as arguments, so tests can use
-// a fixture.
+// The licence list of "About HalfCube": the project's own texts plus the generated third-party data, grouped and
+// searched. Pure functions; the generated data comes in as an argument, so tests can use a fixture.
 import { catalogues } from "../i18n/core.ts";
 import type { Language } from "../i18n/types.ts";
-import type { Platform } from "../platform.ts";
 import { licenceGroups, type LicenceGroup, type LicenceItem, type LocalizedText, type ThirdPartyEntry } from "./types.ts";
+import { branding } from "../branding.ts";
 
 /** The public repository (the "Source code on GitHub" link and the source of the project's own entries). */
 export const REPOSITORY_URL = "https://github.com/sushiflux/HalfCube";
@@ -13,7 +12,7 @@ export const REPOSITORY_URL = "https://github.com/sushiflux/HalfCube";
 export const EARLY_ACCESS = true;
 
 /** Id of the entry that holds the HalfCube licence text; "Lizenztext anzeigen" opens it. */
-export const LICENCE_ITEM = "halfcube";
+export const LICENCE_ITEM: string = branding.slug;
 /** Id of the entry that holds the NOTICE file; "NOTICE-Datei ansehen" opens it. */
 export const NOTICE_ITEM = "notice";
 
@@ -25,7 +24,7 @@ export function selfItems(version: string): LicenceItem[] {
     {
       id: LICENCE_ITEM,
       group: "self",
-      name: "HalfCube",
+      name: branding.name,
       version,
       license: "PolyForm-Shield-1.0.0",
       copyright: [catalogues.de.about.copyright],
@@ -40,7 +39,7 @@ export function selfItems(version: string): LicenceItem[] {
       version: both((m) => m.about.self.noticeVersion),
       license: both((m) => m.about.self.noticeLicence),
       licenseLabel: both((m) => m.about.self.noticeList),
-      copyright: ["Required Notice: Copyright 2026 SushiFlux (https://github.com/sushiflux/HalfCube)"],
+      copyright: [`Required Notice: Copyright 2026 SushiFlux (${REPOSITORY_URL})`],
       source: `${REPOSITORY_URL}/blob/main/NOTICE`,
       purpose: both((m) => m.about.self.noticeUse),
       textFile: "licenses/halfcube-notice.txt",
@@ -64,9 +63,9 @@ export function thirdPartyItem(entry: ThirdPartyEntry): LicenceItem {
   };
 }
 
-/** Every component of this platform: the project's own entries first, then the generated data in its own order. */
-export function buildItems(entries: readonly ThirdPartyEntry[], platform: Platform, version: string): LicenceItem[] {
-  return [...selfItems(version), ...entries.filter((e) => e.platforms.includes(platform)).map(thirdPartyItem)];
+/** Every bundled component: the project's own entries first, then the generated data in its own order. */
+export function buildItems(entries: readonly ThirdPartyEntry[], version: string): LicenceItem[] {
+  return [...selfItems(version), ...entries.map(thirdPartyItem)];
 }
 
 export function pickText(value: string | LocalizedText | undefined, language: Language): string {

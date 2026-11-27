@@ -1,7 +1,6 @@
-// The engine through its real transport: in a browser the WebAssembly engine in a real Web Worker, in the Electron
-// program the native engine process behind the preload bridge. The harness page (tests/e2e/harness) runs the product's
-// own engine session in the page; the tests read what it reports. The browser name and version and the numbers of both
-// self-tests go into the test annotations (HTML and JSON report) and into an attachment.
+// The engine through its real transport: the native engine process behind the preload bridge of the Electron program. The
+// harness page (tests/e2e/harness) runs the product's own engine session in the page; the tests read what it reports. The
+// program version and the numbers of both self-tests go into the test annotations (HTML and JSON report) and into an attachment.
 import type { TestInfo } from "@playwright/test";
 import type { HarnessResult } from "../harness/main.ts";
 import { expect, test, type AppUnderTest } from "../support/fixtures.ts";
@@ -13,7 +12,7 @@ async function runHarness(app: AppUnderTest, run: string, query = ""): Promise<H
   return page.evaluate((name) => window.__harness.run(name), run);
 }
 
-/** Records what ran and what came out, so a report shows the browser and the numbers, not only "passed". */
+/** Records what ran and what came out, so a report shows the program and the numbers, not only "passed". */
 async function record(app: AppUnderTest, name: string, result: HarnessResult, testInfo: TestInfo): Promise<void> {
   const engineDetail = result.startup?.steps.find((s) => s.id === "engine")?.detail;
   const summary = [
@@ -70,8 +69,9 @@ test("the engine starts and passes the kernel and solver self-tests of the norma
   const result = await runHarness(app, "startup");
   await record(app, "startup", result, testInfo);
 
-  expect(result.transport).toBe(app.target === "electron" ? "native" : "worker");
-  expect(result.crossOriginIsolated, "cross-origin isolation (needed for SharedArrayBuffer in the engine worker)").toBe(true);
+  expect(result.transport).toBe("native");
+  // Hardening of the window's own origin (config/security.ts): the app:// responses carry COOP and COEP.
+  expect(result.crossOriginIsolated, "cross-origin isolation of the app:// origin (COOP and COEP headers)").toBe(true);
   expect(result.startup.problem).toBeUndefined();
   expect(result.startup.phase).toBe("ready");
   expect(result.startup.engine).toBe("halfcube-engine");
@@ -95,7 +95,7 @@ test("diagnostics.kernelSelftest and diagnostics.solverSelftest answer through t
   const result = await runHarness(app, "selftests");
   await record(app, "selftests", result, testInfo);
 
-  expect(result.transport).toBe(app.target === "electron" ? "native" : "worker");
+  expect(result.transport).toBe("native");
   expect(result.startup.steps.map((s) => `${s.id}:${s.state}`)).toEqual(["engine:done", "kernel:skipped", "solver:skipped"]);
   expectSelftestsPassed(result);
 });

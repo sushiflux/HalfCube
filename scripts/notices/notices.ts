@@ -6,7 +6,6 @@
 //   package.json, package-lock.json    the production dependency tree of the UI
 //   node_modules/<package>             version, licence, licence text of every bundled npm package
 //   engine/_deps/**                    licence files and source headers of the engine libraries (after fetch-deps)
-//   engine/_build/wasm/licenses/**     licence texts of the Emscripten runtime (after the WebAssembly build)
 //   third_party/licenses/**            vendored texts where the real component ships none (pinned by SHA-256)
 //   the fonts and LICENSE / NOTICE of this repository
 //
@@ -21,7 +20,6 @@ import { brotliDecompressSync } from "node:zlib";
 // ------------------------------------------------------------------------------------------ types
 
 export type Group = "engine" | "ui" | "shell";
-export type Platform = "desktop" | "browser";
 export interface Bilingual {
   de: string;
   en: string;
@@ -38,7 +36,6 @@ export interface NoticeEntry {
   copyright: string[];
   source: string;
   purpose: Bilingual;
-  platforms: Platform[];
   textFile: string | null;
   note?: Bilingual;
 }
@@ -97,7 +94,6 @@ interface SourceEntry {
   group: Group;
   from: From;
   name?: string;
-  platforms?: Platform[];
   purpose: Bilingual;
   note?: Bilingual;
   licenseLabel?: Bilingual;
@@ -136,9 +132,6 @@ const SEPARATOR = "=".repeat(78);
 /** Where to get a missing input, by its location. */
 function fixHint(rel: string): string {
   if (rel.startsWith("engine/_deps/")) return "run engine/scripts/fetch-deps.ps1 (Windows) or sh engine/scripts/fetch-deps.sh";
-  if (rel.startsWith("engine/_build/wasm/")) {
-    return "build the WebAssembly engine first (engine/scripts/build-wasm.ps1, or bash scripts/ci/build-wasm-linux.sh)";
-  }
   if (rel.startsWith("node_modules/")) return "run npm ci";
   return "restore the file";
 }
@@ -496,7 +489,6 @@ function buildEntries(ctx: Context, sources: Sources, texts: Map<string, string>
     let version = "";
     let license = "";
     let url = "";
-    let platforms: Platform[] = source.platforms ?? [];
     const from = source.from;
 
     let scannedLines: string[] = [];
@@ -512,15 +504,12 @@ function buildEntries(ctx: Context, sources: Sources, texts: Map<string, string>
       version = component.version;
       license = component.license;
       url = component.source;
-      platforms = [...new Set(component.usedIn.map((u) => (u === "engine-native" ? "desktop" : u === "engine-wasm" ? "browser" : null)))].filter(
-        (p): p is Platform => p !== null,
-      );
-      if (platforms.length === 0) ctx.add(`${source.id}: manifest usedIn ${component.usedIn.join(", ")} maps to no platform.`);
-      const prefixes = ["engine/_deps/", "engine/_build/wasm/licenses/"];
+      // The engine runs natively on the desktop only; a shipped component that no engine build uses has no place in the list.
+      if (!component.usedIn.includes("engine-native")) ctx.add(`${source.id}: manifest usedIn ${component.usedIn.join(", ")} does not include engine-native.`);
+      const prefix = "engine/_deps/";
       for (const rel of component.licenseFiles) {
         const text = ctx.text(rel, `${source.id}: licence file`);
-        const prefix = prefixes.find((p) => rel.startsWith(p));
-        if (text !== null) blocks.push({ names: [prefix ? rel.slice(prefix.length) : rel], text });
+        if (text !== null) blocks.push({ names: [rel.startsWith(prefix) ? rel.slice(prefix.length) : rel], text });
         const config = source.copyright?.licenseFiles;
         if (text !== null && config !== false && config !== undefined) add(licenseCopyrightLines(text, config.exclude ?? []));
       }
@@ -638,8 +627,7 @@ function buildEntries(ctx: Context, sources: Sources, texts: Map<string, string>
       textFile = outputFile(source.id);
       texts.set(`${sources.output.textDir}/${source.id}.txt`, assembleText(blocks));
     }
-    if (platforms.length === 0) ctx.add(`${source.id}: no platforms.`);
-    const entry: NoticeEntry = { id: source.id, group: source.group, name, version, license, copyright, source: url, purpose: source.purpose, platforms, textFile };
+    const entry: NoticeEntry = { id: source.id, group: source.group, name, version, license, copyright, source: url, purpose: source.purpose, textFile };
     const ordered: NoticeEntry = {
       id: entry.id,
       group: entry.group,
@@ -650,7 +638,6 @@ function buildEntries(ctx: Context, sources: Sources, texts: Map<string, string>
       copyright: entry.copyright,
       source: entry.source,
       purpose: entry.purpose,
-      platforms: entry.platforms,
       textFile: entry.textFile,
       ...(source.note ? { note: source.note } : {}),
     };
@@ -711,7 +698,6 @@ export interface ThirdPartyEntry {
   source: string;
   /** One short line: what HalfCube uses it for. */
   purpose: { de: string; en: string };
-  platforms: ("desktop" | "browser")[];
   /** Path relative to the app's public root, e.g. "licenses/occt.txt"; null when the component ships no text of its own. */
   textFile: string | null;
   note?: { de: string; en: string };
@@ -723,7 +709,15 @@ export const THIRD_PARTY: readonly ThirdPartyEntry[] = ${JSON.stringify(entries,
 
 export function readSources(root: string): Sources {
   const file = join(root, "third_party", "notices.sources.json");
-  return JSON.parse(toLf(readFileSync(file, "utf8"))) as Sources;
+  let text = toLf(readFileSync(file, "utf8"));
+  // {product} in the hand-written texts is the product name of branding/branding.json, so the name is not written out here.
+  if (text.includes("{product}")) {
+    const brandingFile = join(root, "branding", "branding.json");
+    if (!existsSync(brandingFile)) throw new NoticesError(["third_party/notices.sources.json uses {product}, but branding/branding.json is missing."]);
+    const { name } = JSON.parse(readFileSync(brandingFile, "utf8")) as { name: string };
+    text = text.replaceAll("{product}", () => JSON.stringify(name).slice(1, -1));
+  }
+  return JSON.parse(text) as Sources;
 }
 
 /** Builds every output from the real inputs; throws NoticesError with all problems when anything is missing or inconsistent. */

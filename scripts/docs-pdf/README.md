@@ -54,7 +54,8 @@ Markdown files.
 
 ## Look
 
-`theme.json` holds the colours (theme "Präzision"), the wordmark rules and the font files. The brand name comes from
+`theme.json` holds the colours (theme "Präzision"), the place of the wordmark files and the font files. The wordmark on the cover is
+the SVG outline of `../../branding/wordmark` (large file from 28 px, like the program), never typeset text. The brand name comes from
 `../../branding/branding.json`, the logo from `../../branding/source/logo-square.png`; the logo is shown as it is,
 never redrawn.
 

@@ -1,5 +1,5 @@
-// The contract every engine build must keep, run against the native engine and against the WebAssembly engine with the
-// same assertions wherever the two behave alike. Needs a build with test commands (diagnostics.crash / diagnostics.hang).
+// The contract every engine build must keep, run against the native engine process. Needs a build with test commands
+// (diagnostics.crash / diagnostics.hang).
 import { afterAll, beforeAll, expect, it } from "vitest";
 import { EngineCrashedError, isCancelled } from "../../../../app/src/engine/errors.ts";
 import { DOCUMENT_FORMAT, PROTOCOL_ID, PROTOCOL_VERSION, type ErrorMessage, type HelloResult } from "../../../../app/src/engine/generated/protocol.ts";
@@ -35,11 +35,11 @@ export function defineContract(label: string, where: EngineLocation, crash: Cras
       expect(h.protocolId).toBe(PROTOCOL_ID);
       expect(h.documentFormat).toBe(DOCUMENT_FORMAT);
       expect(h.engine.name).toBe("halfcube-engine");
-      expect(h.engine.platform).toBe(where.kind);
+      expect(h.engine.platform).toBe("native");
       expect(h.engine.testCommands).toBe(true);
       expect(h.components.occt).toBe("8.0.2");
       expect(h.components.planegcs.source).toMatch(/FreeCAD 1\.1\.4/);
-      expect(h.capabilities.pingWhileBusy).toBe(where.kind === "native");
+      expect(h.capabilities.pingWhileBusy).toBe(true);
       expect(h.capabilities.cancelWhileBusy).toBe(true);
       expect(h.limits.payloadAlignment).toBe(16);
       expect(h.limits.maxRequestId).toBe(2147483647);

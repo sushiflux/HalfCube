@@ -13,7 +13,7 @@ export interface ErrorReport {
   blocks: readonly ErrorBlock[];
   /** Readable app version with channel symbol, e.g. "v2026.11.5.13.12369 (</>)". */
   version: string;
-  /** e.g. "Browser" or "Desktop win32". */
+  /** e.g. "Desktop win32". */
   environment: string;
   /** Already formatted time of the error. */
   time: string;

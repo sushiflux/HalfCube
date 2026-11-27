@@ -45,12 +45,12 @@ describe("readBuildInfo", () => {
 
 describe("readDevPorts", () => {
   it("reads the registered ports of the repository", () => {
-    expect(readDevPorts()).toEqual({ "web-dev": 5313, "web-preview": 5314, "e2e-cdp": 5315 });
+    expect(readDevPorts()).toEqual({ "web-dev": 5313, "e2e-cdp": 5315 });
   });
 
   it("rejects a missing or invalid port", () => {
     mkdirSync(join(dir, "config"));
-    writeFileSync(join(dir, "config", "dev-ports.json"), JSON.stringify({ "web-dev": 5313, "web-preview": "x", "e2e-cdp": 5315 }));
-    expect(() => readDevPorts(dir)).toThrow(/web-preview/);
+    writeFileSync(join(dir, "config", "dev-ports.json"), JSON.stringify({ "web-dev": 5313, "e2e-cdp": "x" }));
+    expect(() => readDevPorts(dir)).toThrow(/e2e-cdp/);
   });
 });

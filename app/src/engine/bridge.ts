@@ -1,18 +1,19 @@
 // What the Electron preload script exposes for the engine, and the messages on the MessagePort between the page and the
 // Electron main process. Types and channel names only; shared by the page, the preload script and the main process.
 import type { ExitInfo } from "./transport.ts";
+import { branding } from "../branding.ts";
 
 /** IPC channel: the page asks the main process to (re)start its engine. */
-export const IPC_START_ENGINE = "halfcube:start-engine";
+export const IPC_START_ENGINE = `${branding.slug}:start-engine`;
 /** Channel on which the preload script receives the engine's MessagePort from the main process. */
-export const IPC_ENGINE_PORT = "halfcube:engine-port";
+export const IPC_ENGINE_PORT = `${branding.slug}:engine-port`;
 /** IPC channel (synchronous, preload only): the validated setup choices of the installer. */
-export const IPC_SETUP_CHOICES = "halfcube:setup-choices";
+export const IPC_SETUP_CHOICES = `${branding.slug}:setup-choices`;
 
 /** IPC channel: the page asks the main process to open an https address in the system browser. */
-export const IPC_OPEN_EXTERNAL = "halfcube:open-external";
+export const IPC_OPEN_EXTERNAL = `${branding.slug}:open-external`;
 /** IPC channel: the page asks the main process to open the Chromium licence file that ships with Electron. */
-export const IPC_OPEN_CHROMIUM_LICENCES = "halfcube:open-chromium-licences";
+export const IPC_OPEN_CHROMIUM_LICENCES = `${branding.slug}:open-chromium-licences`;
 
 export type StartEngineResult =
   | { ok: true; generation: number }

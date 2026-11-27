@@ -9,12 +9,11 @@ import { thirdParty } from "../../../app/src/about/licences-data.ts";
 const publicRoot = join(import.meta.dirname, "../../../app/public");
 
 describe("the generated third-party data", () => {
-  it("has unique ids the address can carry, valid platforms and a usable text path", () => {
+  it("has unique ids the address can carry and a usable text path", () => {
     const ids = thirdParty.map((e) => e.id);
     expect(new Set(ids).size).toBe(ids.length);
     const problems = thirdParty.flatMap((e) => [
       ...(/^[a-z0-9][a-z0-9._-]{0,63}$/.test(e.id) ? [] : [`${e.id}: id is not a plain id`]),
-      ...(e.platforms.length > 0 ? [] : [`${e.id}: no platform`]),
       ...(e.textFile === null || isLicenceTextPath(e.textFile) ? [] : [`${e.id}: unusable text path ${e.textFile}`]),
     ]);
     expect(problems).toEqual([]);
@@ -28,18 +27,14 @@ describe("the generated third-party data", () => {
     expect(missing).toEqual([]);
   });
 
-  it("keeps desktop-only components out of the browser list", () => {
-    const browser = buildItems(thirdParty, "browser", "x");
-    const leaked = thirdParty.filter((x) => !x.platforms.includes("browser") && browser.some((i) => i.id === x.id)).map((x) => x.id);
-    expect(leaked).toEqual([]);
-    expect(browser.some((i) => i.group === "shell")).toBe(false);
-    const desktop = buildItems(thirdParty, "desktop", "x");
-    expect(desktop.some((i) => i.id === "electron")).toBe(true);
-    expect(desktop.some((i) => i.id === "chromium")).toBe(true);
+  it("lists the desktop shell components", () => {
+    const items = buildItems(thirdParty, "x");
+    expect(items.some((i) => i.id === "electron")).toBe(true);
+    expect(items.some((i) => i.id === "chromium")).toBe(true);
   });
 
   it("gives the kernel version and exactly the two LGPL components, with the notices the Info tab shows", () => {
-    const items = buildItems(thirdParty, "browser", "x");
+    const items = buildItems(thirdParty, "x");
     expect(kernelVersion(items)).toMatch(/^\d+\.\d+\.\d+$/);
     expect(lgplItems(items).map((i) => i.id)).toEqual(["occt", "planegcs"]);
     const line = lgplLibraries(items, "and");
@@ -49,7 +44,7 @@ describe("the generated third-party data", () => {
   });
 
   it("finds the entries by what a person types", () => {
-    const items = buildItems(thirdParty, "desktop", "x");
+    const items = buildItems(thirdParty, "x");
     expect(searchItems(items, "cascade", "en").map((i) => i.id)).toContain("occt");
     expect(searchItems(items, "chromium", "de").map((i) => i.id)).toContain("chromium");
   });

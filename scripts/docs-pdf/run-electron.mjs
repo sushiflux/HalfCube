@@ -2,12 +2,14 @@
 // The runtime comes from HALFCUBE_ELECTRON_EXE or from the repository's own node_modules. The child gets its own
 // temporary user data folder, never shows a window and is ended (with its child processes) when it hangs.
 import { spawn, spawnSync } from "node:child_process";
-import { existsSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const here = dirname(fileURLToPath(import.meta.url));
+// The slug of the product (branding/branding.json) names the temporary folders.
+const { slug } = JSON.parse(readFileSync(resolve(here, "..", "..", "branding", "branding.json"), "utf8"));
 
 /** Finds the Electron binary of the repository (or the one named in HALFCUBE_ELECTRON_EXE). */
 export function findElectron() {
@@ -39,7 +41,7 @@ function killTree(pid) {
  * Resolves with the stdout text; rejects with the error output when the exit code is not 0.
  */
 export async function runElectronJob(script, job, timeoutMs = 300_000) {
-  const work = mkdtempSync(join(tmpdir(), "halfcube-docs-"));
+  const work = mkdtempSync(join(tmpdir(), `${slug}-docs-`));
   const jobFile = join(work, "job.json");
   writeFileSync(jobFile, JSON.stringify({ ...job, userData: join(work, "user-data") }));
   try {

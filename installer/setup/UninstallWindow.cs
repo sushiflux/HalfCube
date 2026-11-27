@@ -140,8 +140,8 @@ internal sealed class UninstallWindow : WizardWindow
         yield return ("failed", () =>
         {
             _state.Failed = true;
-            _state.Error = UninstallTexts.ErrFailed(1, @"C:\Users\Name\AppData\Local\HalfCube", @"C:\Users\Name\AppData\Local\Temp\HalfCube-Uninstall-0f3a.log",
-                string.Join('\n', Enumerable.Repeat("[12:04:11] [ERROR] Unable to remove directory C:\\Users\\Name\\AppData\\Local\\HalfCube\\current: access denied", 4)));
+            _state.Error = UninstallTexts.ErrFailed(1, $@"C:\Users\Name\AppData\Local\{ProductInfo.Name}", $@"C:\Users\Name\AppData\Local\Temp\{ProductInfo.Name}-Uninstall-0f3a.log",
+                string.Join('\n', Enumerable.Repeat($"[12:04:11] [ERROR] Unable to remove directory C:\\Users\\Name\\AppData\\Local\\{ProductInfo.Name}\\current: access denied", 4)));
             GoTo(2);
             UpdateButtons();
         });

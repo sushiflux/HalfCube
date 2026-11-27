@@ -8,6 +8,7 @@ import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "nod
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { branding } from "../../../app/src/branding.ts";
 
 const repoRoot = join(import.meta.dirname, "..", "..", "..");
 const workflow = readFileSync(join(repoRoot, ".github", "workflows", "ci.yml"), "utf8").replace(/\r\n/g, "\n");
@@ -133,8 +134,20 @@ describe("the mapping from tag to Velopack version matches build-installer.ps1",
     expect(ps1).toContain('\'release\' { $core }');
     expect(ps1).toContain('\'beta\' { "$core-beta.$vPrompts.$vLines" }');
     expect(ps1).toContain('\'nightly\' { "$core-alpha.$vPrompts.$vLines" }');
-    expect(ps1).toContain('$finalName = "HalfCube-Setup-$fileId$fileSuffix.exe"');
+    expect(ps1).toContain('$finalName = "$productName-Setup-$fileId$fileSuffix.exe"');
+    expect(ps1).toContain("branding\\branding.json");
     expect(ps1).toContain('$vpkFullName = "$PackId-$packVersion-$Channel-full.nupkg"');
+  });
+});
+
+// The publish job runs no repository code, so it cannot read branding/branding.json; its file names and package id are literals
+// in ci.yml. This holds them to the product name, so a rename cannot leave the release check expecting the old names.
+describe("the release check in ci.yml names the product like branding.json", () => {
+  it("expects the setup and the Velopack package under the product name", () => {
+    const check = runSteps(jobLines("release-publish")).find((s) => s.name.startsWith("Check the release files"))?.body ?? "";
+    expect(check).toContain("const setupName = `" + branding.name + "-Setup-${TAG}.exe`;");
+    expect(check).toContain("const want = `" + branding.name + "-${pack}-${channel}-${String(a.Type).toLowerCase()}.nupkg`;");
+    expect(check).toContain('a.PackageId !== "' + branding.name + '"');
   });
 });
 

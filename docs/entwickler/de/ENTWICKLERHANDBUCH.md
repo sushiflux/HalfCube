@@ -13,7 +13,7 @@ HalfCube befindet sich in früher Entwicklung. Dieses Handbuch ist noch unvollst
 
 # 2 Update-Funktion (Windows-Programm)
 
-Die Update-Funktion gibt es nur im Windows-Programm. Die Browser-Version hat keinen Updater. Sie nutzt von dieser Funktion nur „Was ist neu“.
+Die Update-Funktion gibt es nur im Windows-Programm.
 
 ## 2.1 Überblick
 
@@ -88,7 +88,7 @@ Tests: `tests/unit/updates/`, `tests/unit/ci/`, `tests/e2e/specs/updates.spec.ts
 
 ## 2.6 Release-Weg (CI)
 
-Der Release besteht aus zwei Jobs in `.github/workflows/ci.yml`. Beide laufen nur für ein Tag `v*`, nach allen anderen Jobs (`windows`, `web`, `engine-wasm`, `linux`, `ci-ok`). Der Aufbau trennt, wer Fremdcode ausführt, von dem, der schreiben darf: Der Job, der `npm ci` und die Projektskripte ausführt, hat nur Leserechte. Der Job mit Schreibrecht führt nichts aus dem Repository aus.
+Der Release besteht aus zwei Jobs in `.github/workflows/ci.yml`. Beide laufen nur für ein Tag `v*`, nach allen anderen Jobs (`windows`, `web`, `linux`, `ci-ok`). Der Aufbau trennt, wer Fremdcode ausführt, von dem, der schreiben darf: Der Job, der `npm ci` und die Projektskripte ausführt, hat nur Leserechte. Der Job mit Schreibrecht führt nichts aus dem Repository aus.
 
 **Job `release-build`** (Windows, `contents: read`, 60 Minuten):
 

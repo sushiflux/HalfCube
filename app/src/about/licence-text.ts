@@ -1,5 +1,5 @@
 // Loads a licence text (a plain text file of the build, e.g. licenses/occt.txt) once and remembers it. The path is relative
-// to the page, so it works the same in the browser build and under app:// in the desktop program.
+// to the page, so it works the same under app:// in the desktop program and on the dev server.
 import { useEffect, useState } from "react";
 
 export type LicenceTextState =

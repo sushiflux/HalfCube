@@ -1,7 +1,7 @@
 // The page side of the updater: keeps the state the main process pushes, decides when to check by itself (the schedule setting and
 // the time of the last successful check live in the page's preferences) and forwards the user's steps (check, download, restart,
-// install on exit). No React and no DOM, so it is unit-tested with a fake bridge. The browser version never attaches a bridge:
-// the state stays null and no update view appears.
+// install on exit). No React and no DOM, so it is unit-tested with a fake bridge. Without the desktop bridge (a bare dev page) nothing
+// attaches: the state stays null and no update view appears.
 import { useSyncExternalStore } from "react";
 import type { Preferences } from "../prefs/preferences.ts";
 import { preferences } from "../prefs/preferences.ts";
@@ -14,7 +14,7 @@ import { isSupported } from "./view-model.ts";
 export type ManualResult = { kind: "uptodate" } | { kind: "found"; version: string } | { kind: "error"; error: UpdateError };
 
 export interface UpdatesSnapshot {
-  /** The state of the updater; null until the first answer, and always null in the browser. */
+  /** The state of the updater; null until the first answer, and always null without a bridge. */
   state: UpdateState | null;
   /** ISO time of the last successful check (automatic or by hand); a failed check never sets it. */
   lastCheckAt: string | null;

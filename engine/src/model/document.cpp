@@ -1,6 +1,7 @@
 #include "model/document.hpp"
 
 #include "core/errors.hpp"
+#include "generated/branding.hpp"
 
 #include <map>
 #include <numbers>
@@ -185,7 +186,7 @@ void checkDocument(const protocol::HalfCubeDocument& doc) {
     if (doc.format > protocol::kDocumentFormat)
         throw EngineError(err::kUnsupportedDocument, "The document has the format version " + std::to_string(doc.format) +
                                                          "; this engine reads format " + std::to_string(protocol::kDocumentFormat) +
-                                                         " and older. Update HalfCube to open it.");
+                                                         " and older. Update " + std::string(branding::kName) + " to open it.");
     std::set<std::string> ids;
     const auto claim = [&ids](const std::string& id, const std::string& where) {
         if (id.empty()) bad(where + " has an empty id.");

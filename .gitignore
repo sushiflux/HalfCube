@@ -10,7 +10,6 @@ build/
 cmake-build-*/
 CMakeFiles/
 CMakeCache.txt
-.emscripten_cache/
 *.tsbuildinfo
 coverage/
 

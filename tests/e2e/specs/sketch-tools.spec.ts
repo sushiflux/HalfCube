@@ -1,6 +1,6 @@
 // The sketch tools (step U2b): drawing with the mouse and with typed values, dimensions until the sketch is fully determined and
 // highlighted, the dialog for a contradicting dimension, dragging, undo and redo inside the sketch, the timeline's inner steps
-// and the layout in German and English at the narrowest width. Runs in the browser (WebAssembly engine) and in the Electron
+// and the layout in German and English at the narrowest width. Runs in the Electron
 // program (native engine). The mouse works on real pixels; where a test needs a position it asks the sketch layer (the dev
 // channel exposes it as window.__halfcube.layer) where a sketch point is on the screen.
 import type { Locator, Page } from "@playwright/test";
@@ -512,6 +512,8 @@ async function ownersRectangle(page: Page): Promise<{ start: { x: number; y: num
   await page.keyboard.press("Enter");
   await expect.poll(async () => (await readView(page)).lines.length).toBe(4);
   await expect(statusOf(page)).toHaveAttribute("data-status", "under", { timeout: 15_000 });
+  // "under" is also the state with only the width applied (3 degrees of freedom); wait for both sizes, so a read of the view is not early.
+  await expect.poll(async () => (await readView(page)).dof).toBe(2);
   return { start };
 }
 
@@ -555,13 +557,19 @@ test("what is still missing: the owner's 12 x 55 rectangle away from the origin 
   const before = (await hideLabelsAndShoot(page))(edge, 1);
   await openMissing(page);
   await page.getByTestId("missing-position").hover();
-  await page.waitForTimeout(300);
-  const lit = await page.getByTestId("viewport-host").screenshot();
-  const box2 = (await page.getByTestId("viewport-host").boundingBox())!;
-  const img = decodePng(lit);
-  const scale = img.width / box2.width;
-  const during = meanColour(img, (edge.x - box2.x) * scale, (edge.y - box2.y) * scale, 1);
-  expect(colourDistance(during, before), "the rectangle is highlighted while the entry is hovered").toBeGreaterThan(12);
+  // The highlight is drawn on the next frames after the hover; poll the pixels instead of a fixed pause (a fixed pause of 300 ms was too short once in 12 runs).
+  await expect
+    .poll(
+      async () => {
+        const lit = await page.getByTestId("viewport-host").screenshot();
+        const box2 = (await page.getByTestId("viewport-host").boundingBox())!;
+        const img = decodePng(lit);
+        const scale = img.width / box2.width;
+        return colourDistance(meanColour(img, (edge.x - box2.x) * scale, (edge.y - box2.y) * scale, 1), before);
+      },
+      { message: "the rectangle is highlighted while the entry is hovered", intervals: [100, 200, 300], timeout: 10_000 },
+    )
+    .toBeGreaterThan(12);
   await page.mouse.move(2, 2);
   await page.getByRole("checkbox", { name: "Constraints" }).check();
   await page.getByRole("checkbox", { name: "Dimensions" }).check();
@@ -672,7 +680,8 @@ test("what is still missing: the chip shows a warning triangle for a conflict in
   const feature = conflicting.timeline[0] as { sketch: { constraints: unknown[] } };
   feature.sketch.constraints.push({ id: "d9", kind: "distance", refs: ["l1"], value: { value: 70, unit: "mm" }, driving: true, label: { x: 0, y: 0 } });
   const { page } = app;
-  await app.open("?screen=main&lang=en");
+  // Wait until the first load is complete: a navigation while the engine process is still starting could abort the start and report a page error.
+  await openMain(app, "lang=en");
   await page.evaluate(([key, text]) => sessionStorage.setItem(key!, text!), ["halfcube.session.document.2", serializeDocument(conflicting as never)]);
   await page.goto(app.url("/index.html?screen=main&lang=en&sketch=f1"));
   await expect(page.getByTestId("sketch-palette")).toBeVisible({ timeout: 60_000 });
@@ -739,7 +748,6 @@ test("screenshots of the palette's chip and list, for the report", async ({ app 
   const dir = process.env.HALFCUBE_PALETTE_SHOTS!;
   for (const mode of ["light", "dark"] as const) {
     const page = await openSketch(app, `lang=de&theme=praezision&mode=${mode}`);
-    if (app.target === "browser") await page.setViewportSize({ width: 1440, height: 860 });
     await settled(page);
     // Element screenshots (page.screenshot with a clip hangs in the Electron window); the palette alone, and the list on its own when it is open.
     const clip = async (name: string) => {
@@ -1634,7 +1642,7 @@ async function setMode(page: Page, mode: "light" | "dark"): Promise<void> {
 }
 
 test("screenshots of the real app for the report", async ({ app }, testInfo) => {
-  test.skip(process.env.HALFCUBE_U2_SHOTS === undefined || app.target !== "browser", "only when HALFCUBE_U2_SHOTS names a folder, in the browser project");
+  test.skip(process.env.HALFCUBE_U2_SHOTS === undefined, "only when HALFCUBE_U2_SHOTS names a folder");
   const dir = process.env.HALFCUBE_U2_SHOTS!;
   const page = await openSketch(app, "lang=de&theme=praezision&mode=light");
   await page.setViewportSize({ width: 1440, height: 860 });
@@ -2063,7 +2071,7 @@ test("the look Etikett is a choice in the settings dialog: filled labels with a 
 });
 
 test("screenshots of the value fields while drawing and editing, for the report", async ({ app }, testInfo) => {
-  test.skip(process.env.HALFCUBE_U2_SHOTS === undefined || app.target !== "browser", "only when HALFCUBE_U2_SHOTS names a folder, in the browser project");
+  test.skip(process.env.HALFCUBE_U2_SHOTS === undefined, "only when HALFCUBE_U2_SHOTS names a folder");
   const dir = process.env.HALFCUBE_U2_SHOTS!;
   const page = await openSketch(app, "lang=de&theme=praezision&mode=light");
   await page.setViewportSize({ width: 1440, height: 860 });
@@ -2159,7 +2167,7 @@ test("screenshots of the value fields while drawing and editing, for the report"
 });
 
 test("screenshots of the value field frames: active, editable, invalid, dimension edit, for the report", async ({ app }) => {
-  test.skip(process.env.HALFCUBE_RAHMEN_SHOTS === undefined || app.target !== "browser", "only when HALFCUBE_RAHMEN_SHOTS names a folder, in the browser project");
+  test.skip(process.env.HALFCUBE_RAHMEN_SHOTS === undefined, "only when HALFCUBE_RAHMEN_SHOTS names a folder");
   const dir = process.env.HALFCUBE_RAHMEN_SHOTS!;
   for (const [theme, mode] of [["praezision", "light"], ["praezision", "dark"], ["graphit", "dark"]] as const) {
     const name = `${theme}-${mode === "light" ? "hell" : "dunkel"}`;

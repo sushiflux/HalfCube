@@ -1,4 +1,4 @@
-// Where the UI runs: inside the Electron window (the preload script exposes the bridge) or as a page in a browser.
+// The bridge between the UI and the desktop program: the preload script of the Electron window exposes it as window.desktopBridge.
 import type { EngineBridge } from "./engine/bridge.ts";
 import type { SetupChoices } from "./setup-choices.ts";
 import type { UpdatesBridge } from "./updates/types.ts";
@@ -31,14 +31,8 @@ declare global {
   }
 }
 
-export type Platform = "desktop" | "browser";
-
 export function getDesktopBridge(): DesktopBridge | undefined {
   if (typeof window === "undefined") return undefined;
   const bridge = window.desktopBridge;
   return bridge?.kind === "electron" ? bridge : undefined;
-}
-
-export function detectPlatform(): Platform {
-  return getDesktopBridge() ? "desktop" : "browser";
 }

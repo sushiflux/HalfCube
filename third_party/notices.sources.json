@@ -28,8 +28,8 @@
         "en": "Geometry kernel: solids, cuts and fillets"
       },
       "note": {
-        "de": "HalfCube nutzt Open CASCADE Technology (OCCT) für die Geometrie. Der Lizenztext besteht aus der GNU LGPL 2.1 und der „Open CASCADE exception 1.0“. Einige Quelldateien von OCCT enthalten kleine Teile anderer Urheber; deren Hinweise stehen am Ende des Lizenztextes.",
-        "en": "HalfCube uses Open CASCADE Technology (OCCT) for its geometry. The licence text consists of the GNU LGPL 2.1 and the “Open CASCADE exception 1.0”. A few OCCT source files contain small parts by other authors; their notices are at the end of the licence text."
+        "de": "{product} nutzt Open CASCADE Technology (OCCT) für die Geometrie. Der Lizenztext besteht aus der GNU LGPL 2.1 und der „Open CASCADE exception 1.0“. Einige Quelldateien von OCCT enthalten kleine Teile anderer Urheber; deren Hinweise stehen am Ende des Lizenztextes.",
+        "en": "{product} uses Open CASCADE Technology (OCCT) for its geometry. The licence text consists of the GNU LGPL 2.1 and the “Open CASCADE exception 1.0”. A few OCCT source files contain small parts by other authors; their notices are at the end of the licence text."
       },
       "copyright": {
         "licenseFiles": { "exclude": ["Free Software Foundation"] },
@@ -101,64 +101,16 @@
         "en": "JSON in the engine service"
       },
       "note": {
-        "de": "Die Kopfdatei enthält außerdem Hedley-Makros von Evan Nemerson (MIT laut SPDX-Kopf) und, nur für Compiler vor C++14, eine Hilfsvorlage nach Google Abseil (Apache-2.0); HalfCube baut mit C++20 und übersetzt diesen Teil nicht.",
-        "en": "The header also contains Hedley macros by Evan Nemerson (MIT per its SPDX header) and, for compilers before C++14 only, a helper template derived from Google Abseil (Apache-2.0); HalfCube builds with C++20 and does not compile that part."
+        "de": "Die Kopfdatei enthält außerdem Hedley-Makros von Evan Nemerson (MIT laut SPDX-Kopf) und, nur für Compiler vor C++14, eine Hilfsvorlage nach Google Abseil (Apache-2.0); {product} baut mit C++20 und übersetzt diesen Teil nicht.",
+        "en": "The header also contains Hedley macros by Evan Nemerson (MIT per its SPDX header) and, for compilers before C++14 only, a helper template derived from Google Abseil (Apache-2.0); {product} builds with C++20 and does not compile that part."
       },
       "copyright": { "licenseFiles": {} }
-    },
-    {
-      "id": "emscripten-runtime",
-      "group": "engine",
-      "from": { "kind": "manifest", "id": "emscripten-runtime" },
-      "licenseLabel": { "de": "MIT oder NCSA (zur Wahl)", "en": "MIT or NCSA (your choice)" },
-      "purpose": {
-        "de": "Laufzeit der Browser-Engine (JavaScript-Lader und Systembibliothek)",
-        "en": "Runtime of the browser engine (JavaScript loader and system library)"
-      },
-      "copyright": { "licenseFiles": {} }
-    },
-    {
-      "id": "llvm-runtimes",
-      "group": "engine",
-      "from": { "kind": "manifest", "id": "llvm-runtimes" },
-      "licenseLabel": { "de": "Apache-2.0 mit LLVM-Ausnahme", "en": "Apache-2.0 with LLVM exception" },
-      "purpose": {
-        "de": "C++-Laufzeit der Browser-Engine (libc++, libc++abi, libunwind, compiler-rt)",
-        "en": "C++ runtime of the browser engine (libc++, libc++abi, libunwind, compiler-rt)"
-      },
-      "copyright": { "licenseFiles": {} }
-    },
-    {
-      "id": "musl",
-      "group": "engine",
-      "from": { "kind": "manifest", "id": "musl" },
-      "purpose": {
-        "de": "C-Bibliothek der Browser-Engine",
-        "en": "C library of the browser engine"
-      },
-      "copyright": { "licenseFiles": {} }
-    },
-    {
-      "id": "dlmalloc",
-      "group": "engine",
-      "from": { "kind": "manifest", "id": "dlmalloc" },
-      "licenseLabel": { "de": "gemeinfrei (CC0-1.0)", "en": "public domain (CC0-1.0)" },
-      "purpose": {
-        "de": "Speicherverwaltung der Browser-Engine",
-        "en": "Memory allocator of the browser engine"
-      },
-      "note": {
-        "de": "Von Doug Lea in die Gemeinfreiheit entlassen (system/lib/dlmalloc.c von Emscripten); es gibt keinen Lizenztext und keine Pflichtangabe.",
-        "en": "Released into the public domain by Doug Lea (system/lib/dlmalloc.c of Emscripten); there is no licence text and no required notice."
-      },
-      "copyright": { "licenseFiles": false }
     },
     {
       "id": "react",
       "group": "ui",
       "from": { "kind": "npm", "packages": ["react", "react-dom", "scheduler"], "main": "react" },
       "name": "React, React DOM, Scheduler",
-      "platforms": ["desktop", "browser"],
       "purpose": { "de": "Oberfläche", "en": "User interface" }
     },
     {
@@ -166,7 +118,6 @@
       "group": "ui",
       "from": { "kind": "npm", "packages": ["three"], "main": "three" },
       "name": "three.js",
-      "platforms": ["desktop", "browser"],
       "purpose": { "de": "3D-Ansicht", "en": "3D view" }
     },
     {
@@ -174,7 +125,6 @@
       "group": "ui",
       "from": { "kind": "npm", "packages": ["motion", "framer-motion", "motion-dom", "motion-utils"], "main": "motion" },
       "name": "Motion (Framer Motion)",
-      "platforms": ["desktop", "browser"],
       "purpose": { "de": "Animationen der Oberfläche", "en": "Animations of the interface" }
     },
     {
@@ -182,7 +132,6 @@
       "group": "ui",
       "from": { "kind": "npm", "packages": ["tailwindcss"], "main": "tailwindcss", "cssProof": "--tw-" },
       "name": "Tailwind CSS",
-      "platforms": ["desktop", "browser"],
       "purpose": { "de": "Gestaltung der Oberfläche (Stylesheet)", "en": "Styling of the interface (stylesheet)" }
     },
     {
@@ -190,7 +139,6 @@
       "group": "ui",
       "from": { "kind": "npm", "packages": ["vite"], "main": "vite", "cutTextAt": { "vite": "# Licenses of bundled dependencies" } },
       "name": "Vite",
-      "platforms": ["desktop", "browser"],
       "purpose": { "de": "Hilfscode des Bündlers im Programmpaket", "en": "Bundler helper code in the program bundle" },
       "note": {
         "de": "Der Lizenztext enthält nur die Lizenz von Vite selbst; die Lizenzen der Pakete, die in Vite eingebaut sind, gehören nicht zum Programmpaket.",
@@ -202,7 +150,6 @@
       "group": "ui",
       "from": { "kind": "npm", "packages": ["rolldown"], "main": "rolldown" },
       "name": "Rolldown",
-      "platforms": ["desktop", "browser"],
       "purpose": { "de": "Laufzeithilfen des Bündlers im Programmpaket", "en": "Bundler runtime helpers in the program bundle" }
     },
     {
@@ -216,7 +163,6 @@
         "source": "https://github.com/vercel/geist-font"
       },
       "name": "Geist, Geist Mono",
-      "platforms": ["desktop", "browser"],
       "purpose": { "de": "Schrift der Oberfläche", "en": "Typeface of the interface" },
       "note": {
         "de": "SIL Open Font License, Version 1.1.",
@@ -224,11 +170,28 @@
       }
     },
     {
+      "id": "tabler-icons",
+      "group": "ui",
+      "from": {
+        "kind": "static",
+        "name": "Tabler Icons",
+        "version": "3.53.0",
+        "license": "MIT",
+        "source": "https://github.com/tabler/tabler-icons",
+        "files": [{ "path": "third_party/licenses/tabler-icons-LICENSE", "sha256": "b740a1d46122672da62833e97f7e7c8a13fa85cbc7445b584b297cc00dde93db" }],
+        "requires": [{ "kind": "contains", "file": "app/src/ui/glyph-data.ts", "text": "Tabler Icons (MIT" }]
+      },
+      "purpose": { "de": "Symbole der Oberfläche", "en": "Icons of the interface" },
+      "note": {
+        "de": "Ein Teil der Oberflächensymbole sind Zeichnungen aus Tabler Icons (unverändert oder leicht angepasst), die übrigen sind eigene Zeichnungen im selben Raster. Lizenztext aus dem Quelltext-Stand 3.53.0 von Tabler Icons.",
+        "en": "Some of the interface icons are drawings from Tabler Icons (unchanged or slightly adjusted); the others are our own drawings on the same grid. Licence text from the 3.53.0 source of Tabler Icons."
+      }
+    },
+    {
       "id": "electron",
       "group": "shell",
       "from": { "kind": "npm", "packages": ["electron"], "main": "electron" },
       "name": "Electron",
-      "platforms": ["desktop"],
       "purpose": { "de": "Programmfenster am Desktop", "en": "Desktop program window" }
     },
     {
@@ -243,7 +206,6 @@
         "requires": [{ "kind": "npm-installed", "package": "electron", "version": "45.5.0", "because": "Chromium 156.0.8078.109 is the Chromium of Electron 45.5.0 (process.versions.chrome); check the value here after every Electron update" }]
       },
       "licenseLabel": { "de": "gemischt, je Teilkomponente", "en": "mixed, per component" },
-      "platforms": ["desktop"],
       "purpose": { "de": "Darstellung der Oberfläche (steckt in Electron)", "en": "Renders the interface (part of Electron)" },
       "note": {
         "de": "Chromium und seine Teilkomponenten haben je eigene Lizenzen. Ihre Texte stehen in der mitgelieferten Datei LICENSES.chromium.html neben dem Programm (Desktop).",
@@ -265,7 +227,6 @@
           { "kind": "json", "file": ".config/dotnet-tools.json", "path": ["tools", "vpk", "version"], "equals": "1.2.161" }
         ]
       },
-      "platforms": ["desktop"],
       "purpose": { "de": "Installation und Updates", "en": "Installation and updates" },
       "note": {
         "de": "Lizenztext aus dem Quelltext-Stand 1.2.161 von Velopack. Die nativen Programme von Velopack enthalten außerdem Rust-Bibliotheken; sie stehen in der Cargo.lock von Velopack (https://github.com/velopack/velopack/blob/1.2.161/Cargo.lock).",
@@ -284,7 +245,6 @@
         "files": [{ "path": "third_party/licenses/neon-rs-load-LICENSE", "sha256": "dc1649629e747f001580439e048f829be39d4cd3683ac2a85f25f7670d16c220" }],
         "requires": [{ "kind": "lockfile", "file": "installer/app/package-lock.json", "package": "@neon-rs/load", "version": "0.2.6" }]
       },
-      "platforms": ["desktop"],
       "purpose": { "de": "Lädt die native Bibliothek von Velopack", "en": "Loads Velopack's native library" }
     },
     {
@@ -300,14 +260,13 @@
         "requires": [{ "kind": "contains", "file": "third_party/licenses/vcrt-notice.txt", "text": "14.44.35211.0" }]
       },
       "licenseLabel": { "de": "Microsoft-Bedingungen für verteilbaren Code", "en": "Microsoft terms for distributable code" },
-      "platforms": ["desktop"],
       "purpose": {
         "de": "Laufzeitdateien der Engine (vcruntime140, msvcp140)",
         "en": "Runtime files of the engine (vcruntime140, msvcp140)"
       },
       "note": {
-        "de": "Microsoft-Dateien, unverändert neben der Engine ausgeliefert; sie stehen unter den Bedingungen von Microsoft, nicht unter HalfCubes Lizenz.",
-        "en": "Microsoft files, shipped unmodified next to the engine; they stay under Microsoft's terms, not under HalfCube's licence."
+        "de": "Microsoft-Dateien, unverändert neben der Engine ausgeliefert; sie stehen unter den Bedingungen von Microsoft, nicht unter {product}s Lizenz.",
+        "en": "Microsoft files, shipped unmodified next to the engine; they stay under Microsoft's terms, not under {product}'s licence."
       }
     }
   ]

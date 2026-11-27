@@ -148,16 +148,30 @@ function renderBody(body, { sourceDir, en }) {
   return { html, toc, hasMermaid };
 }
 
-/** The wordmark in the brand colours of the given background ("light" or "dark"). */
-function wordmark(theme, brandName, mode) {
-  const [a, b] = theme.wordmark.split;
-  if (a + b !== brandName) return escapeHtml(brandName);
-  return `<span class="wm wm-${mode}"><span class="wm-a">${a}</span><span class="wm-b">${b}</span></span>`;
+/** Font size of the brand line on the cover (logo and wordmark), in pt. 21 pt = 28 px, so the large wordmark is used. */
+const COVER_BRAND_PT = 21;
+
+/**
+ * The wordmark: the letter outlines of branding/wordmark (the same files the README and the program draw from, made by
+ * scripts/make-wordmark.mjs), inlined as SVG so no font setting (such as the stylistic set of the body text) can change
+ * them. `mode` is the background it sits on ("light" or "dark": the file with the matching brand colours); `fontPx` is the
+ * font size it stands for, which picks the small file below `theme.wordmark.smallBelowPx` and the large one from there on,
+ * like the program does. The size is given in em of the surrounding font size (the files have 1000 units per em).
+ */
+function wordmark({ theme, themeDir, brandName, brandSlug }, mode, fontPx) {
+  const small = fontPx < theme.wordmark.smallBelowPx;
+  const file = resolve(themeDir, theme.wordmark.dir, `${brandSlug}-wordmark-${mode}${small ? "-small" : ""}.svg`);
+  if (!existsSync(file)) throw new Error(`Die Wortmarke fehlt: ${file} (erzeugen mit: node scripts/make-wordmark.mjs)`);
+  const svg = readFileSync(file, "utf8");
+  const box = /viewBox="0 0 ([\d.]+) ([\d.]+)"/.exec(svg);
+  if (!box) throw new Error(`Die Wortmarke hat keine viewBox: ${file}`);
+  const inner = svg.replace(/^[\s\S]*?<svg[^>]*>/, "").replace(/<\/svg>\s*$/, "").replace(/<title>[^<]*<\/title>/, "");
+  const [width, height] = [Number(box[1]) / 1000, Number(box[2]) / 1000];
+  return `<svg class="wm" role="img" aria-label="${escapeHtml(brandName)}" viewBox="0 0 ${box[1]} ${box[2]}" style="width: ${width}em; height: ${height}em">${inner}</svg>`;
 }
 
 function css({ theme, docName, footerLabel, fontUrls }) {
   const c = theme.colors;
-  const wm = theme.wordmark;
   return `
 @font-face { font-family: '${theme.fonts.sans.family}'; src: url("${fontUrls.sans}") format('woff2'); font-weight: 100 900; font-style: normal; }
 @font-face { font-family: '${theme.fonts.mono.family}'; src: url("${fontUrls.mono}") format('woff2'); font-weight: 100 900; font-style: normal; }
@@ -180,10 +194,7 @@ html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 body { margin: 0; font-family: var(--sans); font-size: 9.6pt; line-height: 1.6; color: var(--ink);
   font-feature-settings: "ss01"; hyphens: manual; }
 strong, b { font-weight: 650; }
-.wm { font-weight: ${wm.weightSmall}; letter-spacing: ${wm.trackingSmall}; }
-.wm.big { font-weight: ${wm.weightLarge}; letter-spacing: ${wm.trackingLarge}; }
-.wm-light .wm-a { color: ${wm.light.half}; } .wm-light .wm-b { color: ${wm.light.cube}; }
-.wm-dark .wm-a { color: ${wm.dark.half}; } .wm-dark .wm-b { color: ${wm.dark.cube}; }
+.wm { display: block; flex: none; }
 
 /* ---------- Cover ---------- */
 .cover { page: cover; width: 210mm; height: 296.5mm; break-after: page; position: relative; overflow: hidden;
@@ -194,7 +205,7 @@ strong, b { font-weight: 650; }
   color: #dbe6ee; display: flex; flex-direction: column; justify-content: space-between; padding: 26mm 22mm 16mm; }
 .cover-watermark { position: absolute; right: -22mm; bottom: 30mm; width: 150mm; height: 150mm; opacity: 0.085; transform: rotate(-8deg); }
 .cover-watermark img { width: 100%; height: 100%; }
-.cover-brand { position: relative; display: flex; align-items: center; gap: 4mm; font-size: 21pt; }
+.cover-brand { position: relative; display: flex; align-items: center; gap: 4mm; font-size: ${COVER_BRAND_PT}pt; }
 .cover-logo { width: 15mm; height: 15mm; }
 .cover-main { position: relative; }
 .cover-kicker { display: inline-block; margin: 0 0 5mm; padding: 1.4mm 3.2mm; border: 1px solid rgba(76, 209, 224, 0.6); border-radius: 999px;
@@ -310,10 +321,11 @@ strong, b { font-weight: 650; }
  * @param {object} options.theme     content of theme.json
  * @param {string} options.themeDir  folder of theme.json
  * @param {string} options.brandName name from branding.json
+ * @param {string} options.brandSlug slug from branding.json (names the wordmark files)
  * @param {string} options.logoFile  path of the logo PNG
  * @param {string|null} options.mermaidScript path of mermaid.min.js (used when the document has diagrams)
  */
-export function buildHtml({ markdown, sourceDir, defaults, theme, themeDir, brandName, logoFile, mermaidScript }) {
+export function buildHtml({ markdown, sourceDir, defaults, theme, themeDir, brandName, brandSlug, logoFile, mermaidScript }) {
   const { meta: fileMeta, body } = parseFrontMatter(markdown);
   const meta = { ...defaults, ...fileMeta };
   const en = (meta.lang ?? "de") === "en";
@@ -361,7 +373,7 @@ export function buildHtml({ markdown, sourceDir, defaults, theme, themeDir, bran
   return `<!doctype html><html lang="${en ? "en" : "de"}"><head><meta charset="utf-8"><title>${escapeHtml(footerLabel)}</title><style>${css({ theme, docName, footerLabel, fontUrls })}</style></head><body>
 <section class="cover">
   <div class="cover-watermark"><img src="${logoUri}" alt=""></div>
-  <div class="cover-brand"><img class="cover-logo" src="${logoUri}" alt="">${wordmark(theme, brandName, "dark")}</div>
+  <div class="cover-brand"><img class="cover-logo" src="${logoUri}" alt="">${wordmark({ theme, themeDir, brandName, brandSlug }, "dark", COVER_BRAND_PT * 96 / 72)}</div>
   <div class="cover-main">
     <div class="cover-kicker">${escapeHtml(kicker)}</div>
     <h1 class="cover-title" style="font-size: ${coverSize}pt">${escapeHtml(title)}</h1>

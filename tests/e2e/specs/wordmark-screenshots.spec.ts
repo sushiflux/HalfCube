@@ -6,12 +6,12 @@ const modes = ["light", "dark"] as const;
 
 for (const mode of modes) {
   test(`screenshots of the wordmark: title bar, welcome screen, About view (${mode})`, async ({ app }) => {
-    test.skip(process.env.HALFCUBE_WORDMARK_SHOTS === undefined || app.target !== "electron", "only when HALFCUBE_WORDMARK_SHOTS names a folder, in the Electron project");
+    test.skip(process.env.HALFCUBE_WORDMARK_SHOTS === undefined, "only when HALFCUBE_WORDMARK_SHOTS names a folder");
     const dir = process.env.HALFCUBE_WORDMARK_SHOTS!;
     const { page } = app;
 
     await app.open(`?lang=en&theme=praezision&mode=${mode}`);
-    const welcome = page.getByRole("dialog", { name: "Sketch first, then build" });
+    const welcome = page.getByRole("dialog", { name: "Sketch first, then build." });
     await expect(welcome).toBeVisible({ timeout: 60_000 });
     await page.mouse.move(2, 2);
     await page.screenshot({ path: `${dir}/willkommen-${mode}.png` });

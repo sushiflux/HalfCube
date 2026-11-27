@@ -5,7 +5,7 @@ namespace HalfCube.Setup.Ui;
 
 /// <summary>
 /// The HalfCube brand marks of the setup: the logo (the real logo file of the repository's branding folder, scaled only - never
-/// redrawn, recoloured or altered; transparent margins are left out of the drawn area), the window icon and the wordmark in Geist.
+/// redrawn, recoloured or altered; transparent margins are left out of the drawn area), the window icon and the wordmark (letter outlines).
 /// </summary>
 public static class Branding
 {
@@ -35,31 +35,91 @@ public static class Branding
     /// <summary>The window and taskbar icon (the multi-size .ico of the branding folder).</summary>
     public static Icon GetIcon(int size)
     {
-        using var stream = typeof(Branding).Assembly.GetManifestResourceStream("halfcube.ico")
+        using var stream = typeof(Branding).Assembly.GetManifestResourceStream(ProductInfo.Slug + ".ico")
                            ?? throw new InvalidOperationException("The app icon is missing from the setup.");
         return new Icon(stream, new Size(size, size));
     }
 
     /// <summary>
-    /// "Half" + "Cube" in Geist SemiBold with the fixed brand colours of the dark panel (wordmark option "Klar"; weight 640 of the
-    /// mockup is drawn as the nearest shipped weight, 600). <paramref name="height"/> is the font size in pixels.
+    /// Size of the wordmark at a font size of <paramref name="fontPixels"/> pixels: the width of the text including the letter
+    /// spacing and a line box of one em in height (the same box the program and the manuals use).
     /// </summary>
     public static Size MeasureWordmark(float fontPixels)
     {
-        var font = Fonts.Get(fontPixels * 72f / 96f, 1f, FontStyle.Bold);
-        var flags = TextFormatFlags.NoPrefix | TextFormatFlags.NoPadding | TextFormatFlags.SingleLine;
-        var a = TextRenderer.MeasureText("Half", font, Size.Empty, flags);
-        var b = TextRenderer.MeasureText("Cube", font, Size.Empty, flags);
-        return new Size(a.Width + b.Width, Math.Max(a.Height, b.Height));
+        var scale = fontPixels / WordmarkOutline.UnitsPerEm;
+        var advance = fontPixels < WordmarkOutline.SmallBelow ? WordmarkOutline.SmallAdvance : WordmarkOutline.LargeAdvance;
+        return new Size((int)Math.Ceiling(advance * scale), (int)Math.Round(fontPixels));
     }
 
-    public static void DrawWordmark(Graphics g, Point origin, float fontPixels)
+    /// <summary>
+    /// Draws the wordmark as the letter outlines of the repository's branding/wordmark (generated into WordmarkOutline.generated.cs
+    /// by scripts/make-wordmark.mjs; the same drawing as in the program, the manuals and the README) with the fixed brand colours
+    /// of the background it sits on (<paramref name="onDark"/>, the dark panel by default). <paramref name="origin"/> is the top
+    /// left corner of the one-em line box, <paramref name="fontPixels"/> the font size in pixels; below 28 px the small setting is used.
+    /// </summary>
+    public static void DrawWordmark(Graphics g, Point origin, float fontPixels, bool onDark = true)
     {
-        var font = Fonts.Get(fontPixels * 72f / 96f, 1f, FontStyle.Bold);
-        var flags = TextFormatFlags.NoPrefix | TextFormatFlags.NoPadding | TextFormatFlags.SingleLine;
-        var half = TextRenderer.MeasureText(g, "Half", font, Size.Empty, flags);
-        TextRenderer.DrawText(g, "Half", font, origin, Brand.WordHalf, flags);
-        TextRenderer.DrawText(g, "Cube", font, new Point(origin.X + half.Width, origin.Y), Brand.WordCube, flags);
+        var small = fontPixels < WordmarkOutline.SmallBelow;
+        var scale = fontPixels / WordmarkOutline.UnitsPerEm;
+        var half = onDark ? DarkHalf : LightHalf;
+        var cube = onDark ? DarkCube : LightCube;
+        var state = g.Save();
+        g.SmoothingMode = SmoothingMode.AntiAlias;
+        g.TranslateTransform(origin.X, origin.Y + WordmarkOutline.Baseline * scale);
+        g.ScaleTransform(scale, scale);
+        using (var path = BuildPath(small ? WordmarkOutline.SmallHalfOps : WordmarkOutline.LargeHalfOps, small ? WordmarkOutline.SmallHalfPoints : WordmarkOutline.LargeHalfPoints))
+        using (var brush = new SolidBrush(half))
+        {
+            g.FillPath(brush, path);
+        }
+        using (var path = BuildPath(small ? WordmarkOutline.SmallCubeOps : WordmarkOutline.LargeCubeOps, small ? WordmarkOutline.SmallCubePoints : WordmarkOutline.LargeCubePoints))
+        using (var brush = new SolidBrush(cube))
+        {
+            g.FillPath(brush, path);
+        }
+        g.Restore(state);
+    }
+
+    private static readonly Color LightHalf = Palette.Hex(WordmarkOutline.LightHalf);
+    private static readonly Color LightCube = Palette.Hex(WordmarkOutline.LightCube);
+    private static readonly Color DarkHalf = Palette.Hex(WordmarkOutline.DarkHalf);
+    private static readonly Color DarkCube = Palette.Hex(WordmarkOutline.DarkCube);
+
+    /// <summary>Builds a path from the generated operation and point arrays (font outlines fill with the non-zero winding rule).</summary>
+    private static GraphicsPath BuildPath(byte[] ops, float[] points)
+    {
+        var path = new GraphicsPath(FillMode.Winding);
+        var cx = 0f;
+        var cy = 0f;
+        var p = 0;
+        foreach (var op in ops)
+        {
+            switch (op)
+            {
+                case 0:
+                    path.StartFigure();
+                    cx = points[p];
+                    cy = points[p + 1];
+                    p += 2;
+                    break;
+                case 1:
+                    path.AddLine(cx, cy, points[p], points[p + 1]);
+                    cx = points[p];
+                    cy = points[p + 1];
+                    p += 2;
+                    break;
+                case 2:
+                    path.AddBezier(cx, cy, points[p], points[p + 1], points[p + 2], points[p + 3], points[p + 4], points[p + 5]);
+                    cx = points[p + 4];
+                    cy = points[p + 5];
+                    p += 6;
+                    break;
+                default:
+                    path.CloseFigure();
+                    break;
+            }
+        }
+        return path;
     }
 
     /// <summary>A small filled heart (the "made with" line); drawn as a shape so it does not depend on a font glyph.</summary>

@@ -1,8 +1,7 @@
 // LatestOnly: for work that is redone on every change (typing a dimension, moving an extrude distance) the UI never
 // piles up requests. Per work area at most one request is in flight and one waits; a newer request replaces the
 // waiting one, which is never sent. When the running one answers and a newer one waits, the answer is stale: it is
-// dropped and the waiting one goes out. Desktop and browser behave the same, although the WebAssembly engine cannot
-// read a cancel while it computes.
+// dropped and the waiting one goes out.
 //
 // No cancel per keystroke: cancelling the running request on every change would mean a fast drag never shows a
 // picture. Only a request that has been running for cancelAfterMs (default 250 ms) while a newer one waits is

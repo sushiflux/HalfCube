@@ -1,5 +1,5 @@
 // A stand-in for the generated third-party data (app/src/about/third-party.generated.ts): the same shape, a few entries
-// that cover every group, both platforms and a missing text file.
+// that cover every group and a missing text file.
 import type { ThirdPartyEntry } from "../../../app/src/about/types.ts";
 
 export const fixture: readonly ThirdPartyEntry[] = [
@@ -19,7 +19,6 @@ export const fixture: readonly ThirdPartyEntry[] = [
     ],
     source: "https://github.com/Open-Cascade-SAS/OCCT",
     purpose: { de: "Geometriekern: Körper, Verrundungen, STEP und IGES", en: "Geometry kernel: solids, fillets, STEP and IGES" },
-    platforms: ["desktop", "browser"],
     textFile: "licenses/occt.txt",
   },
   {
@@ -36,7 +35,6 @@ export const fixture: readonly ThirdPartyEntry[] = [
     ],
     source: "https://github.com/FreeCAD/FreeCAD",
     purpose: { de: "Löser für die Abhängigkeiten der Skizzen", en: "Solver for sketch constraints" },
-    platforms: ["desktop", "browser"],
     textFile: "licenses/planegcs.txt",
     note: { de: "Die Dateiköpfe nennen LGPL-2.0-or-later.", en: "The file headers name LGPL-2.0-or-later." },
   },
@@ -49,7 +47,6 @@ export const fixture: readonly ThirdPartyEntry[] = [
     copyright: ["Copyright (c) Meta Platforms, Inc. and affiliates."],
     source: "https://react.dev",
     purpose: { de: "Oberfläche", en: "User interface" },
-    platforms: ["desktop", "browser"],
     textFile: "licenses/react.txt",
   },
   {
@@ -61,7 +58,6 @@ export const fixture: readonly ThirdPartyEntry[] = [
     copyright: ["Copyright (c) Electron contributors"],
     source: "https://github.com/electron/electron",
     purpose: { de: "Programmfenster am Desktop", en: "Desktop program window" },
-    platforms: ["desktop"],
     textFile: "licenses/electron.txt",
   },
   {
@@ -73,7 +69,6 @@ export const fixture: readonly ThirdPartyEntry[] = [
     copyright: [],
     source: "https://www.chromium.org",
     purpose: { de: "Darstellung der Oberfläche", en: "Renders the interface" },
-    platforms: ["desktop"],
     textFile: null,
   },
 ];

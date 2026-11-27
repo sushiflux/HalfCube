@@ -1,3 +1,4 @@
+import { branding } from "../branding.ts";
 // Tiny preferences store (provisional: the real settings storage comes later).
 // Values live in localStorage when it works. When the storage is missing or refuses (private mode, locked-down
 // profile, quota) they stay in memory for the running session, so a failing storage never breaks the app.
@@ -16,7 +17,7 @@ export interface Preferences {
   readonly persistent: boolean;
 }
 
-const keyPrefix = "halfcube.";
+const keyPrefix = `${branding.slug}.`;
 
 /** `getStorage` may throw or return undefined: both mean "no storage". */
 export function createPreferences(getStorage: () => PreferenceStorage | undefined): Preferences {

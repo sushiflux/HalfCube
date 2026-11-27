@@ -79,7 +79,7 @@ add_library(hc_boost INTERFACE)
 target_include_directories(hc_boost SYSTEM INTERFACE "${HC_BOOST_DIR}")
 add_library(hc::boost ALIAS hc_boost)
 
-if(HALFCUBE_BUILD_TESTS AND NOT EMSCRIPTEN)
+if(HALFCUBE_BUILD_TESTS)
     hc_dependency(doctest HC_DOCTEST)
     add_library(hc_doctest INTERFACE)
     target_include_directories(hc_doctest SYSTEM INTERFACE "${HC_DOCTEST_DIR}/include")
@@ -87,7 +87,7 @@ if(HALFCUBE_BUILD_TESTS AND NOT EMSCRIPTEN)
 endif()
 
 # planegcs: FreeCAD's sketch solver, compiled unchanged from the fetched sources. The shim folder must come first
-# for planegcs' own files: it replaces FreeCAD's FCConfig.h (which stops with #error on Emscripten), Base/Console.h
+# for planegcs' own files: it replaces FreeCAD's FCConfig.h (operating-system detection and DLL export macros that planegcs does not use), Base/Console.h
 # and the generated QtCore.h. Consumers see every planegcs include folder as SYSTEM.
 set(_hc_planegcs_src "${HC_PLANEGCS_DIR}/src/Mod/Sketcher/App/planegcs")
 set(_hc_planegcs_shim "${CMAKE_CURRENT_SOURCE_DIR}/third_party_shims/planegcs")
@@ -107,11 +107,7 @@ if(MSVC)
 else()
     target_compile_options(hc_planegcs PRIVATE -w)
 endif()
-if(EMSCRIPTEN)
-    target_compile_options(hc_planegcs PRIVATE -fwasm-exceptions)
-else()
-    # System::diagnose starts std::async; under Emscripten (no threads) libc++ falls back to deferred execution.
-    find_package(Threads REQUIRED)
-    target_link_libraries(hc_planegcs PUBLIC Threads::Threads)
-endif()
+# System::diagnose starts std::async, which needs the thread library.
+find_package(Threads REQUIRED)
+target_link_libraries(hc_planegcs PUBLIC Threads::Threads)
 add_library(hc::planegcs ALIAS hc_planegcs)

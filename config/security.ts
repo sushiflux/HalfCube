@@ -1,20 +1,23 @@
-// Security headers shared by the Electron app:// handler and the Vite preview server.
+// Security headers shared by the Electron app:// handler and the Vite dev server.
 
-/** Same-origin isolation: needed later for SharedArrayBuffer in the WebAssembly engine worker. */
+/**
+ * Same-origin isolation (COOP, COEP, CORP) as hardening of the window's own origin: other origins cannot embed its
+ * resources or share its browsing context group. Nothing in the program depends on it.
+ */
 export const isolationHeaders = {
   "Cross-Origin-Opener-Policy": "same-origin",
   "Cross-Origin-Embedder-Policy": "require-corp",
   "Cross-Origin-Resource-Policy": "same-origin",
 } as const;
 
-/** Strict policy for built bundles: own origin only, WebAssembly allowed, no inline scripts or styles. */
+/** Strict policy for built bundles: own origin only, no WebAssembly, no workers, no inline scripts or styles. */
 export const contentSecurityPolicy = [
   "default-src 'self'",
-  "script-src 'self' 'wasm-unsafe-eval'",
+  "script-src 'self'",
   "style-src 'self'",
   "img-src 'self' data: blob:",
   "font-src 'self'",
-  "worker-src 'self'",
+  "worker-src 'none'",
   "connect-src 'self'",
   "object-src 'none'",
   "base-uri 'none'",

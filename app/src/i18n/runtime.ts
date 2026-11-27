@@ -8,7 +8,7 @@ import type { Language } from "./types.ts";
 
 /**
  * The language the user chose in the desktop setup (read from window.desktopBridge.setupChoices, already validated by
- * the main process). Undefined in the browser and when the setup left no choice.
+ * the main process). Undefined when the setup left no choice.
  */
 export function handedOverLanguage(): string | undefined {
   return getDesktopBridge()?.setupChoices?.language;

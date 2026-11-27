@@ -71,7 +71,7 @@ describe("attaching the updater", () => {
     expect(controller.getSnapshot().state).toBe(found);
   });
 
-  it("has no state and no updater without a bridge (the browser)", () => {
+  it("has no state and no updater without a bridge (a bare dev page)", () => {
     const { controller } = setup();
     expect(controller.getSnapshot().state).toBeNull();
     expect(controller.supported).toBe(false);

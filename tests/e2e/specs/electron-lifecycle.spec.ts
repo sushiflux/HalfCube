@@ -18,7 +18,7 @@ test("the program starts inactive, shows its version in the title, runs one engi
   const { app, page, pid } = program;
 
   // The engine is ready when the welcome screen follows the loading screen.
-  await expect(page.getByRole("dialog", { name: "Sketch first, then build" })).toBeVisible({ timeout: 60_000 });
+  await expect(page.getByRole("dialog", { name: "Sketch first, then build." })).toBeVisible({ timeout: 60_000 });
   await expect(page.getByTestId("version")).toHaveText(`HalfCube ${expectedVersionDisplay()}`);
 
   const window = await app.evaluate(({ BrowserWindow }) => {
@@ -46,7 +46,7 @@ test("the program starts inactive, shows its version in the title, runs one engi
 });
 
 test("a second program with its own user data folder starts next to the first and keeps its own settings", async ({ program }) => {
-  const first = program.page.getByRole("dialog", { name: "Sketch first, then build" });
+  const first = program.page.getByRole("dialog", { name: "Sketch first, then build." });
   await expect(first).toBeVisible({ timeout: 60_000 });
   await first.getByText("Don’t show this at the next start").click();
   await expect(first.getByRole("checkbox")).toBeChecked();
@@ -55,7 +55,7 @@ test("a second program with its own user data folder starts next to the first an
   const other = await launchElectron({ language: "de", colorMode: "dark" });
   try {
     // Its own first-start file: German, and nothing of the first program's stored preferences.
-    await expect(other.page.getByRole("dialog", { name: "Erst skizzieren, dann bauen" })).toBeVisible({ timeout: 60_000 });
+    await expect(other.page.getByRole("dialog", { name: "Sketch first, then build." })).toBeVisible({ timeout: 60_000 });
     expect(await other.page.evaluate(() => localStorage.getItem("halfcube.welcome.hidden"))).toBeNull();
     expect(other.userData).not.toBe(program.userData);
     expect(engineChildren(other.pid)).toHaveLength(1);

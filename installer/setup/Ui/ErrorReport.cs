@@ -22,7 +22,7 @@ public static class ErrorReport
     {
         var text = message.Replace("\r\n", "\n").Replace('\r', '\n').Trim('\n', ' ').Replace("\n", Environment.NewLine);
         var when = (at ?? DateTimeOffset.Now).ToString("yyyy-MM-dd HH:mm:ss zzz", CultureInfo.InvariantCulture);
-        var stamp = new StringBuilder("HalfCube Setup");
+        var stamp = new StringBuilder($"{ProductInfo.Name} Setup");
         var v = version ?? AppVersion;
         if (!string.IsNullOrWhiteSpace(v)) stamp.Append(' ').Append(v);
         stamp.Append(" · ").Append(when);

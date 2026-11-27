@@ -9,7 +9,7 @@ lang: "de"
 
 # 1 Über dieses Handbuch
 
-HalfCube befindet sich in früher Entwicklung. Dieses Handbuch beschreibt, was das Programm heute kann. Es ist noch nicht vollständig und wächst mit dem Programm. Bisher steht hier, wie HalfCube sich selbst aktuell hält.
+HalfCube befindet sich in früher Entwicklung. Dieses Handbuch beschreibt, was das Programm heute kann. Es ist noch nicht vollständig und wächst mit dem Programm. Bisher steht hier, wie HalfCube sich selbst aktuell hält und unter welcher Lizenz es steht.
 
 # 2 Updates und „Was ist neu“
 
@@ -215,6 +215,56 @@ Oben nennt das Fenster, wie viele Versionen es enthält. Darunter steht jede Ver
 
 Öffnest du das Fenster aus „Was ist neu“, zeigt es alle Versionen deines Kanals, die in HalfCube eingebaut sind. Dafür braucht es keine Internetverbindung. Öffnest du es aus dem Fenster „Update“, zeigt es die Versionen aus der Beschreibung des neuen Updates.
 
-## 2.10 Die Browser-Version
+# 3 Lizenz und mitgelieferte Bausteine
 
-Die Browser-Version hat keine Update-Funktion, keinen Punkt am „i“ und keine Karte „Updates“. Sie ist beim Öffnen immer aktuell. „Was ist neu“ gibt es auch dort: über den Link in „Über HalfCube“ und in den Einstellungen auf dem Reiter „Updates“. Es öffnet sich dort nicht von selbst.
+HalfCube besteht nicht nur aus eigenem Code. Es enthält **Bausteine** anderer Projekte, zum Beispiel für die Geometrie. Jeder Baustein hat seine eigene **Lizenz**. Eine Lizenz ist die Erlaubnis des Urhebers, ein Werk unter bestimmten Bedingungen zu benutzen. Dieses Kapitel sagt dir, unter welcher Lizenz HalfCube steht, welche Bausteine dazugehören und wo du die vollständigen Texte findest.
+
+## 3.1 Die Lizenz von HalfCube
+
+HalfCube steht unter der **PolyForm Shield License 1.0.0**. Die Lizenz erlaubt die kostenlose Nutzung, privat und geschäftlich, sowie Änderungen für den eigenen Gebrauch. Du kannst zum Beispiel Teile verkaufen, die du mit HalfCube entworfen hast. Ausgenommen ist das Anbieten von Produkten, die mit HalfCube im Wettbewerb stehen. Es gibt keine Gewährleistung.
+
+Der Quelltext von HalfCube ist öffentlich. Trotzdem nennt HalfCube sich nicht „Open Source“, denn diese Bezeichnung hat eine feste Bedeutung, die die Lizenz nicht erfüllt. Das richtige Wort ist „quelloffen“.
+
+> [!HINWEIS]
+> Das ist eine einfache Zusammenfassung, keine Rechtsberatung. Maßgeblich ist der Lizenztext.
+
+## 3.2 Wo du die Texte findest
+
+Alle Lizenzen liegen in HalfCube selbst. Du brauchst dafür keine Internetverbindung.
+
+1. Klicke in der Titelleiste auf das „i“. Das Fenster „Über HalfCube“ öffnet sich auf dem Reiter **Info**.
+2. Im Abschnitt **Lizenz** steht die Zusammenfassung. Klicke auf **Lizenztext anzeigen**, um den vollständigen Text der PolyForm Shield License zu lesen.
+3. Klicke auf **NOTICE-Datei ansehen**, um die Datei `NOTICE` zu lesen. Sie enthält die Pflichthinweise, die Zusatzerlaubnis für die mitgelieferten Bibliotheken (siehe Abschnitt 3.3) und den Hinweis zu den früheren Versionen unter der GPL.
+4. Klicke auf **Quelltext auf GitHub**, um den öffentlichen Quelltext zu öffnen.
+
+Alle Bausteine stehen auf dem Reiter **Lizenzen**:
+
+1. Öffne „Über HalfCube“ und wechsle auf den Reiter **Lizenzen**. Du erreichst ihn auch mit dem Link **Lizenzen** unter dem Satz „Enthält … unter der LGPL-2.1“ auf dem Reiter „Info“.
+2. Die Liste ist nach Bereichen geordnet: **Dieses Programm**, **Konstruktionskern**, **Oberfläche** und **Programmrahmen**. Schreibe einen Namen in das Feld **Bausteine durchsuchen**, um schneller zu finden, was du suchst.
+3. Klicke auf einen Baustein. Du siehst seine **Lizenz**, den **Urheberrechtshinweis**, die **Quelle** und darunter den **Lizenztext**.
+4. Mit **Alle Bausteine** gehst du zurück zur Liste.
+
+Die Liste zeigt nur die Bausteine, die in der Version enthalten sind, die du benutzt.
+
+## 3.3 Die wichtigsten Bausteine
+
+| Baustein | Wofür HalfCube ihn braucht | Lizenz |
+|---|---|---|
+| Open CASCADE Technology (OCCT) | Der Geometriekern. Er berechnet die Körper. | LGPL-2.1 mit der Ausnahme von Open CASCADE |
+| planegcs | Der Skizzen-Löser aus FreeCAD. Er hält Maße und Abhängigkeiten in der Skizze ein. | LGPL-2.1 |
+| Eigen | Rechenbibliothek für den Skizzen-Löser. | MPL-2.0 |
+| React, three.js und weitere | Oberfläche und 3D-Ansicht. | meist MIT |
+| Geist und Geist Mono | Die Schriften von HalfCube. | SIL Open Font License 1.1 |
+| Electron, Chromium, Velopack, Microsoft-Visual-C++-Laufzeit | Rahmen des Windows-Programms. | verschieden, siehe Reiter „Lizenzen“ |
+
+Die vollständige Liste mit den genauen Lizenzen steht auf dem Reiter „Lizenzen“.
+
+### Hinweis zu Open CASCADE Technology
+
+HalfCube benutzt und basiert auf Funktionen der Software **Open CASCADE Technology** (OCCT, https://dev.opencascade.org). OCCT steht unter der GNU Lesser General Public License, Version 2.1 (LGPL-2.1), mit der Open-CASCADE-Ausnahme (Version 1.0). Diese Ausnahme verlangt, dass die Begleitdokumentation darauf hinweist. Das ist dieser Hinweis. Der Lizenztext von OCCT steht auf dem Reiter „Lizenzen“ unter dem Baustein „Open CASCADE Technology (OCCT)“.
+
+Die LGPL erlaubt es dir, die mitgelieferten Bibliotheken zu ändern und HalfCube mit der geänderten Fassung zu benutzen. Dafür gibt die Datei `NOTICE` eine Zusatzerlaubnis: Du darfst HalfCube für den eigenen Gebrauch ändern und es zurückentwickeln, soweit das zur Fehlersuche an solchen Änderungen nötig ist. Den Quelltext findest du über **Quelltext auf GitHub**.
+
+## 3.4 Name und Logo
+
+Der Name „HalfCube“ und das Logo gehören nicht zur Lizenz des Codes. Wie du sie verwenden darfst, steht in der Datei `TRADEMARKS.md` im öffentlichen Quelltext (siehe Abschnitt 3.2, Schritt 4).

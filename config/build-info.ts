@@ -17,13 +17,13 @@ export function readBuildInfo(root: string = repoRoot, env: NodeJS.ProcessEnv = 
   return { id, channel: parseChannel(env.HALFCUBE_CHANNEL) };
 }
 
-export type DevPortName = "web-dev" | "web-preview" | "e2e-cdp";
+export type DevPortName = "web-dev" | "e2e-cdp";
 
 /** The dev ports from config/dev-ports.json, the single source for Vite, the start script and the tests. */
 export function readDevPorts(root: string = repoRoot): Record<DevPortName, number> {
   const raw = JSON.parse(readFileSync(join(root, "config", "dev-ports.json"), "utf8")) as Record<string, unknown>;
   const ports = {} as Record<DevPortName, number>;
-  for (const name of ["web-dev", "web-preview", "e2e-cdp"] as const) {
+  for (const name of ["web-dev", "e2e-cdp"] as const) {
     const value = raw[name];
     if (typeof value !== "number" || !Number.isInteger(value) || value < 1024 || value > 65535) {
       throw new Error(`config/dev-ports.json: "${name}" must be an integer port between 1024 and 65535.`);

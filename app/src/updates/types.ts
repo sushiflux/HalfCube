@@ -3,7 +3,7 @@
 // The main process owns Velopack's UpdateManager and the one update state of the program; it never checks by itself.
 // The page decides when to check (the schedule setting and the time of the last successful check live in the page's
 // preferences), shows the state (dot on the info icon, update slot in "Über HalfCube", update window) and asks for the
-// next step. The browser version has no updater and never sees this bridge.
+// next step.
 //
 // Like Autodesk Fusion, an update that a check finds (automatic or manual) is downloaded by the main process at once, in
 // the background: none/up-to-date -> downloading -> ready, without a click. The user only restarts (restartNow) or lets
@@ -13,14 +13,15 @@
 // failure in `newerDownloadFailed`; quitting while the newer one downloads installs the scheduled older one.
 // A waiting update does not stop the checks: a newer one is still found and downloaded.
 import type { Channel } from "../version.ts";
+import { branding } from "../branding.ts";
 
-export const IPC_UPDATES_GET = "halfcube:updates-get";
+export const IPC_UPDATES_GET = `${branding.slug}:updates-get`;
 /** Main process to page: every new UpdateState, pushed after each change (also download progress). */
-export const IPC_UPDATES_STATE = "halfcube:updates-state";
-export const IPC_UPDATES_CHECK = "halfcube:updates-check";
-export const IPC_UPDATES_DOWNLOAD = "halfcube:updates-download";
-export const IPC_UPDATES_RESTART = "halfcube:updates-restart";
-export const IPC_UPDATES_ON_EXIT = "halfcube:updates-on-exit";
+export const IPC_UPDATES_STATE = `${branding.slug}:updates-state`;
+export const IPC_UPDATES_CHECK = `${branding.slug}:updates-check`;
+export const IPC_UPDATES_DOWNLOAD = `${branding.slug}:updates-download`;
+export const IPC_UPDATES_RESTART = `${branding.slug}:updates-restart`;
+export const IPC_UPDATES_ON_EXIT = `${branding.slug}:updates-on-exit`;
 
 export type UpdateErrorCode =
   /** The check failed: no answer, network, HTTP status, unreadable feed. */

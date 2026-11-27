@@ -10,7 +10,7 @@ const report: ErrorReport = {
     { kind: "text", text: "   " },
   ],
   version: "v2026.11.5.13.12369 (</>)",
-  environment: "Browser",
+  environment: "Desktop win32",
   time: "25.11.2026 14:32:07",
 };
 
@@ -22,7 +22,7 @@ describe("error text for the copy button", () => {
         "",
         "Die Programmdatei der Engine wurde nicht gefunden:\n%LOCALAPPDATA%\\HalfCube\\current\\resources\\engine\\halfcube-engine.exe",
         "",
-        "HC-ENGINE-001 · v2026.11.5.13.12369 (</>) · Browser · 25.11.2026 14:32:07",
+        "HC-ENGINE-001 · v2026.11.5.13.12369 (</>) · Desktop win32 · 25.11.2026 14:32:07",
       ].join("\n"),
     );
   });

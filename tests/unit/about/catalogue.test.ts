@@ -18,17 +18,11 @@ import {
 import { catalogues } from "../../../app/src/i18n/core.ts";
 import { fixture } from "./fixture.ts";
 
-const desktop = buildItems(fixture, "desktop", "2026.11.6.12.24867");
-const browser = buildItems(fixture, "browser", "2026.11.6.12.24867");
+const desktop = buildItems(fixture, "2026.11.6.12.24867");
 
-describe("buildItems: platform filter", () => {
+describe("buildItems", () => {
   it("lists the project's own texts first, then the data in its order", () => {
     expect(desktop.map((i) => i.id)).toEqual(["halfcube", "notice", "occt", "planegcs", "react", "electron", "chromium"]);
-  });
-
-  it("leaves out entries without 'browser' in the browser version, so no desktop-only entry shows up there", () => {
-    expect(browser.map((i) => i.id)).toEqual(["halfcube", "notice", "occt", "planegcs", "react"]);
-    expect(browser.some((i) => i.group === "shell")).toBe(false);
   });
 
   it("carries the running version on the HalfCube entry and points to the project's two texts", () => {
@@ -42,7 +36,7 @@ describe("buildItems: platform filter", () => {
 describe("groupItems", () => {
   it("uses the fixed order self, engine, ui, shell and leaves out a group without items", () => {
     expect(groupItems(desktop).map((g) => g.group)).toEqual(["self", "engine", "ui", "shell"]);
-    expect(groupItems(browser).map((g) => g.group)).toEqual(["self", "engine", "ui"]);
+    expect(groupItems(desktop.filter((i) => i.group !== "shell")).map((g) => g.group)).toEqual(["self", "engine", "ui"]);
     expect(groupItems([])).toEqual([]);
   });
 
@@ -73,8 +67,8 @@ describe("searchItems", () => {
     expect(searchItems(desktop, "löser", "en")).toEqual([]);
   });
 
-  it("never returns an entry the platform filter removed", () => {
-    expect(searchItems(browser, "electron", "en")).toEqual([]);
+  it("finds the desktop shell entries too", () => {
+    expect(searchItems(desktop, "electron", "en").map((i) => i.id)).toContain("electron");
   });
 });
 
@@ -138,7 +132,6 @@ describe("the LGPL line (LGPL-2.1 section 6)", () => {
 
   it("picks the LGPL components and no others", () => {
     expect(lgplItems(desktop).map((i) => i.id)).toEqual(["occt", "planegcs"]);
-    expect(lgplItems(browser).map((i) => i.id)).toEqual(["occt", "planegcs"]);
     expect(lgplItems([])).toEqual([]);
   });
 

@@ -82,7 +82,7 @@ function makeRepo(): { root: string; sources: Sources } {
           license: "MIT",
           source: "https://example.test/lib",
           shipped: true,
-          usedIn: ["engine-native", "engine-wasm"],
+          usedIn: ["engine-native"],
           licenseFiles: ["engine/_deps/lib/LICENSE"],
           fetch: { dir: "lib" },
         },
@@ -118,7 +118,6 @@ function makeRepo(): { root: string; sources: Sources } {
         id: "foo",
         group: "ui",
         from: { kind: "npm", packages: ["foo"], main: "foo" },
-        platforms: ["desktop", "browser"],
         purpose: { de: "Foo", en: "Foo" },
       },
       {
@@ -132,7 +131,6 @@ function makeRepo(): { root: string; sources: Sources } {
           source: "https://example.test/v",
           files: [{ path: "third_party/licenses/vendored.txt" }],
         },
-        platforms: ["desktop"],
         purpose: { de: "Vendored", en: "Vendored" },
       },
     ],
@@ -160,11 +158,10 @@ describe("buildNotices", () => {
     return [];
   };
 
-  it("builds every entry from the real files, with LF line endings and platforms from the manifest", () => {
+  it("builds every entry from the real files, with LF line endings", () => {
     const result = buildNotices(repo.root, readSources(repo.root));
     expect(result.entries.map((e) => e.id)).toEqual(["lib", "foo", "vendored"]);
     const lib = result.entries[0];
-    expect(lib?.platforms).toEqual(["desktop", "browser"]);
     expect(lib?.copyright).toEqual(["Copyright (c) 2020 Example Author"]);
     expect(lib?.textFile).toBe("licenses/lib.txt");
     expect(result.files.get("app/public/licenses/lib.txt")).toBe("MIT License\n\nCopyright (c) 2020 Example Author\n\nPermission is hereby granted.\n");
@@ -196,6 +193,17 @@ describe("buildNotices", () => {
     writeFileSync(manifestFile, JSON.stringify(manifest));
     const problems = problemsOf(() => buildNotices(repo.root, readSources(repo.root)));
     expect(problems).toEqual(["Manifest component extra is shipped but has no entry in third_party/notices.sources.json."]);
+  });
+
+  it("fails when a listed engine component is used by no native engine build", () => {
+    const manifestFile = join(repo.root, "third_party/manifest.json");
+    const manifest = JSON.parse(readFileSync(manifestFile, "utf8")) as { components: { id: string; usedIn: string[] }[] };
+    const lib = manifest.components.find((c) => c.id === "lib");
+    if (!lib) throw new Error("fixture");
+    lib.usedIn = ["engine-unit-tests"];
+    writeFileSync(manifestFile, JSON.stringify(manifest));
+    const problems = problemsOf(() => buildNotices(repo.root, readSources(repo.root)));
+    expect(problems).toEqual(["lib: manifest usedIn engine-unit-tests does not include engine-native."]);
   });
 
   it("fails when a production dependency has no entry", () => {

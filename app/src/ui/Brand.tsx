@@ -5,6 +5,7 @@ import logo512 from "../../../branding/icons/icon-512.png";
 import logo128 from "../../../branding/icons/icon-128.png";
 import logo64 from "../../../branding/icons/icon-64.png";
 import { cx } from "./cx.ts";
+import { wordmarkBaseline, wordmarkOutlines, wordmarkSmallBelow, wordmarkUnitsPerEm } from "./wordmark.generated.ts";
 
 /** Square logo files (the logo with its transparent margin), scaled from branding/source/logo-square.png. */
 export const logoSources = { large: logo512, medium: logo128, small: logo64 } as const;
@@ -36,9 +37,12 @@ export function Logo({
 }
 
 /**
- * Wordmark "Klar": "Half" and "Cube" in Geist, weight 600 at large sizes and 640 below about 28 px, letter spacing
- * -0.028em large and +0.004em small. The two colours are fixed brand colours (light and dark), independent of the
- * colour theme. The same drawing at every size, only scaled.
+ * Wordmark "Klar": "Half" and "Cube" as the letter outlines of branding/wordmark (Geist, weight 600 at large sizes and
+ * 640 below 28 px, letter spacing -0.028em large and +0.004em small), generated into wordmark.generated.ts by
+ * scripts/make-wordmark.mjs. It is a drawing, not text, so no font has to be loaded and nothing flashes. The two colours
+ * are fixed brand colours (light and dark, `--wm-half` / `--wm-cube`), independent of the colour theme. The same drawing at
+ * every size, only scaled. The box is a text line of height 1 em with the baseline where Geist puts it, so it sits where the
+ * text version sat.
  */
 export function Wordmark({
   size,
@@ -50,19 +54,32 @@ export function Wordmark({
   small?: boolean;
   className?: string;
 }) {
-  const isSmall = small ?? (typeof size === "number" && size < 28);
+  const isSmall = small ?? (typeof size === "number" && size < wordmarkSmallBelow);
+  const outline = isSmall ? wordmarkOutlines.small : wordmarkOutlines.large;
+  const em = wordmarkUnitsPerEm;
   return (
     <span
       role="img"
       aria-label={branding.name}
-      className={cx("inline-block font-sans leading-none whitespace-nowrap text-wm-half", className)}
+      data-wordmark={isSmall ? "small" : "large"}
+      className={cx("inline-block flex-none", className)}
       style={{
         fontSize: size,
-        fontWeight: isSmall ? 640 : 600,
-        letterSpacing: isSmall ? "0.004em" : "-0.028em",
+        width: `${outline.advance / em}em`,
+        height: "1em",
+        // Like a line of text: the baseline of the drawing sits on the baseline of the line around it.
+        verticalAlign: `${-(em - wordmarkBaseline) / em}em`,
       }}
     >
-      Half<i className="text-wm-cube not-italic">Cube</i>
+      <svg
+        aria-hidden="true"
+        focusable="false"
+        viewBox={`0 ${-wordmarkBaseline} ${outline.advance} ${em}`}
+        className="block size-full overflow-visible"
+      >
+        <path className="fill-wm-half" d={outline.half} />
+        <path className="fill-wm-cube" d={outline.cube} />
+      </svg>
     </span>
   );
 }

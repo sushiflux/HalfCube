@@ -16,6 +16,7 @@
 //   3. engine\_build\windows-release-testing\bin\halfcube-engine.exe (has diagnostics.crash and diagnostics.hang)
 import { join, resolve } from "node:path";
 import { NATIVE_EXECUTABLE } from "../../app/src/engine/generated/protocol.ts";
+import { branding } from "../../app/src/branding.ts";
 
 export interface EnginePathInput {
   packaged: boolean;
@@ -55,7 +56,7 @@ export function resolveEngineExecutable(input: EnginePathInput): EnginePathResul
   return {
     ok: false,
     message: input.packaged
-      ? `The engine program is missing from the installation (expected at ${candidates[0]?.path}). Reinstall HalfCube.`
+      ? `The engine program is missing from the installation (expected at ${candidates[0]?.path}). Reinstall ${branding.name}.`
       : `The engine program was not found. Build it with engine/scripts/build-windows.ps1 or set HALFCUBE_ENGINE_EXE.`,
     details: `Looked for: ${candidates.map((c) => c.path).join("; ")}`,
   };

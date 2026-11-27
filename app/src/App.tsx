@@ -1,8 +1,6 @@
 import { MotionConfig } from "motion/react";
 import { lazy, Suspense, useState } from "react";
 import { AboutDialog } from "./about/AboutDialog.tsx";
-import { LICENCE_ITEM } from "./about/catalogue.ts";
-import { aboutStore } from "./about/state.ts";
 import { devParams } from "./dev/params.ts";
 import { useI18n } from "./i18n/runtime.ts";
 import { MainWindow } from "./screens/main/MainWindow.tsx";
@@ -104,7 +102,6 @@ function Shell() {
         }}
         onOpenProject={() => notAvailable("app.notAvailableOpen")}
         onTour={() => notAvailable("app.notAvailableTour")}
-        onShowLicence={() => aboutStore.open({ tab: "licenses", item: LICENCE_ITEM })}
         dontShowAgain={dontShowAgain}
         onDontShowAgainChange={(value) => {
           setDontShowAgain(value);
@@ -115,7 +112,7 @@ function Shell() {
       {/* One view for the whole window, over the main window and over the welcome screen; its state is in the address. */}
       <AboutDialog ready={startupDone} />
 
-      {/* The update function: automatic checks, the update windows, "What's new" after an update. Desktop program only (the browser has no updater). */}
+      {/* The update function: automatic checks, the update windows, "What's new" after an update. */}
       <UpdatesHost ready={startupDone} welcomeOpen={welcomeOpen} />
     </div>
   );

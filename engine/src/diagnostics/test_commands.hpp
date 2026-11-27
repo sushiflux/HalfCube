@@ -1,5 +1,5 @@
 // Test commands diagnostics.crash and diagnostics.hang. They exist only in engines built with the CMake option
-// HALFCUBE_TEST_COMMANDS=ON and serve the tests of the desktop supervisor and the browser worker watchdog.
+// HALFCUBE_TEST_COMMANDS=ON and serve the tests of the desktop supervisor.
 #pragma once
 
 #if defined(HALFCUBE_TEST_COMMANDS)
@@ -14,8 +14,8 @@
 namespace hc::testing {
 
 // Ends the engine on purpose: "abort" (std::abort), "nullcall" (call through a null function pointer) or "intdiv"
-// (integer division by zero). Natively the process dies; in WebAssembly the module traps. Returns only by throwing
-// EngineError "crash_not_triggered" when the platform survives the fault.
+// (integer division by zero). The process dies. Returns only by throwing EngineError "crash_not_triggered" when the
+// platform survives the fault.
 void crash(const std::string& mode, std::int64_t requestId);
 
 // busy: computes for c.ms milliseconds (or until cancelled when ms is missing) and returns how long it ran;

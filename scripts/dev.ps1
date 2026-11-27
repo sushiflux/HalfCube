@@ -1,15 +1,14 @@
-# Start script of the local Dev environment (native, no containers): starts the Vite dev server (browser version) and
-# the Electron window, which loads the dev server. Builds what is missing first.
+# Start script of the local Dev environment (native, no containers): starts the Vite dev server (hot reload of the UI)
+# and the Electron window, which loads the dev server. Builds what is missing first.
 #
 # Usage: powershell -ExecutionPolicy Bypass -File scripts\dev.ps1 [start|stop|restart|status|logs]
-#          [-Neubau] [-NurBrowser] [-NurDesktop] [-Ausweichport] [-ImHintergrund] [-Zweitmonitor]
+#          [-Neubau] [-NurDesktop] [-Ausweichport] [-ImHintergrund] [-Zweitmonitor]
 #   start (default)  start everything that is not running yet; own leftovers on the ports are restarted
 #   stop             stop dev server and Electron window including their child processes
 #   restart          stop, then start
 #   status           show what runs, on which port, and the version of the build
 #   logs             show the end of the log files in _build\run
 #   -Neubau          rebuild the bundles even if they are up to date
-#   -NurBrowser      dev server only, no Electron window
 #   -NurDesktop      Electron window only; it loads the built bundle (app://), no dev server is started
 #   -Ausweichport    take the next free port for this run if the registered one is held by a foreign program
 #   -ImHintergrund   the Electron window starts minimized and without taking the focus (after a commit, tests); implies -Zweitmonitor
@@ -18,10 +17,9 @@
 # The ports come from config\dev-ports.json.
 param(
     [ValidateSet('start', 'stop', 'restart', 'status', 'logs')][string]$Befehl = 'start',
-    [switch]$Neubau, [switch]$NurBrowser, [switch]$NurDesktop, [switch]$Ausweichport, [switch]$ImHintergrund, [switch]$Zweitmonitor
+    [switch]$Neubau, [switch]$NurDesktop, [switch]$Ausweichport, [switch]$ImHintergrund, [switch]$Zweitmonitor
 )
 $ErrorActionPreference = 'Stop'
-if ($NurBrowser -and $NurDesktop) { throw 'NurBrowser und NurDesktop schliessen sich aus.' }
 
 $root = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 $build = Join-Path $root '_build'
@@ -138,7 +136,7 @@ function Ensure-Built {
         if (-not (Test-Path $lock) -or (Get-Item (Join-Path $root 'package-lock.json')).LastWriteTime -gt (Get-Item $lock).LastWriteTime) {
             Step 'npm install' { Npm install --no-audit --no-fund }
         }
-        if (-not $NurBrowser -and -not (Test-Path $electronExe)) {
+        if (-not (Test-Path $electronExe)) {
             Step 'Electron-Laufzeit laden' { & npx.cmd install-electron; if ($LASTEXITCODE -ne 0) { throw 'install-electron fehlgeschlagen' } }
         }
 
@@ -147,9 +145,9 @@ function Ensure-Built {
         $appInputs = @('app', 'branding\branding.json', 'branding\icons', 'config', 'version.txt', 'vite.config.ts', 'package.json')
         $desktopInputs = @('desktop\src', 'app\src\version.ts', 'app\src\branding.ts', 'app\src\platform.ts', 'branding\branding.json',
             'branding\icons\icon-512.png', 'config', 'version.txt', 'vite.desktop.config.ts', 'package.json')
-        # The dev server serves the sources itself; the web bundle is only needed when the window loads it (app://).
-        if ($NurDesktop -and ($Neubau -or (Test-Stale $webBundle $appInputs))) { Step 'Browser-Version bauen' { Npm run build:web } }
-        if (-not $NurBrowser -and ($Neubau -or (Test-Stale $mainBundle $desktopInputs))) { Step 'Desktop-Programm bauen' { Npm run build:desktop } }
+        # The dev server serves the sources itself; the UI bundle is only needed when the window loads it (app://).
+        if ($NurDesktop -and ($Neubau -or (Test-Stale $webBundle $appInputs))) { Step 'Oberflaeche bauen' { Npm run build:web } }
+        if ($Neubau -or (Test-Stale $mainBundle $desktopInputs)) { Step 'Desktop-Programm bauen' { Npm run build:desktop } }
     } finally { Pop-Location }
 }
 
@@ -193,7 +191,7 @@ function Start-Web {
         if ($p.HasExited) { throw "Der Dev-Server hat sich sofort beendet (Code $($p.ExitCode)). Log: $run\web.log" }
         try {
             $r = Invoke-WebRequest -UseBasicParsing -Uri $script:url -TimeoutSec 2
-            if ($r.StatusCode -eq 200) { Say "Browser-Version laeuft: $($script:url) (PID $($p.Id))"; return }
+            if ($r.StatusCode -eq 200) { Say "Dev-Server laeuft: $($script:url) (PID $($p.Id))"; return }
         } catch { Start-Sleep -Milliseconds 200 }
     }
     throw "Der Dev-Server antwortet nicht auf $($script:url). Log: $log"
@@ -218,7 +216,7 @@ function Start-Desktop {
     if ($p.HasExited) { throw "Das Electron-Fenster hat sich sofort beendet (Code $($p.ExitCode)). Log: $run\electron.log" }
     $mode = if ($ImHintergrund) { 'minimiert, ohne Fokus' } else { 'normal' }
     if ($Zweitmonitor -or $ImHintergrund) { $mode += ', Zweitmonitor' }
-    $source = if ($script:url) { 'laedt den Dev-Server' } else { 'laedt die gebaute Browser-Version (app://)' }
+    $source = if ($script:url) { 'laedt den Dev-Server' } else { 'laedt die gebaute Oberflaeche (app://)' }
     Say "Electron-Fenster gestartet (PID $($p.Id), $mode, $source)"
 }
 
@@ -254,8 +252,7 @@ switch ($Befehl) {
         Set-GitHooks
         Ensure-Built
         if (-not $NurDesktop) { Start-Web }
-        if (-not $NurBrowser) { Start-Desktop }
-        if ($script:url) { Say "Im Browser oeffnen: $($script:url)" }
+        Start-Desktop
         Say "Version: $(Get-VersionLine)"
     }
 }

@@ -11,8 +11,6 @@ export interface DevParams {
   demo?: string;
   /** Show the calm crash page of the other channels instead of the diagnostic console. */
   calm?: boolean;
-  /** Load the WebAssembly engine with the test commands (diagnostics.crash, diagnostics.hang) from engine-testing/. */
-  engine?: "testing";
 }
 
 export function parseDevParams(search: string): DevParams {
@@ -27,7 +25,6 @@ export function parseDevParams(search: string): DevParams {
   const demo = q.get("demo");
   if (demo) out.demo = demo;
   if (q.get("calm") === "1") out.calm = true;
-  if (q.get("engine") === "testing") out.engine = "testing";
   return out;
 }
 

@@ -1,25 +1,15 @@
 // The engine session of the running app and its React hook. One session per page; starting it is idempotent.
 import { useCallback, useEffect, useSyncExternalStore } from "react";
-import { devParams } from "../../dev/params.ts";
-import {
-  createEngineSession,
-  defaultWasmModuleUrl,
-  WASM_TESTING_FOLDER,
-  type EngineSession,
-  type EngineStatus,
-} from "../../engine/index.ts";
+import { createEngineSession, type EngineSession, type EngineStatus } from "../../engine/index.ts";
 import { currentVersion } from "../../version.ts";
 
 let session: EngineSession | undefined;
 
-/** The one engine session of this page, created on first use (it picks the native engine or the WebAssembly worker). */
+/** The one engine session of this page, created on first use (the native engine behind the desktop bridge). */
 export function getEngineSession(): EngineSession {
   if (!session) {
-    const params = devParams();
-    session = createEngineSession(
-      params.engine === "testing" ? { wasmModuleUrl: defaultWasmModuleUrl(WASM_TESTING_FOLDER) } : {},
-    );
-    // Dev channel only: lets a test crash the engine on purpose (needs ?engine=testing for the test commands).
+    session = createEngineSession();
+    // Dev channel only: lets a test read the engine status and end the engine on purpose.
     if (currentVersion().channel === "dev") (window as unknown as { __halfcubeSession?: EngineSession }).__halfcubeSession = session;
   }
   return session;

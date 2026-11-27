@@ -1,5 +1,5 @@
 {
-  "$comment": "Look of the HalfCube documents (theme Präzision, the default theme of the product). Colours come from the logo and the decided colour theme; the wordmark rules are fixed per background and independent of the theme. The brand name is read from branding/branding.json, the logo from branding/source/logo-square.png (shown as it is, never redrawn).",
+  "$comment": "Look of the HalfCube documents (theme Präzision, the default theme of the product). Colours come from the logo and the decided colour theme; the wordmark is drawn from the SVG files of branding/wordmark (letter outlines, fixed brand colours per background, independent of the theme). The brand name is read from branding/branding.json, the logo from branding/source/logo-square.png (shown as it is, never redrawn).",
   "name": "Präzision",
   "brandingFile": "../../branding/branding.json",
   "logoFile": "../../branding/source/logo-square.png",
@@ -34,13 +34,8 @@
     "decisionSoft": "#f0ebfb"
   },
   "wordmark": {
-    "split": ["Half", "Cube"],
-    "light": { "half": "#16476e", "cube": "#1f75ae" },
-    "dark": { "half": "#ffffff", "cube": "#4cd1e0" },
-    "weightLarge": 600,
-    "weightSmall": 640,
-    "trackingLarge": "-0.028em",
-    "trackingSmall": "0.004em"
+    "dir": "../../branding/wordmark",
+    "smallBelowPx": 28
   },
   "credit": { "de": "Mit ♥ gemacht", "en": "Made with ♥" }
 }

@@ -1,11 +1,10 @@
 // The status bar: what is selected, how many steps failed, the unit and the version. The version carries the channel
-// symbol; the platform is a data attribute for tests, not text. The early-access label next to it is a button that opens
+// symbol; the program kind is a data attribute for tests, not text. The early-access label next to it is a button that opens
 // "About HalfCube".
 import { EARLY_ACCESS } from "../../about/catalogue.ts";
 import { aboutStore } from "../../about/state.ts";
 import { branding } from "../../branding.ts";
 import { useT } from "../../i18n/runtime.ts";
-import { detectPlatform } from "../../platform.ts";
 import { Glyph } from "../../ui/Glyph.tsx";
 import { currentVersion } from "../../version.ts";
 
@@ -21,7 +20,7 @@ export interface StatusBarProps {
 export function StatusBar({ selection, editing, problemCount, onProblems }: StatusBarProps) {
   const t = useT();
   return (
-    <footer className="flex h-[26px] flex-none items-center gap-[18px] border-t border-line bg-surface px-3 text-[12px] whitespace-nowrap text-muted" data-testid="status-bar" data-platform={detectPlatform()}>
+    <footer className="flex h-[26px] flex-none items-center gap-[18px] border-t border-line bg-surface px-3 text-[12px] whitespace-nowrap text-muted" data-testid="status-bar" data-platform="desktop">
       <span>{editing ?? t("main.status.ready")}</span>
       <span data-testid="status-selection">{selection ? t("main.status.selection", { name: selection }) : t("main.status.noSelection")}</span>
       {problemCount > 0 ? (

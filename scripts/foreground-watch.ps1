@@ -12,7 +12,7 @@ param(
     [string]$StopFile = '',
     [int]$Seconds = 3600,
     # Process names counted as hits (regular expression, case-insensitive).
-    [string]$Match = '^(electron|halfcube)$'
+    [string]$Match = ('^(electron|' + (Get-Content -Raw -Encoding UTF8 (Join-Path $PSScriptRoot '..\branding\branding.json') | ConvertFrom-Json).slug + ')$')
 )
 $ErrorActionPreference = 'Stop'
 

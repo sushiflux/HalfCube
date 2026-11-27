@@ -13,6 +13,7 @@ import {
   throwingFunction,
   type CrashReport,
 } from "./diagnostics.ts";
+import { branding } from "../../branding.ts";
 
 /**
  * The crash page. Always English, whatever the UI language, and independent of the app's translation, theme tokens and
@@ -99,7 +100,7 @@ function CalmCrashPage({ report, text }: { report: CrashReport; text: string }) 
         <p className="pcc-kicker">Unexpected error</p>
         <h1>Something went wrong</h1>
         <p className="pcc-lead">
-          HalfCube hit a problem it could not recover from and had to stop showing this screen. Reloading usually
+          {branding.name} hit a problem it could not recover from and had to stop showing this screen. Reloading usually
           helps. If it happens again, copy the details and add them to your report on GitHub.
         </p>
         <p className="pcc-message">

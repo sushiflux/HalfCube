@@ -6,16 +6,18 @@
     self-contained, compressed single file; scripts/build-installer.ps1 appends the payload to the end of the exe.
     The only .NET in the product (the app, the engine and the updates stay without it).
   -->
+  <!-- ProductName and ProductSlug, generated from branding/branding.json by protocol/generate.mjs (the same file feeds Generated/ProductInfo.g.cs) -->
+  <Import Project="Generated\Product.props" />
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net11.0-windows</TargetFramework>
     <UseWindowsForms>true</UseWindowsForms>
-    <AssemblyName>HalfCube-Setup</AssemblyName>
+    <AssemblyName>$(ProductName)-Setup</AssemblyName>
     <RootNamespace>HalfCube.Setup</RootNamespace>
-    <Description>HalfCube Setup</Description>
-    <AssemblyTitle>HalfCube Setup</AssemblyTitle>
+    <Description>$(ProductName) Setup</Description>
+    <AssemblyTitle>$(ProductName) Setup</AssemblyTitle>
     <Company>SushiFlux</Company>
-    <Product>HalfCube</Product>
+    <Product>$(ProductName)</Product>
     <Copyright>© 2026 SushiFlux</Copyright>
     <ApplicationIcon>..\..\branding\icons\icon.ico</ApplicationIcon>
     <ApplicationHighDpiMode>SystemAware</ApplicationHighDpiMode>
@@ -44,7 +46,7 @@
   <ItemGroup>
     <!-- The logo and the app icon straight from the branding folder (scaled only, never altered) -->
     <EmbeddedResource Include="..\..\branding\icons\icon-512.png" LogicalName="logo.png" Link="Resources\logo.png" />
-    <EmbeddedResource Include="..\..\branding\icons\icon.ico" LogicalName="halfcube.ico" Link="Resources\halfcube.ico" />
+    <EmbeddedResource Include="..\..\branding\icons\icon.ico" LogicalName="$(ProductSlug).ico" Link="Resources\$(ProductSlug).ico" />
     <!-- Geist and Geist Mono (SIL Open Font License 1.1, Resources\fonts\OFL.txt), registered for this process only -->
     <EmbeddedResource Include="Resources\fonts\*.ttf" LogicalName="font-%(Filename).ttf" />
     <EmbeddedResource Include="Resources\fonts\OFL.txt" LogicalName="OFL.txt" />

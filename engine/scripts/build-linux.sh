@@ -30,11 +30,17 @@ while [ $# -gt 0 ]; do
   esac
 done
 
+if [ -n "$occt_dir" ]; then
+  [ -d "$occt_dir" ] || { echo "build-linux.sh: OCCT folder '$occt_dir' does not exist." >&2; exit 1; }
+  # CMake does not resolve a relative OpenCASCADE_DIR against the working directory, so it gets an absolute path.
+  occt_dir=$(cd "$occt_dir" && pwd)
+fi
+
 gen="Unix Makefiles"; command -v ninja >/dev/null 2>&1 && gen=Ninja
 [ "$fetch" = 1 ] && sh "$here/fetch-deps.sh"
 start=$(date +%s)
 
-# Same OCCT modules and switches as the Windows and WebAssembly builds.
+# Same OCCT modules and switches as the Windows build.
 occt_stamp="OCCT 8.0.2 shared linux Release C++20"
 if [ -z "$occt_dir" ]; then
   occt_dir="$build_root/occt-linux-install"

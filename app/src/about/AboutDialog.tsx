@@ -4,7 +4,6 @@
 // that height and scrolls inside. The credit line closes the strip on the same line as the last row of the right column.
 import { useId, useMemo, useRef, type RefObject } from "react";
 import { useI18n } from "../i18n/runtime.ts";
-import { detectPlatform } from "../platform.ts";
 import { CreditLine, Logo, Wordmark } from "../ui/Brand.tsx";
 import { cx } from "../ui/cx.ts";
 import { Glyph } from "../ui/Glyph.tsx";
@@ -95,7 +94,7 @@ export function AboutDialog({ ready }: { ready: boolean }) {
     }),
     [],
   );
-  const items = useMemo(() => buildItems(thirdParty, detectPlatform(), currentVersion().id.slice(1)), []);
+  const items = useMemo(() => buildItems(thirdParty, currentVersion().id.slice(1)), []);
   const info = shown.tab === "info";
 
   return (

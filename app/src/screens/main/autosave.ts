@@ -2,11 +2,12 @@
 // and read back at the next start of the page. It is a stop-gap until real files exist; nothing here is a save.
 import { absoluteLabelsToRelative, documentProblems, numberNamesInDocument, serializeDocument } from "../../document/index.ts";
 import type { HalfCubeDocument } from "../../document/types.ts";
+import { branding } from "../../branding.ts";
 
 // The key names the working format: ".2" stores dimension labels relative to the measured geometry. A document under the
 // older key (absolute label points) is converted once at the next start and moves to the new key.
-export const sessionDocumentKey = "halfcube.session.document.2";
-export const legacySessionDocumentKey = "halfcube.session.document";
+export const sessionDocumentKey = `${branding.slug}.session.document.2`;
+export const legacySessionDocumentKey = `${branding.slug}.session.document`;
 
 export interface SessionStorageLike {
   getItem(key: string): string | null;

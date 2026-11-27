@@ -1,3 +1,4 @@
+import { branding } from "../branding.ts";
 // DEV BUILDS ONLY (see demo-bridge.ts). A made-up customer changelog in the frame of the shipped channel files, with three entries
 // newer than the running version, so the update window and "Was ist neu" have something to show.
 
@@ -47,7 +48,7 @@ function entryLines(): Record<"offer" | "middle" | "oldest", Line[]> {
       l("sketch", "new", "Kreise zeichnest du über drei Punkte.", "Draw a circle through three points."),
       l("sketch", "fix", "Maße springen nicht mehr, wenn du die Ansicht drehst.", "Dimensions no longer jump when you rotate the view."),
       l("body", "change", "Verrundungen zeigen schon beim Tippen des Radius eine Vorschau.", "Fillets show a preview while you type the radius."),
-      l("install", "new", "HalfCube sucht selbst nach Updates und installiert sie mit einem Klick.", "HalfCube checks for updates by itself and installs them with one click."),
+      l("install", "new", `${branding.name} sucht selbst nach Updates und installiert sie mit einem Klick.`, `${branding.name} checks for updates by itself and installs them with one click.`),
       l("install", "new", "Nach jedem Update zeigt „Was ist neu“, was dazugekommen ist.", "After every update “What’s new” shows what was added."),
       l("general", "fix", "Mehrere kleine Fehler behoben.", "Several small bugs fixed."),
     ],

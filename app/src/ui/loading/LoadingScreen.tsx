@@ -9,6 +9,7 @@ import { IconRetry, StepIcon } from "../icons.tsx";
 import "./loading.css";
 import { currentStepIndex, isComplete, overallProgress } from "./progress.ts";
 import type { LoadingAction, LoadingProgress } from "./types.ts";
+import { branding } from "../../branding.ts";
 
 export interface LoadingScreenProps {
   progress: LoadingProgress;
@@ -119,7 +120,7 @@ export function LoadingScreen({ progress, onAction, onHandoverDone }: LoadingScr
       <div className="hc-halo" data-fade />
 
       <div ref={logo} className="hc-logo">
-        <svg viewBox={`0 0 ${logoViewBox} ${logoViewBox}`} role="img" aria-label="HalfCube" className="hc-logo-intro">
+        <svg viewBox={`0 0 ${logoViewBox} ${logoViewBox}`} role="img" aria-label={branding.name} className="hc-logo-intro">
           <defs>
             <mask id={maskId} maskUnits="userSpaceOnUse" x="0" y="0" width={logoViewBox} height={logoViewBox} style={{ maskType: "alpha" }}>
               <image href={logoSources.large} width={logoViewBox} height={logoViewBox} />
@@ -139,6 +140,9 @@ export function LoadingScreen({ progress, onAction, onHandoverDone }: LoadingScr
 
       <div className="hc-word" data-fade>
         <Wordmark size="calc(68 * var(--u))" small={false} />
+      </div>
+      <div className="hc-slogan" data-fade data-testid="loading-slogan" lang="en">
+        {branding.slogan}
       </div>
       <div className="hc-tag" data-fade>
         {t("loading.earlyAccess")}

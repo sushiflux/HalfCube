@@ -5,7 +5,7 @@ import { expect, test } from "../support/fixtures.ts";
 const WELCOME_STORAGE_KEY = "halfcube.welcome.hidden";
 
 test.describe("welcome screen", () => {
-  test("appears on the first start, after the loading screen; no browser dialogs are used", async ({ app }) => {
+  test("appears on the first start, after the loading screen; no native dialogs are used", async ({ app }) => {
     const { page } = app;
     let nativeDialogs = 0;
     page.on("dialog", (dialog) => {
@@ -14,7 +14,7 @@ test.describe("welcome screen", () => {
     });
     await app.open("?lang=en");
 
-    const welcome = page.getByRole("dialog", { name: "Sketch first, then build" });
+    const welcome = page.getByRole("dialog", { name: "Sketch first, then build." });
     await expect(welcome).toBeVisible({ timeout: 60_000 });
     await expect(page.getByTestId("loading-screen")).toHaveCount(0);
     // Page 1: the keyboard focus is on the main control, the early-access note is there.
@@ -26,7 +26,7 @@ test.describe("welcome screen", () => {
   test("the checkbox 'Don't show this at the next start' persists over a reload", async ({ app }) => {
     const { page } = app;
     await app.open("?lang=en");
-    const welcome = page.getByRole("dialog", { name: "Sketch first, then build" });
+    const welcome = page.getByRole("dialog", { name: "Sketch first, then build." });
     await expect(welcome).toBeVisible({ timeout: 60_000 });
 
     const checkbox = welcome.getByRole("checkbox", { name: "Don’t show this at the next start" });
@@ -46,7 +46,7 @@ test.describe("welcome screen", () => {
     // Un-ticking is remembered too: the welcome screen is back at the next start, with the box unticked.
     await page.evaluate((key) => localStorage.removeItem(key), WELCOME_STORAGE_KEY);
     await page.reload();
-    const again = page.getByRole("dialog", { name: "Sketch first, then build" });
+    const again = page.getByRole("dialog", { name: "Sketch first, then build." });
     await expect(again).toBeVisible({ timeout: 60_000 });
     await expect(again.getByRole("checkbox", { name: "Don’t show this at the next start" })).not.toBeChecked();
   });
@@ -73,7 +73,7 @@ test.describe("welcome screen", () => {
     });
     await app.open("?demo=welcome&lang=en");
 
-    const welcome = page.getByRole("dialog", { name: "Sketch first, then build" });
+    const welcome = page.getByRole("dialog", { name: "Sketch first, then build." });
     await expect(welcome).toBeVisible();
     await welcome.getByRole("button", { name: "Next" }).click();
     const second = page.getByRole("dialog", { name: "How do you want to start?" });
@@ -107,7 +107,7 @@ test.describe("welcome screen", () => {
   test("the close button and 'Skip' close the welcome screen", async ({ app }) => {
     const { page } = app;
     await app.open("?demo=welcome&lang=en");
-    const welcome = page.getByRole("dialog", { name: "Sketch first, then build" });
+    const welcome = page.getByRole("dialog", { name: "Sketch first, then build." });
     await welcome.getByRole("button", { name: "Skip" }).click();
     await expect(page.getByRole("dialog")).toHaveCount(0);
 
@@ -119,7 +119,7 @@ test.describe("welcome screen", () => {
   test("German: the welcome screen speaks German and the 'not available' dialog too", async ({ app }) => {
     const { page } = app;
     await app.open("?demo=welcome&lang=de");
-    const welcome = page.getByRole("dialog", { name: "Erst skizzieren, dann bauen" });
+    const welcome = page.getByRole("dialog", { name: "Sketch first, then build." });
     await expect(welcome).toBeVisible();
     await expect(welcome.getByText("Frühphase.")).toBeVisible();
     await welcome.getByRole("button", { name: "Weiter" }).click();

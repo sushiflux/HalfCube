@@ -1,6 +1,6 @@
 // Where the update views get their facts from in the running page: the updater bridge of the desktop program (or, in a dev build with
-// `?updates-demo=...`, the made-up one) and the source of "Was ist neu". The browser version has neither: there is no updater and
-// no update view appears.
+// `?updates-demo=...`, the made-up one) and the source of "Was ist neu". Without the desktop bridge (a bare dev page) there is no
+// updater and no update view appears.
 import { getDesktopBridge } from "../platform.ts";
 import { preferences } from "../prefs/preferences.ts";
 import { currentVersion } from "../version.ts";
@@ -34,7 +34,7 @@ function realNewsSource(): NewsSource {
 /** The source of "Was ist neu"; a dev build with the demo parameter swaps it for the demo's. */
 export const newsSourceRef: { current: NewsSource } = { current: realNewsSource() };
 
-/** The updater the page talks to, or undefined (the browser version). */
+/** The updater the page talks to, or undefined (no desktop bridge: a bare dev page, unit tests). */
 export async function pickUpdatesBridge(): Promise<UpdatesBridge | undefined> {
   // The constant is a literal false in nightly, beta and release bundles, so this branch and the demo module are dropped there.
   if (typeof __HC_UPDATES_DEMO__ !== "undefined" && __HC_UPDATES_DEMO__ && typeof location !== "undefined") {
@@ -42,8 +42,7 @@ export async function pickUpdatesBridge(): Promise<UpdatesBridge | undefined> {
     const options = demo.parseDemoOptions(location.search);
     if (options) {
       newsSourceRef.current = demo.createDemoNewsSource(options);
-      // The browser demo has no updater: the page behaves as the browser version does.
-      return options.browser ? undefined : demo.createDemoBridge(options);
+      return demo.createDemoBridge(options);
     }
   }
   return getDesktopBridge()?.updates;

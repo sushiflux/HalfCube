@@ -5,13 +5,14 @@ import { EngineCommandError, EngineCrashedError } from "./errors.ts";
 import type { HelloResult, KernelSelftestResult, SolverSelftestResult } from "./generated/protocol.ts";
 import type { EngineProblem, EngineProblemCode, StartupStepId } from "./status.ts";
 import type { ExitInfo } from "./transport.ts";
+import { branding } from "../branding.ts";
 
 /** What the problem report knows about the situation. */
 export interface ProblemContext {
   step: StartupStepId | null;
   attempt: number;
   restarts: number;
-  transport: "native" | "wasm" | null;
+  transport: "native" | null;
   engine: HelloResult | null;
   /** Product version line for the report, e.g. "HalfCube v2026.11.5.13.12369 (</>)". */
   appVersion: string | undefined;
@@ -50,13 +51,13 @@ function assemble(
   extra: { exit?: ExitInfo; raw?: string; sections?: [string, string][] } = {},
 ): EngineProblem {
   const lines: string[] = [
-    "HalfCube engine problem",
+    `${branding.name} engine problem`,
     ctx.appVersion ? `Program: ${ctx.appVersion}` : "",
     `Time: ${ctx.at.toISOString()}`,
     `Code: ${code}`,
     `Step: ${ctx.step ? stepNames[ctx.step] : "engine running normally"}`,
     `Attempt: ${ctx.attempt} (engine replaced ${ctx.restarts} time${ctx.restarts === 1 ? "" : "s"} before)`,
-    `Connection: ${ctx.transport === "native" ? "native engine process" : ctx.transport === "wasm" ? "WebAssembly engine in a web worker" : "none"}`,
+    `Connection: ${ctx.transport === "native" ? "native engine process" : "none"}`,
     "",
     `Cause: ${message}`,
     "",

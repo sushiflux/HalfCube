@@ -12,7 +12,7 @@ internal sealed class SetupLayout
         PackId = packId;
         Title = title;
         // The app's own per-user data folder (Electron's userData, named after the product). Tests redirect it.
-        AppDataDir = Path.Combine(appDataOverride ?? Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "HalfCube");
+        AppDataDir = Path.Combine(appDataOverride ?? Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), ProductInfo.Name);
     }
 
     public string PackId { get; }

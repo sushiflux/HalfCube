@@ -10,21 +10,16 @@ export interface SentCommand {
 }
 
 export class FakeTransport implements EngineTransport {
-  readonly kind: "native" | "wasm";
+  readonly kind = "native" as const;
   onMessage: ((header: string, payload: ArrayBuffer | null) => void) | null = null;
   onExit: ((info: ExitInfo) => void) | null = null;
   diagnostics = "";
   sent: SentCommand[] = [];
   killed = false;
-  cancelFlagCalls: number[] = [];
   /** Set to make start() fail with this error. */
   startError: Error | null = null;
   /** Called for every command; return true when the test answered it itself. */
   autoReply: ((cmd: SentCommand, transport: FakeTransport) => void) | null = null;
-
-  constructor(kind: "native" | "wasm" = "native") {
-    this.kind = kind;
-  }
 
   start(): Promise<void> {
     return this.startError ? Promise.reject(this.startError) : Promise.resolve();
@@ -40,11 +35,6 @@ export class FakeTransport implements EngineTransport {
 
   kill(): void {
     this.killed = true;
-  }
-
-  cancelRunning(requestId: number): boolean {
-    this.cancelFlagCalls.push(requestId);
-    return this.kind === "wasm";
   }
 
   /** The engine says something. */
@@ -66,7 +56,7 @@ export class FakeTransport implements EngineTransport {
 }
 
 /** The answer of a healthy engine to hello. */
-export function helloResult(replyTo: number, kind: "native" | "wasm" = "native"): Record<string, unknown> {
+export function helloResult(replyTo: number): Record<string, unknown> {
   return {
     type: "helloResult",
     replyTo,
@@ -78,8 +68,8 @@ export function helloResult(replyTo: number, kind: "native" | "wasm" = "native")
       version: "v2026.11.5",
       versionFull: "v2026.11.5.13.12369",
       buildType: "Release",
-      platform: kind,
-      os: kind === "native" ? "windows-x64" : "wasm32",
+      platform: "native",
+      os: "windows-x64",
       compiler: "fake 1.0",
       testCommands: false,
     },
@@ -90,7 +80,7 @@ export function helloResult(replyTo: number, kind: "native" | "wasm" = "native")
       boost: "1.86",
       nlohmannJson: "3.11.3",
     },
-    capabilities: { pingWhileBusy: kind === "native", cancelWhileBusy: true },
+    capabilities: { pingWhileBusy: true, cancelWhileBusy: true },
     limits: { maxHeaderBytes: 16777216, maxPayloadBytes: 1073741824, payloadAlignment: 16, maxRequestId: 2147483647 },
   };
 }
@@ -131,7 +121,7 @@ export const solverResult = (replyTo: number, passed = true): Record<string, unk
 
 /** Answers hello and both self-tests like a healthy engine. */
 export function healthyEngine(cmd: SentCommand, t: FakeTransport): void {
-  if (cmd.type === "hello") t.say(helloResult(cmd.id, t.kind));
+  if (cmd.type === "hello") t.say(helloResult(cmd.id));
   else if (cmd.type === "diagnostics.kernelSelftest") t.say(kernelResult(cmd.id));
   else if (cmd.type === "diagnostics.solverSelftest") t.say(solverResult(cmd.id));
   else if (cmd.type === "ping") t.say({ type: "pong", replyTo: cmd.id, busyWith: null, queued: 0 });

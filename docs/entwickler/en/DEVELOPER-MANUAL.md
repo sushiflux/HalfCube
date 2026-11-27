@@ -13,7 +13,7 @@ HalfCube is in early development. This manual is incomplete and grows with the c
 
 # 2 Update function (Windows program)
 
-The update function exists only in the Windows program. The browser version has no updater. Of this feature it uses only "What's new".
+The update function exists only in the Windows program.
 
 ## 2.1 Overview
 
@@ -88,7 +88,7 @@ Tests: `tests/unit/updates/`, `tests/unit/ci/`, `tests/e2e/specs/updates.spec.ts
 
 ## 2.6 Release path (CI)
 
-The release consists of two jobs in `.github/workflows/ci.yml`. Both run only for a `v*` tag, after all other jobs (`windows`, `web`, `engine-wasm`, `linux`, `ci-ok`). The split separates who runs third-party code from who may write: the job that runs `npm ci` and the project scripts has read access only. The job with write access runs nothing from the repository.
+The release consists of two jobs in `.github/workflows/ci.yml`. Both run only for a `v*` tag, after all other jobs (`windows`, `web`, `linux`, `ci-ok`). The split separates who runs third-party code from who may write: the job that runs `npm ci` and the project scripts has read access only. The job with write access runs nothing from the repository.
 
 **Job `release-build`** (Windows, `contents: read`, 60 minutes):
 

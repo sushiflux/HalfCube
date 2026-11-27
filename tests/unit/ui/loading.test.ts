@@ -64,7 +64,7 @@ describe("current step and completion", () => {
 });
 
 describe("demo scenarios (dev only) behave like real progress would", () => {
-  const names = ["start", "start-error", "start-browser", "start-browser-error", "panel-open", "panel-open-error", "panel-step", "panel-restart"];
+  const names = ["start", "start-error", "panel-open", "panel-open-error", "panel-step", "panel-restart"];
 
   it.each(names.flatMap((n) => (["de", "en"] as const).map((l) => [n, l] as const)))("%s in %s never goes backwards", (name, lang) => {
     const scenario = buildScenario(name, lang) as Scenario;
@@ -88,10 +88,13 @@ describe("demo scenarios (dev only) behave like real progress would", () => {
     expect(failed.steps.slice(1).every((s) => s.state === "pending")).toBe(true);
   });
 
-  it("the download step fails at its measured point, not before", () => {
-    const bad = buildScenario("start-browser-error", "en") as Scenario;
+  it("a measured step fails at its measured point, not before", () => {
+    const bad: Scenario = {
+      steps: [{ id: "read", active: "Reading", done: "Read", measured: true, detail: (f) => String(f), weight: 1, durationMs: 7000 }],
+      fail: { step: 0, fraction: 0.45, error: { headline: "x", code: "HC-TEST-001", details: [] } },
+    };
     expect(progressAt(bad, 1000).error).toBeUndefined();
-    expect(progressAt(bad, 4000).error?.code).toBe("HC-ENGINE-002");
+    expect(progressAt(bad, 4000).error?.code).toBe("HC-TEST-001");
   });
 
   it("every demo text exists in both languages and is not empty", () => {

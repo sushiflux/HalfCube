@@ -1,6 +1,5 @@
-// Contract of sketch.solve and model.sync, run against the native and the WebAssembly engine with the same
-// assertions: every recorded case gives the recorded answer (native recording, so this is also the parity check
-// between the engines), protocol errors name their cause, and the model layer (HalfCubeModel with its editors)
+// Contract of sketch.solve and model.sync, run against the native engine: every recorded case gives the recorded
+// answer, protocol errors name their cause, and the model layer (HalfCubeModel with its editors)
 // works end to end against the real engine, including the replay after an engine crash.
 import { afterAll, beforeAll, expect, it } from "vitest";
 import type { CommandInput } from "../../../../app/src/engine/client.ts";
@@ -604,7 +603,7 @@ export function defineModelContract(label: string, where: EngineLocation, skip: 
       expect(own.schemaErrors).toEqual([]);
     }, SLOW);
 
-    it("drag: 100 steps along a path with a chain of 40 links keep every link length (P04, native and WebAssembly alike)", async () => {
+    it("drag: 100 steps along a path with a chain of 40 links keep every link length (P04)", async () => {
       const plane = { kind: "originPlane", plane: "xy" } as const;
       let sketch = chain();
       let worst = 0;

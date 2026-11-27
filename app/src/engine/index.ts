@@ -1,5 +1,5 @@
 // Public surface of the engine client. The UI imports from here only.
-export { createEngineSession, defaultWasmModuleUrl, WASM_ENGINE_FOLDER, WASM_TESTING_FOLDER } from "./create.ts";
+export { createEngineSession } from "./create.ts";
 export type { CreateEngineSessionOptions } from "./create.ts";
 export { EngineSession } from "./session.ts";
 export type { EngineSessionOptions, RestartLimit } from "./session.ts";

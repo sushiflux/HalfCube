@@ -79,10 +79,6 @@ public static class Brand
     public static readonly Color OnCrystal = Palette.Hex("#05252c");
     public static readonly Color Bad = Palette.Hex("#f06a62");
 
-    /// <summary>Wordmark colours on the night panel (fixed brand colours, independent of the theme).</summary>
-    public static readonly Color WordHalf = Color.White;
-    public static readonly Color WordCube = Palette.Hex("#4cd1e0");
-
     /// <summary>Paints the panel into <paramref name="bounds"/>: gradient, two glows and the grid fading out towards the middle.</summary>
     public static void PaintNight(Graphics g, Rectangle bounds)
     {
@@ -304,7 +300,7 @@ public static class Fonts
             }
             // GDI+ reads the files from a temporary folder (the in-memory variant of the same API left a font out of the collection in
             // about one run in ten); the folder is removed when the process ends
-            var folder = Path.Combine(Path.GetTempPath(), "HalfCube-Setup-fonts-" + Environment.ProcessId.ToString(System.Globalization.CultureInfo.InvariantCulture));
+            var folder = Path.Combine(Path.GetTempPath(), $"{ProductInfo.Name}-Setup-fonts-" + Environment.ProcessId.ToString(System.Globalization.CultureInfo.InvariantCulture));
             Directory.CreateDirectory(folder);
             AppDomain.CurrentDomain.ProcessExit += (_, _) =>
             {

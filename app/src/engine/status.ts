@@ -26,11 +26,11 @@ export interface StartupStep {
 }
 
 export type EngineProblemCode =
-  /** The engine could not be started: the program is missing, the worker did not load, the process did not spawn. */
+  /** The engine could not be started: the program is missing, the process did not spawn, the desktop bridge is missing. */
   | "engine_start_failed"
   /** The engine started but refused the handshake (for example a different protocol version). */
   | "engine_refused"
-  /** The native process ended or the WebAssembly module trapped. */
+  /** The native engine process ended. */
   | "engine_crashed"
   /** The engine stopped answering and was stopped by a watchdog. */
   | "engine_hung"

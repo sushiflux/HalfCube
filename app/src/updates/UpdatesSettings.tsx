@@ -1,6 +1,6 @@
 // The tab "Updates" of the settings dialog (mockup "geteilt-einstellungen"): the channel (read-only, set by the installer), the
 // installed version, "Jetzt nach Updates suchen" with its result, how often HalfCube checks by itself (a vertical segmented choice
-// with a help text) and "Was ist neu". Browser and programs without an updater show what makes sense there: the version, a note and
+// with a help text) and "Was ist neu". A program without an updater shows what makes sense there: the version, a note and
 // "Was ist neu".
 import { useI18n } from "../i18n/runtime.ts";
 import type { MessageKey } from "../i18n/types.ts";
@@ -49,10 +49,11 @@ export function UpdatesSettings() {
   );
 
   if (!isSupported(state)) {
-    // No updater: the browser version, a dev build, a copy that was not installed. The state is null in the browser.
+    // No updater: a dev build, a portable copy, a copy that was not installed. The state is null until the updater has
+    // answered (and on a page without the desktop bridge); no reason is claimed then, the line keeps its height.
     const reason =
       state === null
-        ? t("updates.settings.browser")
+        ? " "
         : state.reason === "dev-build"
           ? t("updates.settings.unsupportedDev")
           : state.reason === "portable"

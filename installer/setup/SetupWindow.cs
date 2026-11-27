@@ -241,7 +241,7 @@ internal sealed partial class SetupWindow : WizardWindow
         if (!_state.IsUpdate)
         {
             yield return ("location-unsafe-folder", () => { _location.SetFolder(@"C:\"); GoTo(2); UpdateButtons(); });
-            yield return ("location-long-path", () => { _location.SetFolder(@"C:\Users\Beispielbenutzer\AppData\Local\Programs\HalfCube\VeryLongFolderNameForTheLayoutCheck\AnotherLongSubfolder\HalfCube"); GoTo(2); UpdateButtons(); });
+            yield return ("location-long-path", () => { _location.SetFolder($@"C:\Users\Beispielbenutzer\AppData\Local\Programs\{ProductInfo.Name}\VeryLongFolderNameForTheLayoutCheck\AnotherLongSubfolder\{ProductInfo.Name}"); GoTo(2); UpdateButtons(); });
             yield return ("location-ok", () => { _location.SetFolder(original); GoTo(2); UpdateButtons(); });
         }
         yield return ("installing", () =>
@@ -257,8 +257,8 @@ internal sealed partial class SetupWindow : WizardWindow
         {
             _running = false;
             _state.Failed = true;
-            _state.Error = SetupTexts.ErrVelopackFailed(1, @"C:\Users\Name\AppData\Local\Temp\HalfCube-Setup-0f3a\velopack-setup.log",
-                string.Join('\n', Enumerable.Repeat("[12:04:11] [ERROR] An error has occurred: Unable to write file C:\\Users\\Name\\AppData\\Local\\HalfCube\\current\\resources\\engine\\halfcube-engine.exe: access denied", 4)));
+            _state.Error = SetupTexts.ErrVelopackFailed(1, $@"C:\Users\Name\AppData\Local\Temp\{ProductInfo.Name}-Setup-0f3a\velopack-setup.log",
+                string.Join('\n', Enumerable.Repeat($"[12:04:11] [ERROR] An error has occurred: Unable to write file C:\\Users\\Name\\AppData\\Local\\{ProductInfo.Name}\\current\\resources\\engine\\halfcube-engine.exe: access denied", 4)));
             GoTo(InstallingIndex);
             UpdateButtons();
         });
@@ -445,8 +445,8 @@ internal sealed partial class SetupWindow : WizardWindow
             if (dialog.ShowDialog(owner.FindForm()) != DialogResult.OK) return;
             var chosen = dialog.SelectedPath;
             // A chosen parent folder gets the program's own subfolder, so nothing is ever installed straight into "Documents" or a drive
-            if (!string.Equals(Path.GetFileName(chosen.TrimEnd('\\')), "HalfCube", StringComparison.OrdinalIgnoreCase))
-                chosen = Path.Combine(chosen, "HalfCube");
+            if (!string.Equals(Path.GetFileName(chosen.TrimEnd('\\')), ProductInfo.Name, StringComparison.OrdinalIgnoreCase))
+                chosen = Path.Combine(chosen, ProductInfo.Name);
             SetFolder(chosen);
         }
 

@@ -31,6 +31,6 @@ export function linkSession(session: EngineSession): EngineLink {
   };
 }
 
-/** Time limits against a hung engine (the WebAssembly engine has nothing else that notices one). */
+/** Time limits against a hung engine (they bound a single request that never answers). */
 export const SKETCH_SOLVE_TIMEOUT_MS = 10_000;
 export const MODEL_SYNC_TIMEOUT_MS = 60_000;

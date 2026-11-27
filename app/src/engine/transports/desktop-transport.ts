@@ -96,8 +96,4 @@ export class DesktopTransport implements EngineTransport {
     this.port.postMessage(message);
     this.port.close();
   }
-
-  cancelRunning(): boolean {
-    return false; // the native engine reads cancel messages while it computes
-  }
 }

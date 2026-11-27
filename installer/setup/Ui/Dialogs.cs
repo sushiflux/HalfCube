@@ -81,7 +81,7 @@ public sealed class MessageWindow : Form
         AutoScaleMode = AutoScaleMode.None;
         FormBorderStyle = FormBorderStyle.None;
         ShowInTaskbar = forcedScale is null;
-        Text = "HalfCube";
+        Text = ProductInfo.Name;
         Icon = Branding.GetIcon(32);
         KeyPreview = true;
         DoubleBuffered = true;

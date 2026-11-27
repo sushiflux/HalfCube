@@ -1,6 +1,5 @@
-// A fixed set of sketch.solve and model.sync requests. The contract tests run them against the native and the
-// WebAssembly engine and compare both with the answers recorded from the native engine
-// (tests/fixtures/engine/record.ts); the replay stub plays the same recordings for UI work without an engine.
+// A fixed set of sketch.solve and model.sync requests. The contract tests run them against the native engine and
+// compare the answers with the recorded ones (tests/fixtures/engine/record.ts); the replay stub plays the same recordings for UI work without an engine.
 import type {
   Dimension,
   GeometricConstraint,

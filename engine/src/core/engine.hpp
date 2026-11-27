@@ -1,6 +1,5 @@
 // Transport-independent engine core: reads command headers, answers hello, ping and cancel at once, queues every
-// other command and runs it. The native main (stdio frames, reader thread plus compute thread) and the WebAssembly
-// main (one call per message, single-threaded) both drive this class.
+// other command and runs it. The native main (stdio frames, reader thread plus compute thread) drives this class.
 #pragma once
 
 #include "generated/protocol.hpp"
@@ -31,8 +30,6 @@ public:
 struct EngineOptions {
     bool pingWhileBusy = false;    // receive() runs on its own thread while runNext() computes
     bool cancelWhileBusy = false;  // a cancel can reach the running command
-    // Optional extra cancel source, polled by running commands (WebAssembly: shared cancel flag).
-    std::function<bool(std::int64_t requestId)> externalCancel;
 };
 
 class Engine {

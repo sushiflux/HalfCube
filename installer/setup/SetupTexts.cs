@@ -5,7 +5,7 @@ namespace HalfCube.Setup;
 /// <summary>Every text of the setup and the uninstaller, German and English side by side.</summary>
 internal static class SetupTexts
 {
-    public static readonly Msg WindowTitle = new("HalfCube installieren", "Install HalfCube");
+    public static readonly Msg WindowTitle = new($"{ProductInfo.Name} installieren", $"Install {ProductInfo.Name}");
     public static readonly Msg SideInstall = new("Installation", "Setup");
     public static readonly Msg SideUpdate = new("Aktualisierung", "Update");
 
@@ -17,19 +17,19 @@ internal static class SetupTexts
 
     public static readonly Msg Install = new("Installieren", "Install");
     public static readonly Msg Update = new("Aktualisieren", "Update");
-    public static readonly Msg StartNow = new("HalfCube starten", "Start HalfCube");
+    public static readonly Msg StartNow = new($"{ProductInfo.Name} starten", $"Start {ProductInfo.Name}");
     public static readonly Msg Uninstall = new("Deinstallieren", "Uninstall");
 
     // ---- welcome -------------------------------------------------------------------------------------------------------------
     public static readonly Msg WelcomeKicker = new("Willkommen", "Welcome");
-    public static readonly Msg WelcomeTitle = new("Willkommen bei HalfCube", "Welcome to HalfCube");
+    public static readonly Msg WelcomeTitle = new($"Willkommen bei {ProductInfo.Name}", $"Welcome to {ProductInfo.Name}");
     public static readonly Msg WelcomeSubtitle = new(
         "Parametrisches CAD für Windows: erst skizzieren, dann Körper bauen. Wähle deine Sprache.",
         "Parametric CAD for Windows: sketch first, then build solid bodies. Choose your language.");
-    public static readonly Msg UpdateTitle = new("HalfCube aktualisieren", "Update HalfCube");
+    public static readonly Msg UpdateTitle = new($"{ProductInfo.Name} aktualisieren", $"Update {ProductInfo.Name}");
     public static Msg UpdateSubtitle(string installed) => new(
-        $"HalfCube {installed} ist schon installiert und wird ersetzt. Deine Projekte und Einstellungen bleiben erhalten. Wähle deine Sprache.",
-        $"HalfCube {installed} is already installed and will be replaced. Your projects and settings are kept. Choose your language.");
+        $"{ProductInfo.Name} {installed} ist schon installiert und wird ersetzt. Deine Projekte und Einstellungen bleiben erhalten. Wähle deine Sprache.",
+        $"{ProductInfo.Name} {installed} is already installed and will be replaced. Your projects and settings are kept. Choose your language.");
     public static readonly Msg GermanText = new("Programm und Handbuch auf Deutsch.", "Programm und Handbuch auf Deutsch.");
     public static readonly Msg EnglishText = new("Program and manual in English.", "Program and manual in English.");
     public static readonly Msg FeatureSketch = new("Skizzen mit Bedingungen und Maßen", "Sketches with constraints and dimensions");
@@ -40,8 +40,8 @@ internal static class SetupTexts
     public static readonly Msg LicenceKicker = new("Lizenz", "Licence");
     public static readonly Msg LicenceTitle = new("Quelloffene Software", "Source-available software");
     public static readonly Msg LicenceSubtitle = new(
-        "HalfCube wird unter der PolyForm Shield License 1.0.0 bereitgestellt. Sie erlaubt die kostenlose Nutzung, privat und geschäftlich, sowie Änderungen für den eigenen Gebrauch. Ausgenommen ist das Anbieten von Produkten, die mit HalfCube im Wettbewerb stehen. Ohne Gewährleistung.",
-        "HalfCube is provided under the PolyForm Shield License 1.0.0. It permits free use, private and commercial, and changes for your own use. Offering products that compete with HalfCube is excluded. No warranty.");
+        $"{ProductInfo.Name} wird unter der PolyForm Shield License 1.0.0 bereitgestellt. Sie erlaubt die kostenlose Nutzung, privat und geschäftlich, sowie Änderungen für den eigenen Gebrauch. Ausgenommen ist das Anbieten von Produkten, die mit {ProductInfo.Name} im Wettbewerb stehen. Ohne Gewährleistung.",
+        $"{ProductInfo.Name} is provided under the PolyForm Shield License 1.0.0. It permits free use, private and commercial, and changes for your own use. Offering products that compete with {ProductInfo.Name} is excluded. No warranty.");
     public static readonly Msg LicenceSource = new(
         "Quellcode: github.com/sushiflux/HalfCube · der Lizenztext ist das englische Original des PolyForm Project (polyformproject.org).",
         "Source code: github.com/sushiflux/HalfCube · the licence text is the original published by the PolyForm Project (polyformproject.org).");
@@ -61,7 +61,7 @@ internal static class SetupTexts
 
     // ---- location ------------------------------------------------------------------------------------------------------------
     public static readonly Msg LocationKicker = new("Ort", "Location");
-    public static readonly Msg LocationTitle = new("Wohin kommt HalfCube?", "Where does HalfCube go?");
+    public static readonly Msg LocationTitle = new($"Wohin kommt {ProductInfo.Name}?", $"Where does {ProductInfo.Name} go?");
     public static readonly Msg LocationSubtitle = new(
         "Nur für dich installiert – ohne Administratorrechte.",
         "Installed just for you – no administrator rights.");
@@ -79,16 +79,16 @@ internal static class SetupTexts
         $"Benötigt etwa {needed}, frei sind {free}",
         $"Needs about {needed}, {free} free");
     public static Msg FolderUnsafe(string path) => new(
-        $"„{path}“ kann nicht der Programmordner sein (Laufwerk, Benutzer- oder Systemordner). Bitte einen eigenen Unterordner wählen, z. B. …\\HalfCube.",
-        $"“{path}” cannot be the program folder (a drive, user or system folder). Please choose a folder of its own, e.g. …\\HalfCube.");
+        $"„{path}“ kann nicht der Programmordner sein (Laufwerk, Benutzer- oder Systemordner). Bitte einen eigenen Unterordner wählen, z. B. …\\{ProductInfo.Name}.",
+        $"“{path}” cannot be the program folder (a drive, user or system folder). Please choose a folder of its own, e.g. …\\{ProductInfo.Name}.");
     public static Msg FolderNotEmpty(string path) => new(
         $"Im Ordner „{path}“ liegen schon andere Dateien. Bitte einen leeren Ordner oder einen neuen Unterordner wählen.",
         $"The folder “{path}” already contains other files. Please choose an empty folder or a new subfolder.");
 
     // ---- installing ----------------------------------------------------------------------------------------------------------
     public static readonly Msg InstallKicker = new("Installation", "Installing");
-    public static readonly Msg InstallTitle = new("HalfCube wird installiert", "Installing HalfCube");
-    public static readonly Msg UpdatingTitle = new("HalfCube wird aktualisiert", "Updating HalfCube");
+    public static readonly Msg InstallTitle = new($"{ProductInfo.Name} wird installiert", $"Installing {ProductInfo.Name}");
+    public static readonly Msg UpdatingTitle = new($"{ProductInfo.Name} wird aktualisiert", $"Updating {ProductInfo.Name}");
     public static readonly Msg InstallSubtitle = new("Das dauert meist weniger als eine Minute.", "This usually takes less than a minute.");
     public static readonly Msg FailedTitle = new("Installation unterbrochen", "Setup interrupted");
     public static readonly Msg FailedSubtitle = new("Der Grund steht unten vollständig.", "The full reason is shown below.");
@@ -123,8 +123,8 @@ internal static class SetupTexts
 
     public static Msg ErrElevated() => Fail("HC-SETUP-001",
         new("Das Setup läuft mit Administratorrechten", "Setup is running with administrator rights"),
-        new("HalfCube wird nur für dich installiert. Als Administrator landeten Programm und Einstellungen womöglich im Konto des Administrators statt in deinem. Bitte die Installationsdatei normal per Doppelklick starten (nicht „Als Administrator ausführen“).",
-            "HalfCube is installed just for you. As administrator, program and settings could end up in the administrator's account instead of yours. Please start the setup file normally with a double-click (not “Run as administrator”)."));
+        new($"{ProductInfo.Name} wird nur für dich installiert. Als Administrator landeten Programm und Einstellungen womöglich im Konto des Administrators statt in deinem. Bitte die Installationsdatei normal per Doppelklick starten (nicht „Als Administrator ausführen“).",
+            $"{ProductInfo.Name} is installed just for you. As administrator, program and settings could end up in the administrator's account instead of yours. Please start the setup file normally with a double-click (not “Run as administrator”)."));
 
     public static Msg ErrFolderUnsafe(string path) => Fail("HC-SETUP-002",
         new("Dieser Ordner kann nicht der Programmordner sein", "This folder cannot be the program folder"), FolderUnsafe(path));
@@ -169,10 +169,10 @@ internal static class SetupTexts
 
     // ---- done ----------------------------------------------------------------------------------------------------------------
     public static readonly Msg DoneKicker = new("Geschafft", "All set");
-    public static readonly Msg DoneTitle = new("HalfCube ist bereit", "HalfCube is ready");
-    public static readonly Msg DoneUpdatedTitle = new("HalfCube ist aktuell", "HalfCube is up to date");
+    public static readonly Msg DoneTitle = new($"{ProductInfo.Name} ist bereit", $"{ProductInfo.Name} is ready");
+    public static readonly Msg DoneUpdatedTitle = new($"{ProductInfo.Name} ist aktuell", $"{ProductInfo.Name} is up to date");
     public static readonly Msg DoneSubtitle = new(
-        "Beim ersten Start zeigt dir HalfCube in einer kurzen Tour, wo alles ist.",
+        $"Beim ersten Start zeigt dir {ProductInfo.Name} in einer kurzen Tour, wo alles ist.",
         "On the first start a short tour shows you where everything is.");
     public static readonly Msg TipSearchTitle = new("Jeder Befehl mit S", "Every command with S");
     public static readonly Msg TipSearchText = new("Die Befehlssuche findet jedes Werkzeug beim Namen.", "The command search finds every tool by name.");
@@ -185,7 +185,7 @@ internal static class SetupTexts
 /// <summary>The texts of the uninstall window.</summary>
 internal static class UninstallTexts
 {
-    public static readonly Msg WindowTitle = new("HalfCube deinstallieren", "Uninstall HalfCube");
+    public static readonly Msg WindowTitle = new($"{ProductInfo.Name} deinstallieren", $"Uninstall {ProductInfo.Name}");
     public static readonly Msg Side = new("Deinstallation", "Uninstall");
 
     public static readonly Msg StepConfirm = new("Bestätigen", "Confirm");
@@ -193,10 +193,10 @@ internal static class UninstallTexts
     public static readonly Msg StepDone = new("Fertig", "Done");
 
     public static readonly Msg ConfirmKicker = new("Deinstallation", "Uninstall");
-    public static readonly Msg ConfirmTitle = new("HalfCube deinstallieren?", "Uninstall HalfCube?");
+    public static readonly Msg ConfirmTitle = new($"{ProductInfo.Name} deinstallieren?", $"Uninstall {ProductInfo.Name}?");
     public static readonly Msg ConfirmSubtitle = new(
-        "Das Programm wird von diesem PC entfernt. Das lässt sich nicht rückgängig machen, du kannst HalfCube aber jederzeit neu installieren.",
-        "The program is removed from this PC. This cannot be undone, but you can reinstall HalfCube at any time.");
+        $"Das Programm wird von diesem PC entfernt. Das lässt sich nicht rückgängig machen, du kannst {ProductInfo.Name} aber jederzeit neu installieren.",
+        $"The program is removed from this PC. This cannot be undone, but you can reinstall {ProductInfo.Name} at any time.");
     public static readonly Msg RemovedTitle = new("Wird entfernt", "Removed");
     public static Msg RemovedText(string size) => new(
         $"Das Programm ({size}), der Eintrag im Startmenü und die Verknüpfung auf dem Desktop",
@@ -208,22 +208,22 @@ internal static class UninstallTexts
     public static readonly Msg ButtonUninstall = new("Deinstallieren", "Uninstall");
 
     public static readonly Msg RemoveKicker = new("Deinstallation", "Uninstall");
-    public static readonly Msg RemoveTitle = new("HalfCube wird entfernt", "Removing HalfCube");
+    public static readonly Msg RemoveTitle = new($"{ProductInfo.Name} wird entfernt", $"Removing {ProductInfo.Name}");
     public static readonly Msg RemoveSubtitle = new("Deine Projekte und Einstellungen bleiben erhalten.", "Your projects and settings are kept.");
-    public static readonly Msg TaskStop = new("HalfCube wird beendet", "Closing HalfCube");
-    public static readonly Msg TaskStopDone = new("HalfCube beendet", "HalfCube closed");
+    public static readonly Msg TaskStop = new($"{ProductInfo.Name} wird beendet", $"Closing {ProductInfo.Name}");
+    public static readonly Msg TaskStopDone = new($"{ProductInfo.Name} beendet", $"{ProductInfo.Name} closed");
     public static readonly Msg TaskFiles = new("Programmdateien werden entfernt", "Removing program files");
     public static readonly Msg TaskFilesDone = new("Programmdateien entfernt", "Program files removed");
     public static readonly Msg TaskShortcuts = new("Verknüpfungen werden entfernt", "Removing shortcuts");
     public static readonly Msg TaskShortcutsDone = new("Verknüpfungen entfernt", "Shortcuts removed");
 
     public static readonly Msg DoneKicker = new("Fertig", "Done");
-    public static readonly Msg DoneTitle = new("HalfCube wurde entfernt", "HalfCube was removed");
-    public static readonly Msg DoneSubtitle = new("Danke, dass du HalfCube ausprobiert hast.", "Thank you for trying HalfCube.");
+    public static readonly Msg DoneTitle = new($"{ProductInfo.Name} wurde entfernt", $"{ProductInfo.Name} was removed");
+    public static readonly Msg DoneSubtitle = new($"Danke, dass du {ProductInfo.Name} ausprobiert hast.", $"Thank you for trying {ProductInfo.Name}.");
     public static readonly Msg StillThereTitle = new("Noch da", "Still there");
     public static readonly Msg StillThereText = new(
-        "Deine Projekte (.hcube) und deine Einstellungen. Wenn du HalfCube wieder installierst, ist alles wie vorher.",
-        "Your projects (.hcube) and your settings. If you install HalfCube again, everything is as before.");
+        $"Deine Projekte (.hcube) und deine Einstellungen. Wenn du {ProductInfo.Name} wieder installierst, ist alles wie vorher.",
+        $"Your projects (.hcube) and your settings. If you install {ProductInfo.Name} again, everything is as before.");
     public static readonly Msg FailedTitle = new("Deinstallation unterbrochen", "Uninstall interrupted");
     public static readonly Msg FailedSubtitle = new("Der Grund steht unten vollständig.", "The full reason is shown below.");
 
@@ -232,7 +232,7 @@ internal static class UninstallTexts
         $"{headline.En} ({code})\n\n{details.En}");
 
     public static Msg ErrNotFound() => Fail("HC-UNINST-001",
-        new("HalfCube ist nicht installiert", "HalfCube is not installed"),
+        new($"{ProductInfo.Name} ist nicht installiert", $"{ProductInfo.Name} is not installed"),
         new("Es wurde keine Installation gefunden, die sich entfernen ließe.", "No installation was found that could be removed."));
 
     public static Msg ErrStartFailed(string reason) => Fail("HC-UNINST-002",
@@ -240,9 +240,9 @@ internal static class UninstallTexts
         new(reason, reason));
 
     public static Msg ErrFailed(int exitCode, string folder, string logFile, string logTail) => Fail("HC-UNINST-003",
-        new("HalfCube konnte nicht vollständig entfernt werden", "HalfCube could not be removed completely"),
-        new($"Das Deinstallationsprogramm (Velopack) endete mit Code {exitCode}. Der Programmordner „{folder}“ kann teilweise noch vorhanden sein. Beende HalfCube und versuche es erneut. Deine Projekte und Einstellungen sind nicht betroffen.\n\nProtokoll ({logFile}):\n{logTail}",
-            $"The uninstaller (Velopack) ended with code {exitCode}. The program folder “{folder}” may still be partly there. Close HalfCube and try again. Your projects and settings are not affected.\n\nLog ({logFile}):\n{logTail}"));
+        new($"{ProductInfo.Name} konnte nicht vollständig entfernt werden", $"{ProductInfo.Name} could not be removed completely"),
+        new($"Das Deinstallationsprogramm (Velopack) endete mit Code {exitCode}. Der Programmordner „{folder}“ kann teilweise noch vorhanden sein. Beende {ProductInfo.Name} und versuche es erneut. Deine Projekte und Einstellungen sind nicht betroffen.\n\nProtokoll ({logFile}):\n{logTail}",
+            $"The uninstaller (Velopack) ended with code {exitCode}. The program folder “{folder}” may still be partly there. Close {ProductInfo.Name} and try again. Your projects and settings are not affected.\n\nLog ({logFile}):\n{logTail}"));
 
     public static Msg ErrLeftover(string folder) => Fail("HC-UNINST-004",
         new("Der Programmordner ist noch vorhanden", "The program folder is still there"),

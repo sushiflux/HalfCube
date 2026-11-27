@@ -1,11 +1,23 @@
 // Translation core: no React, no DOM, so it can be tested on its own.
-// German and English are fixed in the code; every other language comes only through the browser's own translation.
+// German and English are fixed in the code; every other system language gets English.
+import { branding } from "../branding.ts";
 import type { Preferences } from "../prefs/preferences.ts";
 import { de } from "./de.ts";
 import { en } from "./en.ts";
 import type { Language, MessageKey, MessageParams, Messages } from "./types.ts";
 
-export const catalogues: Record<Language, Messages> = { de, en };
+/** Placeholder of the product name in the message sources; it is replaced once, when the catalogues load. */
+export const PRODUCT_PLACEHOLDER = "{product}";
+
+/** A copy of a catalogue with the product placeholder replaced by the name from branding/branding.json. */
+export function bindProduct<T>(node: T, name: string = branding.name): T {
+  if (typeof node === "string") return node.replaceAll(PRODUCT_PLACEHOLDER, () => name) as T;
+  if (Array.isArray(node)) return node.map((item) => bindProduct(item, name)) as T;
+  if (typeof node !== "object" || node === null) return node;
+  return Object.fromEntries(Object.entries(node).map(([key, value]) => [key, bindProduct(value, name)])) as T;
+}
+
+export const catalogues: Record<Language, Messages> = { de: bindProduct(de), en: bindProduct(en) };
 
 export const languagePreferenceKey = "language";
 
@@ -24,7 +36,7 @@ export interface InitialLanguageSources {
   browserLanguages?: readonly string[] | undefined;
 }
 
-/** The first-start language: the setup's choice, otherwise the system/browser language (de* -> de, else en). */
+/** The first-start language: the setup's choice, otherwise the system language (de* -> de, else en). */
 export function resolveInitialLanguage(sources: InitialLanguageSources): Language {
   const handed = normalizeLanguage(sources.handedOver);
   if (handed) return handed;

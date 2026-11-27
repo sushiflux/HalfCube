@@ -5,9 +5,10 @@ import type { SettingsTab } from "../screens/main/url-state.ts";
 import { updates } from "./controller.ts";
 import { updateUi } from "./ui-state.ts";
 import { restartNeedsWarning, workStore } from "./work.ts";
+import { branding } from "../branding.ts";
 
 /** The main window listens for this: a tab opens its settings dialog on that tab, null closes it (the dialog's state lives there). */
-export const OPEN_SETTINGS_EVENT = "halfcube:open-settings";
+export const OPEN_SETTINGS_EVENT = `${branding.slug}:open-settings`;
 
 function settingsView(tab: SettingsTab | null): void {
   if (typeof window !== "undefined") window.dispatchEvent(new CustomEvent<SettingsTab | null>(OPEN_SETTINGS_EVENT, { detail: tab }));

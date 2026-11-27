@@ -1,3 +1,4 @@
+import { branding } from "../../branding.ts";
 // Parsing and formatting for the crash page. Pure and dependency-free: the crash page must work even when the rest of
 // the app is what broke.
 
@@ -12,9 +13,8 @@ export interface StackFrame {
 }
 
 const v8Frame = /^at\s+(?:(async)\s+)?(?:(.+?)\s+\()?(.+?):(\d+):(\d+)\)?$/;
-const geckoFrame = /^(.*?)@(.+?):(\d+):(\d+)$/;
 
-/** Parses a JavaScript stack (Chromium and Firefox/Safari formats) into frames; lines that are no frames are skipped. */
+/** Parses a JavaScript stack (the Chromium format of the Electron renderer) into frames; lines that are no frames are skipped. */
 export function parseStack(stack: string | undefined): StackFrame[] {
   if (!stack) return [];
   const frames: StackFrame[] = [];
@@ -30,18 +30,6 @@ export function parseStack(stack: string | undefined): StackFrame[] {
         line: Number(v8[4]),
         column: Number(v8[5]),
         isAsync: v8[1] === "async",
-      });
-      continue;
-    }
-    const gecko = geckoFrame.exec(raw);
-    if (gecko) {
-      frames.push({
-        raw,
-        functionName: gecko[1] === "" ? undefined : gecko[1],
-        file: gecko[2],
-        line: Number(gecko[3]),
-        column: Number(gecko[4]),
-        isAsync: false,
       });
       continue;
     }
@@ -95,7 +83,7 @@ export interface CrashReport {
 export function buildCrashReport(report: CrashReport): string {
   const { environment: env } = report;
   const lines = [
-    `HalfCube crashed: ${report.name}: ${report.message}`,
+    `${branding.name} crashed: ${report.name}: ${report.message}`,
     "",
     `Version:   ${env.version}`,
     `Channel:   ${env.channel}`,

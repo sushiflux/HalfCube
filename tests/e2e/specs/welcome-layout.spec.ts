@@ -8,7 +8,7 @@ import { NARROWEST_WIDTH, type Lang } from "../support/paths.ts";
 
 const words: Record<Lang, { title1: string; title2: string; next: string; back: string; open: RegExp; checkbox: string; infoTitle: string }> = {
   en: {
-    title1: "Sketch first, then build",
+    title1: "Sketch first, then build.",
     title2: "How do you want to start?",
     next: "Next",
     back: "Back",
@@ -17,7 +17,7 @@ const words: Record<Lang, { title1: string; title2: string; next: string; back: 
     infoTitle: "Not available yet",
   },
   de: {
-    title1: "Erst skizzieren, dann bauen",
+    title1: "Sketch first, then build.",
     title2: "Womit möchtest du anfangen?",
     next: "Weiter",
     back: "Zurück",

@@ -103,23 +103,22 @@ describe("what the windows show", () => {
   });
 });
 
-describe("'Was ist neu' in the browser version (no updater)", () => {
-  it("is decided at once and counts as supported; the desktop waits for the updater's answer", () => {
-    expect(newsReadiness({ bridge: false, state: null })).toEqual({ known: true, supported: true });
-    expect(newsReadiness({ bridge: true, state: null })).toEqual({ known: false, supported: false });
-    expect(newsReadiness({ bridge: true, state: { supported: true } })).toEqual({ known: true, supported: true });
-    // A desktop program that is not an installed one (dev build, unpacked copy, portable) never shows it.
-    expect(newsReadiness({ bridge: true, state: { supported: false } })).toEqual({ known: true, supported: false });
+describe("'Was ist neu' waits for the updater", () => {
+  it("is decided only after the updater's first answer, and only for an installed program", () => {
+    expect(newsReadiness({ state: null })).toEqual({ known: false, supported: false });
+    expect(newsReadiness({ state: { supported: true } })).toEqual({ known: true, supported: true });
+    // A program that is not an installed one (dev build, unpacked copy, portable) never shows it.
+    expect(newsReadiness({ state: { supported: false } })).toEqual({ known: true, supported: false });
   });
 
-  it("first visit stores the own id and shows nothing; a later visit of a newer build opens it once", () => {
-    const browser = newsReadiness({ bridge: false, state: null });
-    const first = decideNewsOnStart({ ...base, ...browser, lastShownId: null });
+  it("first start stores the own id and shows nothing; a later start of a newer build opens it once", () => {
+    const installedProgram = newsReadiness({ state: { supported: true } });
+    const first = decideNewsOnStart({ ...base, ...installedProgram, lastShownId: null });
     expect(first).toEqual({ kind: "remember" });
-    const later = decideNewsOnStart({ ...base, ...browser, lastShownId: installed });
+    const later = decideNewsOnStart({ ...base, ...installedProgram, lastShownId: installed });
     expect(later).toEqual({ kind: "open" });
-    expect(decideNewsOnStart({ ...base, ...browser, lastShownId: ids.offer })).toEqual({ kind: "none" });
+    expect(decideNewsOnStart({ ...base, ...installedProgram, lastShownId: ids.offer })).toEqual({ kind: "none" });
     // Never in a dev build.
-    expect(decideNewsOnStart({ ...base, ...browser, autoAllowed: false })).toEqual({ kind: "none" });
+    expect(decideNewsOnStart({ ...base, ...installedProgram, autoAllowed: false })).toEqual({ kind: "none" });
   });
 });

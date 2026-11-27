@@ -25,6 +25,7 @@ import {
 } from "./errors.ts";
 import type { EngineTransport, ExitInfo } from "./transport.ts";
 import { CommandWatchdog, realClock, type ExpiredCommand, type WatchdogClock, type WatchdogLane } from "./watchdog.ts";
+import { branding } from "../branding.ts";
 
 type DistributiveOmit<T, K extends PropertyKey> = T extends unknown ? Omit<T, K> : never;
 
@@ -76,8 +77,8 @@ export interface EngineClientOptions {
   /** Names the client in the hello command (diagnostics only). */
   clientName?: string;
   /**
-   * Time limit in ms for commands that have no entry in commandTimeoutsMs (0 = none). Default: none for the native
-   * engine (the main process pings it), 60 000 for the WebAssembly engine, where nothing else can notice a hang.
+   * Time limit in ms for commands that have no entry in commandTimeoutsMs (0 = none). Default: none, the main process
+   * pings the engine.
    */
   defaultTimeoutMs?: number;
   commandTimeoutsMs?: Partial<Record<CommandType, number>>;
@@ -115,8 +116,6 @@ const QUICK_TIMEOUT_MS: Partial<Record<CommandType, number>> = {
   "shutdown": PING_TIMEOUT_MS,
 };
 
-const DEFAULT_WASM_TIMEOUT_MS = 60_000;
-
 /**
  * The complete reason when the engine's hello answer names another protocol than this program speaks, otherwise
  * undefined. Names both the expected and the received protocol id and version.
@@ -126,7 +125,7 @@ export function protocolRefusal(hello: Pick<HelloResult, "protocol" | "protocolI
   const received = typeof hello.protocolId === "string" ? `"${hello.protocolId}"` : "nothing (no protocolId in the answer)";
   return (
     `This program speaks protocol "${PROTOCOL_ID}" (version ${PROTOCOL_VERSION}), the engine answered with protocol ${received} ` +
-    `(version ${String(hello.protocol)}). User interface and engine come from different builds; reinstall HalfCube.`
+    `(version ${String(hello.protocol)}). User interface and engine come from different builds; reinstall ${branding.name}.`
   );
 }
 
@@ -135,7 +134,7 @@ export class EngineClient {
   hello: HelloResult | null = null;
   private transport: EngineTransport | null = null;
   private _state: ClientState = "idle";
-  private lastKind: "native" | "wasm" | null = null;
+  private lastKind: "native" | null = null;
   private nextId = 1;
   private readonly pending = new Map<number, Pending>();
   private readonly opts: EngineClientOptions;
@@ -151,12 +150,12 @@ export class EngineClient {
   }
 
   /** Kind of the current engine connection, null when there is none. */
-  get transportKind(): "native" | "wasm" | null {
+  get transportKind(): "native" | null {
     return this.transport?.kind ?? null;
   }
 
   /** Kind of the most recent connection, also after it ended (for problem reports). */
-  get lastTransportKind(): "native" | "wasm" | null {
+  get lastTransportKind(): "native" | null {
     return this.lastKind;
   }
 
@@ -189,7 +188,7 @@ export class EngineClient {
     };
     try {
       await transport.start();
-      const handshake = this.request({ type: "hello", protocol: PROTOCOL_VERSION, protocolId: PROTOCOL_ID, client: this.opts.clientName ?? "halfcube" });
+      const handshake = this.request({ type: "hello", protocol: PROTOCOL_VERSION, protocolId: PROTOCOL_ID, client: this.opts.clientName ?? branding.slug });
       const reply = await handshake.reply;
       if (this.transport !== transport) throw new EngineNotRunningError("The engine was stopped during the handshake.");
       // The engine checks our protocol id; this is the same check the other way round, so that neither side talks to
@@ -242,7 +241,7 @@ export class EngineClient {
     const reply = new Promise<Reply>((resolve, reject) => {
       this.pending.set(id, { type, label, resolve, reject, onProgress: options.onProgress, key: options.supersedeKey, abandoned: false });
     });
-    this.watch(id, type, label, transport.kind, options.timeoutMs);
+    this.watch(id, type, label, options.timeoutMs);
     try {
       transport.send(JSON.stringify({ ...command, id }));
     } catch (e) {
@@ -253,11 +252,9 @@ export class EngineClient {
 
   /**
    * Cancels a queued or running command. The cancelled command itself answers with the error code "cancelled"
-   * (its own request rejects with it). For a WebAssembly command that is running right now the shared cancel flag is
-   * set first, because that engine cannot read messages while it computes.
+   * (its own request rejects with it). The engine reads the cancel message while it computes.
    */
   cancel(target: number): RequestHandle<"cancel"> {
-    this.transport?.cancelRunning(target);
     return this.request({ type: "cancel", target });
   }
 
@@ -303,20 +300,20 @@ export class EngineClient {
 
   // ---------------------------------------------------------------------------------------------------- internals
 
-  private timeoutFor(type: CommandType, kind: "native" | "wasm", requested: number | undefined): number {
+  private timeoutFor(type: CommandType, requested: number | undefined): number {
     if (requested !== undefined) return requested;
     const own = this.opts.commandTimeoutsMs?.[type];
     if (own !== undefined) return own;
     const quick = QUICK_TIMEOUT_MS[type];
     if (quick !== undefined) return quick;
-    return this.opts.defaultTimeoutMs ?? (kind === "wasm" ? DEFAULT_WASM_TIMEOUT_MS : 0);
+    return this.opts.defaultTimeoutMs ?? 0;
   }
 
-  private watch(id: number, type: CommandType, label: string, kind: "native" | "wasm", requested: number | undefined): void {
-    // The WebAssembly engine works every message off in order; the native one answers hello, ping and cancel at once.
-    const direct = kind === "native" && (IMMEDIATE_COMMAND_TYPES as readonly string[]).includes(type);
+  private watch(id: number, type: CommandType, label: string, requested: number | undefined): void {
+    // The engine answers hello, ping and cancel at once, also while it computes; every other command is worked off in order.
+    const direct = (IMMEDIATE_COMMAND_TYPES as readonly string[]).includes(type);
     const lane: WatchdogLane = direct ? "direct" : "serial";
-    this.watchdog.add(id, label, this.timeoutFor(type, kind, requested), lane);
+    this.watchdog.add(id, label, this.timeoutFor(type, requested), lane);
   }
 
   /** Abandons every open request with this key and tells the engine to stop working on it. */
@@ -332,7 +329,6 @@ export class EngineClient {
   private sendInternalCancel(target: number): void {
     const transport = this.transport;
     if (!transport || this.nextId > CLIENT_MAX_ID) return;
-    transport.cancelRunning(target);
     const id = this.nextId++;
     const label = `cancel of request ${target} (request ${id})`;
     this.pending.set(id, {
@@ -344,7 +340,7 @@ export class EngineClient {
       key: undefined,
       abandoned: true,
     });
-    this.watch(id, "cancel", label, transport.kind, undefined);
+    this.watch(id, "cancel", label, undefined);
     try {
       transport.send(JSON.stringify({ type: "cancel", id, target }));
     } catch {
@@ -405,8 +401,7 @@ export class EngineClient {
       kind: "hang",
       message:
         `The engine did not answer ${command.label} within ${seconds} s (waited ${(command.sinceSentMs / 1000).toFixed(1)} s) ` +
-        `and was stopped.` +
-        (transport?.kind === "wasm" ? " The engine worker was terminated." : ""),
+        `and was stopped.`,
       diagnostics: transport?.diagnostics,
     });
   }

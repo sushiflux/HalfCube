@@ -1,4 +1,4 @@
-// The one place in the app shell that runs the update function: it attaches the updater (desktop program only), starts the
+// The one place in the app shell that runs the update function: it attaches the updater, starts the
 // automatic checks once the main window is shown, opens "Was ist neu" by itself on the first start after an update, drops views
 // that no longer have anything to show (after a reload, for example) and renders the update windows.
 import { useEffect, useRef, useState } from "react";
@@ -31,7 +31,7 @@ export function UpdatesHost({ ready, welcomeOpen }: UpdatesHostProps) {
   const ui = useUpdateUi();
   const work = useDesignWork();
   const modalOpen = useAnyModalOpen();
-  // "pending" until the bridge is chosen; "none" in the browser version.
+  // "pending" until the bridge is chosen; "none" when there is no updater (a bare dev page without the desktop bridge).
   const [environment, setEnvironment] = useState<"pending" | "none" | "ready">("pending");
 
   useEffect(() => {
@@ -65,8 +65,7 @@ export function UpdatesHost({ ready, welcomeOpen }: UpdatesHostProps) {
   // "Was ist neu" opens by itself once, when nothing else owns the screen.
   const newsDecided = useRef(false);
   const knownState = snapshot.state !== null;
-  // The browser version has no updater but gets "Was ist neu" all the same (it is decided once, on the first visit of a newer build).
-  const readiness = newsReadiness({ bridge: environment === "ready", state: snapshot.state });
+  const readiness = newsReadiness({ state: snapshot.state });
   useEffect(() => {
     if (newsDecided.current || !ready || welcomeOpen || modalOpen || ui.news || environment === "pending" || !readiness.known) return;
     newsDecided.current = true;
@@ -84,7 +83,7 @@ export function UpdatesHost({ ready, welcomeOpen }: UpdatesHostProps) {
   }, [ready, welcomeOpen, modalOpen, ui.news, environment, readiness.known, readiness.supported, language]);
 
   // A view that has nothing to show any more is dropped: an address with ?update=window after the update was installed, an update
-  // window in the browser, the restart warning when the design is empty.
+  // window without an updater, the restart warning when the design is empty.
   useEffect(() => {
     if (environment === "pending" || !ui.view) return;
     if (environment === "none") {

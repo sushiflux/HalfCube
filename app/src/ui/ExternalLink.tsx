@@ -1,5 +1,5 @@
-// A link to an address outside the program. In the browser it is a plain link that opens a new tab; in the desktop program
-// the click goes to the Electron main process, which opens the system browser (the program window never navigates away).
+// A link to an address outside the program. The click goes to the Electron main process, which opens the system browser
+// (the program window never navigates away). Without a bridge (unit tests, a bare dev page) it stays a plain link.
 // A failure to open is reported in our own dialog, with the complete cause.
 import type { MouseEvent, ReactNode } from "react";
 import { parseExternalUrl } from "../about/external-url.ts";
@@ -20,7 +20,7 @@ export function ExternalLink({ href, children, className, ...rest }: ExternalLin
   const confirm = useConfirm();
   const onClick = (event: MouseEvent<HTMLAnchorElement>) => {
     const bridge = getDesktopBridge();
-    if (!bridge) return; // the browser opens the link itself, in a new tab
+    if (!bridge) return; // no desktop bridge: leave the plain link alone
     event.preventDefault();
     const url = parseExternalUrl(href);
     const done = url === null ? Promise.resolve({ ok: false as const, message: `Not a plain https address: ${href}` }) : bridge.openExternal(url);

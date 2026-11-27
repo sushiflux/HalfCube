@@ -14,5 +14,4 @@
 *.otf binary
 *.zip binary
 *.3mf binary
-*.wasm binary
 *.pdf binary

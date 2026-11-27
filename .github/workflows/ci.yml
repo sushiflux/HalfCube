@@ -1,13 +1,12 @@
-# Continuous integration: checks, engine builds and the browser build on every push to main, every pull request and
+# Continuous integration: checks, engine builds and the UI build on every push to main, every pull request and
 # every v* tag. A v* tag also builds the Windows package and publishes the GitHub release (jobs "release-build" and
 # "release-publish").
 #
 # Jobs
 #   windows      typecheck, lint, unit tests, protocol check, native engine (MSVC), C++ unit tests, engine drive test
-#   web          browser UI build (npm run build:web), third-party list covers the bundle (npm run check:notices-bundle)
-#   engine-wasm  WebAssembly engine in the pinned emscripten/emsdk container, driven through its message interface,
-#                third-party notices up to date (npm run check:notices; needs the engine licence files and the WebAssembly build)
-#   linux        compile check of the native engine, no tests, no package (Linux comes later)
+#   web          UI build of the desktop window (npm run build:web), third-party list covers the bundle (npm run check:notices-bundle)
+#   linux        compile check of the native engine, no tests, no package (Linux comes later); third-party notices up to date
+#                (npm run check:notices; needs the engine licence files and the OCCT sources)
 #   ci-ok        single result of all jobs above (what branch protection depends on)
 #   release-build    only for a v* tag, after every job above succeeded: Windows package (Velopack, our own setup), contents: read
 #   release-publish  the GitHub release from the artifacts of release-build, contents: write, runs no code of this repository
@@ -43,11 +42,7 @@ concurrency:
   cancel-in-progress: ${{ !startsWith(github.ref, 'refs/tags/') }}
 
 env:
-  # Same image as engine/scripts/build-wasm.ps1 (tag and digest). EMSDK_KEY goes into the OCCT cache key; change it
-  # together with the image.
-  EMSDK_IMAGE: emscripten/emsdk:7.0.1@sha256:73aece2e0ab748487945ad117b79fc4d277e9f656e54fc800a9b1a0a6562715b
-  EMSDK_KEY: emsdk-7.0.1-73aece2e
-  # The Electron runtime (about 100 MB) is not needed for typecheck, lint, tests or the web build.
+  # The Electron runtime (about 100 MB) is not needed for typecheck, lint, tests or the UI build.
   ELECTRON_SKIP_BINARY_DOWNLOAD: "1"
   # Newest LTS; package.json requires >=24.
   NODE_VERSION: "26"
@@ -174,7 +169,7 @@ jobs:
           if-no-files-found: error
 
   web:
-    name: Browser UI build
+    name: UI build (desktop window)
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
@@ -195,74 +190,6 @@ jobs:
       - name: Third-party list covers the bundle
         run: npm run check:notices-bundle
 
-  engine-wasm:
-    name: WebAssembly engine
-    runs-on: ubuntu-24.04
-    timeout-minutes: 90
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-
-      # fetch-deps.sh and the drive test need Node; the third-party notices check at the end needs the npm packages.
-      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: npm
-
-      - name: OCCT cache key
-        id: key
-        run: node scripts/ci/occt-key.mjs wasm
-
-      - name: Restore OCCT
-        id: occt
-        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: engine/_build/occt-wasm-install
-          key: occt-${{ steps.key.outputs.key }}-${{ env.EMSDK_KEY }}
-
-      - name: Fetch third-party sources (OCCT sources only without a cache hit)
-        run: |
-          if [ '${{ steps.occt.outputs.cache-hit }}' = 'true' ]; then
-            sh engine/scripts/fetch-deps.sh --skip occt
-          else
-            sh engine/scripts/fetch-deps.sh
-          fi
-
-      - name: Build the WebAssembly engine
-        run: bash scripts/ci/build-wasm-linux.sh
-
-      - name: Save OCCT
-        if: always() && steps.occt.outputs.cache-hit != 'true' && hashFiles('engine/_build/occt-wasm-install/.halfcube-occt') != ''
-        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: engine/_build/occt-wasm-install
-          key: occt-${{ steps.key.outputs.key }}-${{ env.EMSDK_KEY }}
-
-      - name: Drive the engine through its message interface
-        run: node engine/tests/drive-engine.mjs --wasm engine/_build/wasm --out engine/_build/results/wasm.json
-
-      # The licence list of the info view is built from the real files: UI packages from node_modules, engine libraries from
-      # engine/_deps, the Emscripten runtime from the build above. This job is the only one that has all of them.
-      - name: Install npm packages
-        run: npm ci
-
-      # With an OCCT cache hit the sources were skipped above; the licence texts and source headers are needed here.
-      - name: OCCT sources for the notices check
-        run: sh engine/scripts/fetch-deps.sh --only occt
-
-      - name: Third-party notices are up to date
-        run: npm run check:notices
-
-      - name: Upload build logs
-        if: failure()
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        with:
-          name: wasm-build-logs
-          path: engine/_build/wasm/*.log
-          retention-days: 7
-          if-no-files-found: ignore
-
   linux:
     name: Linux (compile check)
     runs-on: ubuntu-24.04
@@ -272,10 +199,11 @@ jobs:
         with:
           persist-credentials: false
 
-      # fetch-deps.sh needs Node to read the manifest.
+      # fetch-deps.sh needs Node to read the manifest; the third-party notices check needs the npm packages.
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: ${{ env.NODE_VERSION }}
+          cache: npm
 
       - name: OCCT cache key
         id: key
@@ -298,6 +226,11 @@ jobs:
             sh engine/scripts/fetch-deps.sh
           fi
 
+      # The licence list of the info view is built from the real files: UI packages from node_modules, engine libraries from
+      # engine/_deps. This job is the only one that has the engine sources next to the npm packages.
+      - name: Install npm packages
+        run: npm ci
+
       # Compiles only: no --test, no package. A cache hit passes the installation explicitly.
       - name: Compile the engine
         run: |
@@ -306,6 +239,16 @@ jobs:
           else
             bash engine/scripts/build-linux.sh
           fi
+
+      # After the compile step and with always(), so a stale notices file never hides a Linux compile error (and the
+      # reverse). With an OCCT cache hit the sources were skipped above; the licence texts and source headers are needed here.
+      - name: OCCT sources for the notices check
+        if: always() && steps.occt.outputs.cache-hit == 'true'
+        run: sh engine/scripts/fetch-deps.sh --only occt
+
+      - name: Third-party notices are up to date
+        if: always()
+        run: npm run check:notices
 
       - name: Save OCCT
         if: always() && steps.occt.outputs.cache-hit != 'true' && hashFiles('engine/_build/occt-linux-install/.halfcube-occt') != ''
@@ -316,7 +259,7 @@ jobs:
 
   ci-ok:
     name: All CI jobs
-    needs: [windows, web, engine-wasm, linux]
+    needs: [windows, web, linux]
     if: always()
     runs-on: ubuntu-24.04
     timeout-minutes: 5
@@ -337,7 +280,7 @@ jobs:
   # these).
   release-build:
     name: Release build (Windows package)
-    needs: [windows, web, engine-wasm, linux, ci-ok]
+    needs: [windows, web, linux, ci-ok]
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: windows-2025
     timeout-minutes: 60

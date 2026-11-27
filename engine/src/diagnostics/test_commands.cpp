@@ -14,7 +14,6 @@ namespace {
 // volatile keeps the compiler from folding the deliberate faults away.
 volatile int gZero = 0;
 int (*volatile gNullFunction)(int) = nullptr;
-volatile std::uint64_t gSpin = 0;
 
 using Clock = std::chrono::steady_clock;
 
@@ -45,13 +44,7 @@ protocol::HangResult hang(const protocol::DiagnosticsHangCommand& c, const Cance
         std::fprintf(stderr, "halfcube-engine: diagnostics.hang \"frozen\": the engine stops answering until it is ended\n");
         std::fflush(stderr);
         std::lock_guard<std::mutex> hold(engineLock);
-        for (;;) {
-#ifdef __EMSCRIPTEN__
-            gSpin = gSpin + 1;  // single-threaded: a busy loop is the hang
-#else
-            std::this_thread::sleep_for(std::chrono::milliseconds(50));
-#endif
-        }
+        for (;;) std::this_thread::sleep_for(std::chrono::milliseconds(50));
     }
     protocol::HangResult r;
     r.mode = "busy";
@@ -61,11 +54,7 @@ protocol::HangResult hang(const protocol::DiagnosticsHangCommand& c, const Cance
         if (cancelled && cancelled())
             throw EngineError(protocol::err::kCancelled,
                               "diagnostics.hang \"busy\" was cancelled after " + std::to_string(static_cast<long long>(elapsed)) + " ms.");
-#ifdef __EMSCRIPTEN__
-        gSpin = gSpin + 1;
-#else
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
-#endif
     }
     r.ms = msSince(t0);
     return r;

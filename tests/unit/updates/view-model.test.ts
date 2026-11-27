@@ -68,7 +68,7 @@ describe("the mark on the info icon", () => {
     expect(iconKind(state(phases.faildl!))).toBe("failed");
   });
 
-  it("is plain without an updater (the browser, a dev build)", () => {
+  it("is plain without an updater (no bridge, a dev build)", () => {
     expect(iconKind(null)).toBe("none");
     expect(iconKind({ supported: false, reason: "dev-build" })).toBe("none");
   });

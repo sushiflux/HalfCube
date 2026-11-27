@@ -19,7 +19,6 @@ export interface ThirdPartyEntry {
   source: string;
   /** One short line: what HalfCube uses it for. */
   purpose: { de: string; en: string };
-  platforms: ("desktop" | "browser")[];
   /** Path relative to the app's public root, e.g. "licenses/occt.txt"; null when the component ships no text of its own. */
   textFile: string | null;
   note?: { de: string; en: string };
@@ -51,10 +50,6 @@ export const THIRD_PARTY: readonly ThirdPartyEntry[] = [
       "de": "Geometriekern: Körper, Schnitte und Verrundungen",
       "en": "Geometry kernel: solids, cuts and fillets"
     },
-    "platforms": [
-      "desktop",
-      "browser"
-    ],
     "textFile": "licenses/occt.txt",
     "note": {
       "de": "HalfCube nutzt Open CASCADE Technology (OCCT) für die Geometrie. Der Lizenztext besteht aus der GNU LGPL 2.1 und der „Open CASCADE exception 1.0“. Einige Quelldateien von OCCT enthalten kleine Teile anderer Urheber; deren Hinweise stehen am Ende des Lizenztextes.",
@@ -81,10 +76,6 @@ export const THIRD_PARTY: readonly ThirdPartyEntry[] = [
       "de": "Löser für die Abhängigkeiten der Skizzen",
       "en": "Solver for sketch constraints"
     },
-    "platforms": [
-      "desktop",
-      "browser"
-    ],
     "textFile": "licenses/planegcs.txt",
     "note": {
       "de": "Aus den FreeCAD-Quellen, fest in die Engine gebunden. Die Dateiköpfe nennen LGPL-2.0-or-later (zwei Hilfsdateien LGPL-2.1-or-later); die beiliegende Lizenzdatei enthält den Text der LGPL 2.1.",
@@ -163,10 +154,6 @@ export const THIRD_PARTY: readonly ThirdPartyEntry[] = [
       "de": "Matrizenrechnung für den Skizzen-Löser",
       "en": "Matrix maths for the sketch solver"
     },
-    "platforms": [
-      "desktop",
-      "browser"
-    ],
     "textFile": "licenses/eigen.txt",
     "note": {
       "de": "Gebaut mit EIGEN_MPL2_ONLY, also ohne die LGPL-Teile. Wenige Kopfdateien stehen unter Apache-2.0 oder BSD-3-Clause. Die Urheberzeilen stammen aus den Kopfdateien von Eigen.",
@@ -185,10 +172,6 @@ export const THIRD_PARTY: readonly ThirdPartyEntry[] = [
       "de": "Hilfsbibliothek des Skizzen-Lösers (nur Kopfdateien)",
       "en": "Helper library of the sketch solver (headers only)"
     },
-    "platforms": [
-      "desktop",
-      "browser"
-    ],
     "textFile": "licenses/boost.txt",
     "note": {
       "de": "Die Lizenzdatei nennt keinen Inhaber; die Urheberzeilen stehen in den einzelnen Kopfdateien. Die Boost Software License verlangt den Hinweis nicht für Kopien, die nur in maschinenlesbarer Objektform vorliegen.",
@@ -209,115 +192,10 @@ export const THIRD_PARTY: readonly ThirdPartyEntry[] = [
       "de": "JSON im Engine-Dienst",
       "en": "JSON in the engine service"
     },
-    "platforms": [
-      "desktop",
-      "browser"
-    ],
     "textFile": "licenses/nlohmann-json.txt",
     "note": {
       "de": "Die Kopfdatei enthält außerdem Hedley-Makros von Evan Nemerson (MIT laut SPDX-Kopf) und, nur für Compiler vor C++14, eine Hilfsvorlage nach Google Abseil (Apache-2.0); HalfCube baut mit C++20 und übersetzt diesen Teil nicht.",
       "en": "The header also contains Hedley macros by Evan Nemerson (MIT per its SPDX header) and, for compilers before C++14 only, a helper template derived from Google Abseil (Apache-2.0); HalfCube builds with C++20 and does not compile that part."
-    }
-  },
-  {
-    "id": "emscripten-runtime",
-    "group": "engine",
-    "name": "Emscripten runtime (JavaScript loader and system library glue)",
-    "version": "7.0.1",
-    "license": "MIT OR NCSA",
-    "licenseLabel": {
-      "de": "MIT oder NCSA (zur Wahl)",
-      "en": "MIT or NCSA (your choice)"
-    },
-    "copyright": [
-      "Copyright (c) 2010-2014 Emscripten authors, see AUTHORS file.",
-      "Copyright Joyent, Inc. and other Node contributors. All rights reserved."
-    ],
-    "source": "https://github.com/emscripten-core/emscripten",
-    "purpose": {
-      "de": "Laufzeit der Browser-Engine (JavaScript-Lader und Systembibliothek)",
-      "en": "Runtime of the browser engine (JavaScript loader and system library)"
-    },
-    "platforms": [
-      "browser"
-    ],
-    "textFile": "licenses/emscripten-runtime.txt"
-  },
-  {
-    "id": "llvm-runtimes",
-    "group": "engine",
-    "name": "LLVM libc++, libc++abi, libunwind and compiler-rt (as bundled with Emscripten)",
-    "version": "Emscripten 7.0.1",
-    "license": "Apache-2.0 WITH LLVM-exception",
-    "licenseLabel": {
-      "de": "Apache-2.0 mit LLVM-Ausnahme",
-      "en": "Apache-2.0 with LLVM exception"
-    },
-    "copyright": [
-      "Copyright (c) 2009-2019 by the contributors listed in CREDITS.TXT",
-      "Copyright (c) 2009-2014 by the contributors listed in CREDITS.TXT",
-      "Copyright (c) 2009-2015 by the contributors listed in CREDITS.TXT"
-    ],
-    "source": "https://github.com/llvm/llvm-project",
-    "purpose": {
-      "de": "C++-Laufzeit der Browser-Engine (libc++, libc++abi, libunwind, compiler-rt)",
-      "en": "C++ runtime of the browser engine (libc++, libc++abi, libunwind, compiler-rt)"
-    },
-    "platforms": [
-      "browser"
-    ],
-    "textFile": "licenses/llvm-runtimes.txt"
-  },
-  {
-    "id": "musl",
-    "group": "engine",
-    "name": "musl libc (as bundled with Emscripten)",
-    "version": "Emscripten 7.0.1",
-    "license": "MIT",
-    "copyright": [
-      "Copyright © 2005-2020 Rich Felker, et al.",
-      "Copyright © 1993,2004 Sun Microsystems or",
-      "Copyright © 2003-2011 David Schultz or",
-      "Copyright © 2003-2009 Steven G. Kargl or",
-      "Copyright © 2003-2009 Bruce D. Evans or",
-      "Copyright © 2008 Stephen L. Moshier or",
-      "Copyright © 2017-2018 Arm Limited",
-      "Copyright © 1999-2019, Arm Limited.",
-      "Copyright © 1994 David Burren. It is licensed under a BSD license."
-    ],
-    "source": "https://musl.libc.org/",
-    "purpose": {
-      "de": "C-Bibliothek der Browser-Engine",
-      "en": "C library of the browser engine"
-    },
-    "platforms": [
-      "browser"
-    ],
-    "textFile": "licenses/musl.txt"
-  },
-  {
-    "id": "dlmalloc",
-    "group": "engine",
-    "name": "dlmalloc (Emscripten's default memory allocator)",
-    "version": "Emscripten 7.0.1",
-    "license": "CC0-1.0",
-    "licenseLabel": {
-      "de": "gemeinfrei (CC0-1.0)",
-      "en": "public domain (CC0-1.0)"
-    },
-    "copyright": [],
-    "source": "https://github.com/emscripten-core/emscripten/blob/main/system/lib/dlmalloc.c",
-    "purpose": {
-      "de": "Speicherverwaltung der Browser-Engine",
-      "en": "Memory allocator of the browser engine"
-    },
-    "platforms": [
-      "browser"
-    ],
-    "textFile": null,
-    "note": {
-      "de": "Von Doug Lea in die Gemeinfreiheit entlassen (system/lib/dlmalloc.c von Emscripten); es gibt keinen Lizenztext und keine Pflichtangabe.",
-      "en": "Released into the public domain by Doug Lea (system/lib/dlmalloc.c of Emscripten); there is no licence text and no required notice."
     }
   },
   {
@@ -334,10 +212,6 @@ export const THIRD_PARTY: readonly ThirdPartyEntry[] = [
       "de": "Oberfläche",
       "en": "User interface"
     },
-    "platforms": [
-      "desktop",
-      "browser"
-    ],
     "textFile": "licenses/react.txt"
   },
   {
@@ -354,10 +228,6 @@ export const THIRD_PARTY: readonly ThirdPartyEntry[] = [
       "de": "3D-Ansicht",
       "en": "3D view"
     },
-    "platforms": [
-      "desktop",
-      "browser"
-    ],
     "textFile": "licenses/three.txt"
   },
   {
@@ -375,10 +245,6 @@ export const THIRD_PARTY: readonly ThirdPartyEntry[] = [
       "de": "Animationen der Oberfläche",
       "en": "Animations of the interface"
     },
-    "platforms": [
-      "desktop",
-      "browser"
-    ],
     "textFile": "licenses/motion.txt"
   },
   {
@@ -395,17 +261,13 @@ export const THIRD_PARTY: readonly ThirdPartyEntry[] = [
       "de": "Gestaltung der Oberfläche (Stylesheet)",
       "en": "Styling of the interface (stylesheet)"
     },
-    "platforms": [
-      "desktop",
-      "browser"
-    ],
     "textFile": "licenses/tailwindcss.txt"
   },
   {
     "id": "vite",
     "group": "ui",
     "name": "Vite",
-    "version": "8.3.8",
+    "version": "8.4.0",
     "license": "MIT",
     "copyright": [
       "Copyright (c) 2019-present, VoidZero Inc. and Vite contributors"
@@ -415,10 +277,6 @@ export const THIRD_PARTY: readonly ThirdPartyEntry[] = [
       "de": "Hilfscode des Bündlers im Programmpaket",
       "en": "Bundler helper code in the program bundle"
     },
-    "platforms": [
-      "desktop",
-      "browser"
-    ],
     "textFile": "licenses/vite.txt",
     "note": {
       "de": "Der Lizenztext enthält nur die Lizenz von Vite selbst; die Lizenzen der Pakete, die in Vite eingebaut sind, gehören nicht zum Programmpaket.",
@@ -429,7 +287,7 @@ export const THIRD_PARTY: readonly ThirdPartyEntry[] = [
     "id": "rolldown",
     "group": "ui",
     "name": "Rolldown",
-    "version": "1.2.19",
+    "version": "1.3.4",
     "license": "MIT",
     "copyright": [
       "Copyright (c) 2024-present VoidZero Inc. & Contributors"
@@ -439,10 +297,6 @@ export const THIRD_PARTY: readonly ThirdPartyEntry[] = [
       "de": "Laufzeithilfen des Bündlers im Programmpaket",
       "en": "Bundler runtime helpers in the program bundle"
     },
-    "platforms": [
-      "desktop",
-      "browser"
-    ],
     "textFile": "licenses/rolldown.txt"
   },
   {
@@ -460,14 +314,30 @@ export const THIRD_PARTY: readonly ThirdPartyEntry[] = [
       "de": "Schrift der Oberfläche",
       "en": "Typeface of the interface"
     },
-    "platforms": [
-      "desktop",
-      "browser"
-    ],
     "textFile": "licenses/geist.txt",
     "note": {
       "de": "SIL Open Font License, Version 1.1.",
       "en": "SIL Open Font License, Version 1.1."
+    }
+  },
+  {
+    "id": "tabler-icons",
+    "group": "ui",
+    "name": "Tabler Icons",
+    "version": "3.53.0",
+    "license": "MIT",
+    "copyright": [
+      "Copyright (c) 2020-2026 Paweł Kuna"
+    ],
+    "source": "https://github.com/tabler/tabler-icons",
+    "purpose": {
+      "de": "Symbole der Oberfläche",
+      "en": "Icons of the interface"
+    },
+    "textFile": "licenses/tabler-icons.txt",
+    "note": {
+      "de": "Ein Teil der Oberflächensymbole sind Zeichnungen aus Tabler Icons (unverändert oder leicht angepasst), die übrigen sind eigene Zeichnungen im selben Raster. Lizenztext aus dem Quelltext-Stand 3.53.0 von Tabler Icons.",
+      "en": "Some of the interface icons are drawings from Tabler Icons (unchanged or slightly adjusted); the others are our own drawings on the same grid. Licence text from the 3.53.0 source of Tabler Icons."
     }
   },
   {
@@ -485,9 +355,6 @@ export const THIRD_PARTY: readonly ThirdPartyEntry[] = [
       "de": "Programmfenster am Desktop",
       "en": "Desktop program window"
     },
-    "platforms": [
-      "desktop"
-    ],
     "textFile": "licenses/electron.txt"
   },
   {
@@ -506,9 +373,6 @@ export const THIRD_PARTY: readonly ThirdPartyEntry[] = [
       "de": "Darstellung der Oberfläche (steckt in Electron)",
       "en": "Renders the interface (part of Electron)"
     },
-    "platforms": [
-      "desktop"
-    ],
     "textFile": null,
     "note": {
       "de": "Chromium und seine Teilkomponenten haben je eigene Lizenzen. Ihre Texte stehen in der mitgelieferten Datei LICENSES.chromium.html neben dem Programm (Desktop).",
@@ -530,9 +394,6 @@ export const THIRD_PARTY: readonly ThirdPartyEntry[] = [
       "de": "Installation und Updates",
       "en": "Installation and updates"
     },
-    "platforms": [
-      "desktop"
-    ],
     "textFile": "licenses/velopack.txt",
     "note": {
       "de": "Lizenztext aus dem Quelltext-Stand 1.2.161 von Velopack. Die nativen Programme von Velopack enthalten außerdem Rust-Bibliotheken; sie stehen in der Cargo.lock von Velopack (https://github.com/velopack/velopack/blob/1.2.161/Cargo.lock).",
@@ -553,9 +414,6 @@ export const THIRD_PARTY: readonly ThirdPartyEntry[] = [
       "de": "Lädt die native Bibliothek von Velopack",
       "en": "Loads Velopack's native library"
     },
-    "platforms": [
-      "desktop"
-    ],
     "textFile": "licenses/neon-rs-load.txt"
   },
   {
@@ -576,9 +434,6 @@ export const THIRD_PARTY: readonly ThirdPartyEntry[] = [
       "de": "Laufzeitdateien der Engine (vcruntime140, msvcp140)",
       "en": "Runtime files of the engine (vcruntime140, msvcp140)"
     },
-    "platforms": [
-      "desktop"
-    ],
     "textFile": "licenses/vcrt.txt",
     "note": {
       "de": "Microsoft-Dateien, unverändert neben der Engine ausgeliefert; sie stehen unter den Bedingungen von Microsoft, nicht unter HalfCubes Lizenz.",

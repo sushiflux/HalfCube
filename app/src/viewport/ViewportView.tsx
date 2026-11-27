@@ -1,7 +1,7 @@
 // React host of the 3D view: creates the viewport inside a div, keeps its style in step with the active theme (a theme or
 // mode switch updates the view live), shows the axis navigator over it, and cleans everything up on unmount. Also safe in
 // React's strict mode, where an effect runs, is cleaned up and runs again.
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useI18n } from "../i18n/runtime.ts";
 import { themeStore, useTheme } from "../theme/runtime.ts";
 import { cx } from "../ui/cx.ts";
@@ -12,6 +12,7 @@ import type { AxisLabelMode } from "./navigator-model.ts";
 import type { NavigationPreset, WheelZoomDirection } from "./navigation.ts";
 import { styleFromTheme } from "./style.ts";
 import type { RendererRequest, Viewport } from "./types.ts";
+import { describeViewportFailure, probeGraphics, type GraphicsProbe } from "./unavailable.ts";
 
 export interface ViewportViewProps {
   className?: string;
@@ -31,7 +32,9 @@ export function ViewportView({ className, navigationPreset = "mouse", wheelZoom 
   const { theme, mode } = useTheme();
   const hostRef = useRef<HTMLDivElement>(null);
   const [viewport, setViewport] = useState<Viewport | null>(null);
-  const [failure, setFailure] = useState<Error | null>(null);
+  const [failure, setFailure] = useState<{ error: Error; probe: GraphicsProbe } | null>(null);
+  // What the user reads: what failed and what to do; the library's own error text only as the technical detail.
+  const failureText = useMemo(() => (failure ? describeViewportFailure(failure.error, failure.probe, t) : null), [failure, t]);
 
   useEffect(() => {
     const host = hostRef.current;
@@ -51,7 +54,7 @@ export function ViewportView({ className, navigationPreset = "mouse", wheelZoom 
         setViewport(vp);
       },
       (error: unknown) => {
-        if (!cancelled) setFailure(error instanceof Error ? error : new Error(String(error)));
+        if (!cancelled) setFailure({ error: error instanceof Error ? error : new Error(String(error)), probe: probeGraphics() });
       },
     );
     return () => {
@@ -81,17 +84,14 @@ export function ViewportView({ className, navigationPreset = "mouse", wheelZoom 
     <div className={cx("relative overflow-hidden bg-bg", className)} data-testid="viewport">
       <div ref={hostRef} className="absolute inset-0" data-testid="viewport-host" />
       {viewport ? <AxisNavigator viewport={viewport} labels={axisLabels} className="absolute top-3 right-3" /> : null}
-      {failure ? (
+      {failureText ? (
         <div className="absolute inset-0 grid place-items-center p-6" role="alert">
           <ErrorNotice
             className="max-w-xl"
-            headline={t("viewport.unavailableTitle")}
-            code="HC-VIEW-001"
+            headline={failureText.headline}
+            code={failureText.code}
             defaultOpen
-            details={[
-              { kind: "text", text: t("viewport.unavailableText") },
-              { kind: "code", text: `${failure.name}: ${failure.message}` },
-            ]}
+            details={failureText.blocks}
           />
         </div>
       ) : null}

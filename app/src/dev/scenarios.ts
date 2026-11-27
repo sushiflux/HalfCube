@@ -4,6 +4,7 @@
 import { catalogues } from "../i18n/core.ts";
 import type { Language } from "../i18n/types.ts";
 import type { LoadingError, LoadingProgress, LoadingStep } from "../ui/loading/types.ts";
+import { branding } from "../branding.ts";
 
 export interface ScenarioStep {
   id: string;
@@ -35,8 +36,6 @@ export interface Scenario {
 export const demoNames = [
   "start",
   "start-error",
-  "start-browser",
-  "start-browser-error",
   "panel-open",
   "panel-open-error",
   "panel-step",
@@ -52,7 +51,6 @@ const number = (lang: Language, n: number, digits = 1): string =>
 export function buildScenario(name: string, lang: Language): Scenario | undefined {
   const L = (de: string, en: string) => (lang === "de" ? de : en);
   const of = (a: string, b: string, unit: string) => (lang === "de" ? `${a} von ${b} ${unit}` : `${a} of ${b} ${unit}`);
-  const sys = (browser: boolean) => (browser ? "Chrome · Windows" : "Windows 11");
 
   // The real startup steps; their texts live in the catalogue (the engine session drives them in the app).
   const start = catalogues[lang].loading.start;
@@ -61,30 +59,15 @@ export function buildScenario(name: string, lang: Language): Scenario | undefine
     { id: "kernel", active: start.kernelActive, done: start.kernelDone, detail: () => "OCCT 8.0.2", weight: 1, durationMs: 520 },
     { id: "solver", active: start.solverActive, done: start.solverDone, detail: () => "planegcs", weight: 1, durationMs: 260 },
   ];
-  const total = 41.2;
-  const browserStart: ScenarioStep[] = [
-    {
-      id: "engine",
-      active: L("Engine wird geladen", "Downloading the engine"),
-      done: L("Engine geladen", "Engine downloaded"),
-      measured: true,
-      detail: (f) => (f >= 1 ? `${number(lang, total)} MB` : of(number(lang, total * f), number(lang, total), "MB")),
-      weight: 60,
-      durationMs: 7000,
-    },
-    { id: "compile", active: L("Engine wird übersetzt", "Compiling the engine"), done: L("Engine übersetzt", "Engine compiled"), detail: () => "WebAssembly", weight: 15, durationMs: 1600 },
-    { id: "kernel", active: start.kernelActive, done: start.kernelDone, detail: () => "OCCT 8.0.2", weight: 7, durationMs: 500 },
-    { id: "solver", active: start.solverActive, done: start.solverDone, detail: () => "planegcs", weight: 4, durationMs: 250 },
-  ];
 
   const engineMissing = (): LoadingError => ({
     headline: L("Engine konnte nicht gestartet werden: halfcube-engine.exe fehlt", "The engine could not be started: halfcube-engine.exe is missing"),
     code: "HC-ENGINE-001",
     details: [
-      { kind: "text", text: L("HalfCube startet die Engine als eigenen Prozess, damit ein Absturz der Geometrieberechnung nie die Oberfläche mitreißt. Die Programmdatei der Engine wurde nicht gefunden:", "HalfCube runs the engine as a separate process so a crash in the geometry never takes the interface down with it. The engine program file was not found:") },
-      { kind: "code", text: "%LOCALAPPDATA%\\HalfCube\\current\\resources\\engine\\halfcube-engine.exe" },
-      { kind: "text", text: L("Häufige Ursache: Ein Virenschutz hat die Datei in die Quarantäne verschoben. Stelle sie dort wieder her oder installiere HalfCube neu – deine Projekte und Einstellungen bleiben dabei erhalten.", "Common cause: a virus scanner moved the file to quarantine. Restore it there or reinstall HalfCube – your projects and settings are kept.") },
-      { kind: "code", text: `${sys(false)}` },
+      { kind: "text", text: L(`${branding.name} startet die Engine als eigenen Prozess, damit ein Absturz der Geometrieberechnung nie die Oberfläche mitreißt. Die Programmdatei der Engine wurde nicht gefunden:`, `${branding.name} runs the engine as a separate process so a crash in the geometry never takes the interface down with it. The engine program file was not found:`) },
+      { kind: "code", text: `%LOCALAPPDATA%\\${branding.name}\\current\\resources\\engine\\halfcube-engine.exe` },
+      { kind: "text", text: L(`Häufige Ursache: Ein Virenschutz hat die Datei in die Quarantäne verschoben. Stelle sie dort wieder her oder installiere ${branding.name} neu – deine Projekte und Einstellungen bleiben dabei erhalten.`, `Common cause: a virus scanner moved the file to quarantine. Restore it there or reinstall ${branding.name} – your projects and settings are kept.`) },
+      { kind: "code", text: "Windows 11" },
     ],
     actions: [
       { id: "retry", label: L("Erneut versuchen", "Try again"), primary: true },
@@ -92,30 +75,15 @@ export function buildScenario(name: string, lang: Language): Scenario | undefine
     ],
   });
 
-  const downloadFailed = (): LoadingError => ({
-    headline: L(`Engine konnte nicht geladen werden: Download bei ${number(lang, 18.4)} von ${number(lang, 41.2)} MB abgebrochen`, `The engine could not be loaded: download stopped at ${number(lang, 18.4)} of ${number(lang, 41.2)} MB`),
-    code: "HC-ENGINE-002",
-    details: [
-      { kind: "text", text: L("Die Datei halfcube-engine.wasm kam nicht vollständig an. Der Browser meldet:", "The file halfcube-engine.wasm did not arrive completely. The browser reports:") },
-      { kind: "code", text: "net::ERR_CONNECTION_RESET" },
-      { kind: "text", text: L("Prüfe die Internetverbindung und lade die Seite neu. Deine im Browser gespeicherten Projekte sind davon nicht betroffen.", "Check the internet connection and reload the page. Your projects stored in the browser are not affected.") },
-    ],
-    actions: [{ id: "reload", label: L("Neu laden", "Reload"), primary: true }],
-  });
-
   switch (name) {
     case "start":
       return { steps: desktopStart };
     case "start-error":
       return { steps: desktopStart, fail: { step: 0, fraction: 0, detail: "halfcube-engine.exe", error: engineMissing() } };
-    case "start-browser":
-      return { steps: browserStart };
-    case "start-browser-error":
-      return { steps: browserStart, fail: { step: 0, fraction: 18.4 / 41.2, error: downloadFailed() } };
     case "panel-open":
       return {
         title: L("Gehäuse.hcube wird geöffnet", "Opening Gehäuse.hcube"),
-        subtitle: L("Dokumente\\HalfCube\\Gehäuse.hcube · 112,6 MB", "Documents\\HalfCube\\Gehäuse.hcube · 112.6 MB"),
+        subtitle: L(`Dokumente\\${branding.name}\\Gehäuse.hcube · 112,6 MB`, `Documents\\${branding.name}\\Gehäuse.hcube · 112.6 MB`),
         note: L("Abbrechen lässt alles, wie es war.", "Cancel leaves everything as it was."),
         cancellable: true,
         loop: true,
@@ -134,11 +102,11 @@ export function buildScenario(name: string, lang: Language): Scenario | undefine
           step: 1,
           fraction: 0,
           error: {
-            headline: L("Gehäuse.hcube konnte nicht geöffnet werden: keine HalfCube-Datei", "Gehäuse.hcube could not be opened: not a HalfCube file"),
+            headline: L(`Gehäuse.hcube konnte nicht geöffnet werden: keine ${branding.name}-Datei`, `Gehäuse.hcube could not be opened: not a ${branding.name} file`),
             code: "HC-FILE-003",
             details: [
-              { kind: "text", text: L("In der Datei fehlt manifest.json. HalfCube erkennt Projekte an ihrem Inhalt, nicht an der Endung; diese Datei ist beschädigt oder ein anderes ZIP-Archiv mit der Endung .hcube.", "The file has no manifest.json. HalfCube recognises projects by their content, not by the extension; this file is damaged or another ZIP archive named .hcube.") },
-              { kind: "code", text: L("Dokumente\\HalfCube\\Gehäuse.hcube", "Documents\\HalfCube\\Gehäuse.hcube") },
+              { kind: "text", text: L(`In der Datei fehlt manifest.json. ${branding.name} erkennt Projekte an ihrem Inhalt, nicht an der Endung; diese Datei ist beschädigt oder ein anderes ZIP-Archiv mit der Endung .hcube.`, `The file has no manifest.json. ${branding.name} recognises projects by their content, not by the extension; this file is damaged or another ZIP archive named .hcube.`) },
+              { kind: "code", text: L(`Dokumente\\${branding.name}\\Gehäuse.hcube`, `Documents\\${branding.name}\\Gehäuse.hcube`) },
               { kind: "text", text: L("Es wurde nichts verändert; geöffnete Projekte bleiben, wie sie waren.", "Nothing was changed; open projects stay as they were.") },
             ],
             actions: [

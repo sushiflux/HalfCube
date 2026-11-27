@@ -100,12 +100,9 @@ export function decideNewsOnStart(input: StartInput): StartDecision {
 }
 
 /**
- * Whether "Was ist neu" may be decided now, and whether this program counts as one that gets updates. The desktop program waits for
- * the updater's first answer and only an installed one (not a dev build, not a copy that was not installed) counts. The browser
- * version has no updater at all (`bridge` false): it is always current, so "Was ist neu" applies there as on every platform, on the
- * first visit with a newer build id.
+ * Whether "Was ist neu" may be decided now, and whether this program counts as one that gets updates. It waits for the updater's
+ * first answer and only an installed program (not a dev build, not a copy that was not installed) counts.
  */
-export function newsReadiness(input: { bridge: boolean; state: { supported: boolean } | null }): { known: boolean; supported: boolean } {
-  if (!input.bridge) return { known: true, supported: true };
+export function newsReadiness(input: { state: { supported: boolean } | null }): { known: boolean; supported: boolean } {
   return { known: input.state !== null, supported: input.state?.supported === true };
 }

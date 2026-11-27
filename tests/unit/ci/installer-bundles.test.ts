@@ -43,7 +43,8 @@ if (args[1] === "build:desktop") {
 function project(label: string): string {
   const root = join(dir, `proj-${label}`);
   for (const d of ["scripts/ci", "app/src/dev", "node_modules/electron", "node_modules/@electron/packager/bin", "fakes"]) mkdirSync(join(root, d), { recursive: true });
-  for (const f of ["scripts/build-installer.ps1", "scripts/ci/release.ts", "scripts/ci/release-lib.ts", "app/src/version.ts", "app/src/dev/look.ts"]) copyFileSync(join(repo, f), join(root, f));
+  mkdirSync(join(root, "branding"), { recursive: true });
+  for (const f of ["scripts/build-installer.ps1", "scripts/ci/release.ts", "scripts/ci/release-lib.ts", "app/src/version.ts", "app/src/dev/look.ts", "branding/branding.json"]) copyFileSync(join(repo, f), join(root, f));
   writeFileSync(join(root, "version.txt"), `v2026.11.14\n${ID}\n`);
   writeFileSync(join(root, "node_modules/electron/package.json"), '{"version":"1.0.0"}');
   writeFileSync(join(root, "node_modules/@electron/packager/package.json"), '{"version":"20.3.0"}');

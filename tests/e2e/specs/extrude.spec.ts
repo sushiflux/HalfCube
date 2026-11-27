@@ -3,7 +3,7 @@
 // thickness), OK is ONE undo step with the step in the timeline and the body in the browser tree, Cancel leaves nothing, a double-click
 // on the step or the body edits it, a changed sketch rebuilds the body, undo and redo reach across all steps, an engine that crashes
 // while the dialog is open comes back with the same body, and fast typing ends on the last value (durchstich-engine.md 6.4, cases 5
-// to 9). Runs in the browser (WebAssembly engine) and in the Electron program (native engine).
+// to 9). Runs in the Electron program (native engine).
 import type { Page } from "@playwright/test";
 import { expect, test, type AppUnderTest } from "../support/fixtures.ts";
 import { expectNoHorizontalOverflow, expectNothingMoved, expectNotTruncated, snapshot, type Targets } from "../support/layout.ts";
@@ -609,8 +609,8 @@ test("undo and redo reach across all steps: sketch, rectangle, extrusion and an 
 
 test("the engine crashes while the dialog is open: a notice says so and keeps the input, the engine restarts, the preview of the same body comes back", async ({ app }) => {
   const { page } = app;
-  // The browser engine needs its test variant (it has diagnostics.crash); the native engine is simply ended from outside.
-  await openMain(app, "lang=en&engine=testing");
+  // The native engine process is simply ended from outside (app.crashEngine).
+  await openMain(app, "lang=en");
   await makeSketchWithRectangle(page);
   await startExtrude(page);
   await expectPreviewVolume(page, 10_000);
@@ -636,7 +636,7 @@ test("the engine crashes while the dialog is open: a notice says so and keeps th
   await expect(page.getByTestId("extrude-dialog")).toHaveCount(0);
   await expect.poll(async () => (await lastBody(page, false))?.volume ?? -1, { timeout: 20_000 }).toBeCloseTo(30_000, 3);
   expect((await lastBody(page, false))!.id).toBe(idBefore);
-  expect(app.errors.filter((e) => !/engine|worker|terminated|crash|exit/i.test(e))).toEqual([]);
+  expect(app.errors.filter((e) => !/engine|terminated|crash|exit/i.test(e))).toEqual([]);
 });
 
 // ----------------------------------------------------------------------------------------------------------------------- 6.4 #9
@@ -746,7 +746,7 @@ async function setMode(page: Page, mode: "light" | "dark"): Promise<void> {
 }
 
 test("screenshots of the real app for the report (extrude, light and dark)", async ({ app }, testInfo) => {
-  test.skip(process.env.HALFCUBE_U3B_SHOTS === undefined || app.target !== "browser", "only when HALFCUBE_U3B_SHOTS names a folder, in the browser project");
+  test.skip(process.env.HALFCUBE_U3B_SHOTS === undefined, "only when HALFCUBE_U3B_SHOTS names a folder");
   const dir = process.env.HALFCUBE_U3B_SHOTS!;
   const { page } = app;
   await openMain(app, "lang=de&theme=praezision&mode=light");

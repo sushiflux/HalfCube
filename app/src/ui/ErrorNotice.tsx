@@ -1,8 +1,7 @@
 import { useCallback, useId, useMemo, useState, type ReactNode } from "react";
 import { formatTimestamp } from "../i18n/core.ts";
 import { useI18n } from "../i18n/runtime.ts";
-import { windowsLook } from "../dev/look.ts";
-import { detectPlatform, getDesktopBridge } from "../platform.ts";
+import { getDesktopBridge } from "../platform.ts";
 import { currentVersion } from "../version.ts";
 import { CopyButton } from "./CopyButton.tsx";
 import { cx } from "./cx.ts";
@@ -50,13 +49,8 @@ export function ErrorNotice({
   const detailsId = useId();
 
   const report = useMemo(() => {
-    const bridge = getDesktopBridge();
-    const environment =
-      detectPlatform() === "desktop" && bridge
-        ? t("error.environmentDesktop", { os: bridge.os })
-        : windowsLook()
-          ? t("error.environmentDesktop", { os: "win32" })
-          : t("error.environmentBrowser");
+    // Always the desktop program; a page without the bridge (unit tests, the bare dev server) is named as Windows.
+    const environment = t("error.environmentDesktop", { os: getDesktopBridge()?.os ?? "win32" });
     return {
       headline,
       code,

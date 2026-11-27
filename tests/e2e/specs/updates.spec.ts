@@ -1,7 +1,7 @@
 // The update function: the mark on the info icon, the update slot in "Über HalfCube", the update window, the restart warning, "Was ist
 // neu", the settings tab "Updates", and a reload keeping every view. The states come from the dev-only demo updater
-// (?updates-demo=found|dl|ready|exit|failed|faildl|uptodate|none|news, see app/src/updates/demo-bridge.ts); in the browser without that
-// parameter there is no updater at all. Runs in the browser and in the Electron program (both are dev builds in the suite).
+// (?updates-demo=found|dl|ready|exit|failed|faildl|uptodate|none|news, see app/src/updates/demo-bridge.ts); the dev build of the
+// suite has no real updater. Runs in the Electron program.
 import type { Page } from "@playwright/test";
 import { expect, test, type AppUnderTest } from "../support/fixtures.ts";
 import { snapshot } from "../support/layout.ts";
@@ -72,16 +72,6 @@ test.describe("the mark on the info icon", () => {
     await expect(icon(app.page)).toHaveAttribute("aria-label", "Info · Update-Suche fehlgeschlagen");
     const after = await snapshot(app.page, { icon: icon(app.page), settings: app.page.getByTestId("settings-button"), undo: app.page.getByTestId("undo") });
     expect(after.boxes).toEqual(before.boxes);
-  });
-
-  test("the browser version has no updater: no mark, no slot, only the link to what is new", async ({ app }) => {
-    test.skip(app.target === "electron", "The Electron program has an updater bridge of its own.");
-    await openMain(app, "");
-    await expect(icon(app.page)).toHaveAttribute("data-update-icon", "none");
-    await icon(app.page).click();
-    await expect(app.page.getByTestId("about-info")).toBeVisible();
-    await expect(app.page.getByTestId("update-slot")).toHaveCount(0);
-    await expect(app.page.getByTestId("update-news-link")).toBeVisible();
   });
 });
 
@@ -493,28 +483,9 @@ test.describe("Was ist neu", () => {
     await expect(page.getByTestId("all-changes-link")).toBeVisible();
   });
 
-  test("the browser version (no updater) gets it too: opens by itself on a later visit of a newer build, there is no update mark", async ({ app }) => {
+  test("a first visit shows nothing", async ({ app }) => {
     const { page } = app;
-    await openMain(app, "updates-demo=news&updates-browser=1");
-    await expect(page.getByRole("dialog", { name: "Was ist neu" })).toBeVisible({ timeout: 20_000 });
-    await expect(page.getByTestId("news-date")).toHaveText("26.11.2026");
-    await page.getByTestId("news-close").click();
-    await expect(icon(page)).toHaveAttribute("data-update-icon", "none");
-    await icon(page).click();
-    await expect(page.getByTestId("update-slot")).toHaveCount(0);
-  });
-
-  test("a first visit shows nothing, in the browser version as well", async ({ app }) => {
-    const { page } = app;
-    await openMain(app, "updates-demo=news&updates-browser=1&updates-first=1");
-    await page.waitForTimeout(2500);
-    await expect(page.getByRole("dialog", { name: "Was ist neu" })).toHaveCount(0);
-  });
-
-  test("the browser version waits while the welcome screen owns the screen", async ({ app }) => {
-    const { page } = app;
-    await app.open("?lang=de&updates-demo=news&updates-browser=1");
-    await expect(page.getByRole("dialog", { name: "Erst skizzieren, dann bauen" })).toBeVisible({ timeout: 60_000 });
+    await openMain(app, "updates-demo=news&updates-first=1");
     await page.waitForTimeout(2500);
     await expect(page.getByRole("dialog", { name: "Was ist neu" })).toHaveCount(0);
   });
@@ -540,9 +511,9 @@ test.describe("Was ist neu", () => {
     await expect(page.getByRole("dialog", { name: "Was ist neu" })).toBeVisible();
   });
 
-  test("the dialog works in English and is reachable from the browser version", async ({ app }) => {
+  test("the dialog works in English", async ({ app }) => {
     const { page } = app;
-    await openMain(app, "updates-demo=news&updates-browser=1", "en");
+    await openMain(app, "updates-demo=news", "en");
     await expect(page.getByRole("dialog", { name: "What’s new" })).toBeVisible({ timeout: 20_000 });
     await page.getByTestId("all-changes-link").click();
     await expect(page.getByRole("dialog", { name: "All changes" })).toBeVisible();
@@ -568,7 +539,7 @@ test.describe("Was ist neu", () => {
   test("waits while the welcome screen owns the screen", async ({ app }) => {
     const { page } = app;
     await app.open("?lang=de&updates-demo=news");
-    const welcome = page.getByRole("dialog", { name: "Erst skizzieren, dann bauen" });
+    const welcome = page.getByRole("dialog", { name: "Sketch first, then build." });
     await expect(welcome).toBeVisible({ timeout: 60_000 });
     await page.waitForTimeout(2500);
     await expect(page.getByRole("dialog", { name: "Was ist neu" })).toHaveCount(0);
@@ -646,14 +617,6 @@ test.describe("Einstellungen › Updates", () => {
     await expect(page.getByTestId("settings-tab-updates")).toHaveAttribute("aria-selected", "true");
     expect(query(page, "about")).toBeNull();
     expect(query(page, "settings")).toBe("updates");
-  });
-
-  test("the browser version shows its version, a note and 'Was ist neu' only", async ({ app }) => {
-    test.skip(app.target === "electron", "The Electron program has an updater bridge of its own.");
-    await openMain(app, "settings=updates");
-    await expect(app.page.getByTestId("settings-no-updater")).toContainText("Browser-Version");
-    await expect(app.page.getByTestId("settings-news")).toBeVisible();
-    await expect(app.page.getByTestId("settings-check")).toHaveCount(0);
   });
 });
 
